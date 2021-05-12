@@ -3,7 +3,7 @@
 """Tests the signup view.
 """
 
-from test import get_text
+from tests import get_text
 from spz.models import Applicant, Approval
 from spz import db, token
 

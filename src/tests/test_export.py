@@ -10,7 +10,7 @@ from zipfile import ZipFile
 from spz import db
 from spz.export import export_course_list
 from spz.models import ExportFormat, Graduation, Attendance
-from test.sample_data import make_applicant
+from tests.sample_data import make_applicant
 
 
 def fill(courses):
