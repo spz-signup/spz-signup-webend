@@ -3,7 +3,7 @@ language: python
 cache: pip
 
 python:
-  - "3.7"
+  - "3.9"
 
 services:
   - postgresql
@@ -14,10 +14,10 @@ install: "pip install -q -r requirements.txt"
 jobs:
   include:
     - stage: lint
-      script: flake8 ./src/spz-signup-webend
+      script: flake8 ./src
     - stage: test
       env:
           - FLASK_ENV=testing
       before_script:
           - psql -c 'create database spz;' -U postgres
-      script: pytest ./src/spz-signup-webend
+      script: pytest ./src

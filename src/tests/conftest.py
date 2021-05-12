@@ -6,7 +6,7 @@
 from pytest import fixture
 from spz import app, db
 from spz.models import User, Origin, Degree, Graduation, Course
-from util.init_db import recreate_tables, insert_resources
+from spz.setup.init_db import recreate_tables, insert_resources
 
 
 def create_user(mail, superuser=False, languages=[]):
