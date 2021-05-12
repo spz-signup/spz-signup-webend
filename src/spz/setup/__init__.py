@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Utility function and classes.
+"""Setup utilities.
 
-   Mostly independent functionality that isn't especially bound to this project.
+   Procedures that are useful for the initial setup but will not be used during normal operation.
 """

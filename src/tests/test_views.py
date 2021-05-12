@@ -3,7 +3,7 @@
 """Tests the application views.
 """
 
-from test import login, logout, get_text
+from tests import login, logout, get_text
 
 
 def test_startpage(client):
