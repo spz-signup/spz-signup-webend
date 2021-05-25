@@ -38,5 +38,5 @@ USER 1000
 # expose port
 EXPOSE 3031
 
-# set entry point
-ENTRYPOINT ["/bin/bash", "-c", "uwsgi --ini uwsgi.ini"]
+# set default startup command
+CMD ["uwsgi --ini uwsgi.ini"]
