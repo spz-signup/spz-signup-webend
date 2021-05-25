@@ -1,0 +1,16 @@
+.git
+.gitignore
+.dockerignore
+.editorconfig
+.travis.yml
+.pytest_cache
+
+Dockerfile
+__pycache__
+
+*.mo
+*.pyc
+*.pyo
+*.swp
+*.swo
+*.~
