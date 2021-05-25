@@ -1,4 +1,4 @@
-SPZ Signup Webend
+SPZ Signup App
 ==========
 
 :Authors: - Roman Zukowsky <roman@zukowsky.de>
@@ -11,4 +11,6 @@ SPZ Signup Webend
 :Source: https://github.com/spz-signup/spz-signup-webend
 
 
-Webend of the sign-up-management for the language courses at the KIT Sprachenzentrum.
+This repository contains the source code for our WSGI-app, which handles language course sign-ups at the KIT Sprachenzentrum.
+The app is designed to run as a Docker image alongside nginx, PostgreSQL and Celery.
+You can find a docker-compose file in the corresponding repository at https://github.com/spz-signup/spz-signup.
