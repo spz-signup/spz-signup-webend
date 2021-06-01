@@ -31,8 +31,11 @@ RUN mkdir /state && \
 RUN mkdir /home/spz/config
 COPY ./uwsgi.ini uwsgi.ini
 
+# build assets
+RUN python -m spz.setup.build_assets
+
 # security and volumes
-VOLUME ["/home/spz/code/spz/static", "/state"]
+VOLUME ["/state"]
 USER 1000
 
 # expose port

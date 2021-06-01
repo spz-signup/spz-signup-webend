@@ -138,7 +138,7 @@ class Development(BaseConfig):
     DB_DRIVER = 'postgresql'
     DB_HOST = 'postgres'
     DB_USER = 'postgres'
-    DB_PW = 'mysecretpassword'
+    DB_PW = 'dev-password'
 
 
 class Testing(BaseConfig):
