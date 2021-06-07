@@ -17,26 +17,25 @@ RUN apt-get update && \
     pip install -U pip setuptools --no-cache-dir && \
     rm -rf /root/.cache /var/cache/*
 
-# install requirements and do cleanup
-COPY requirements.txt /home/spz/code/requirements.txt
+# install python requirements and do cleanup
+COPY requirements.txt requirements.txt
 RUN pip install -U -r requirements.txt --no-cache-dir && \
     rm -rf /root/.cache /var/cache/*
+# TODO: uninstall build-only requirements (gcc, git, ...)
 
-# copy code
-COPY ./src/spz /home/spz/code/spz
+# create state directory
 RUN mkdir /state && \
-    chown -R spz:spz /home/spz/code /state
+    chown -R spz:spz /state
 
-# copy config
-RUN mkdir /home/spz/config
-COPY ./uwsgi.ini uwsgi.ini
+# copy code & config
+COPY --chown=spz:spz uwsgi.ini uwsgi.ini
+COPY --chown=spz:spz src/spz spz
+
+# switch to spz user
+USER 1000
 
 # build assets
 RUN python -m spz.setup.build_assets
-
-# security and volumes
-VOLUME ["/state"]
-USER 1000
 
 # expose port
 EXPOSE 3031
