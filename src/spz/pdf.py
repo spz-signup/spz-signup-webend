@@ -16,9 +16,7 @@ class SPZPDF(fpdf.FPDF):
     """Base class used for ALL PDF generators here."""
 
     def __init__(self):
-        fpdf.set_global('FPDF_CACHE_MODE', 2)
-        fpdf.set_global('FPDF_CACHE_DIR', '/tmp')
-        super(SPZPDF, self).__init__('L', 'mm', 'A4')
+        super(SPZPDF, self).__init__(orientation='L', unit='mm', format='A4', font_cache_dir='/tmp')
         self.add_font('DejaVu', '', '/usr/share/fonts/truetype/dejavu/DejaVuSansCondensed.ttf', uni=True)
         self.add_font('DejaVu', 'B', '/usr/share/fonts/truetype/dejavu/DejaVuSansCondensed-Bold.ttf', uni=True)
 
