@@ -21,16 +21,10 @@
             "template": "export/courselist.csv"
         },
         {
-            "name": "Spanisch 1-4",
+            "name": "Spanisch 1-8",
             "language": "Spanisch",
             "formatter": "zip-excel",
-            "template": "export/spanisch_1-4.xlsx"
-        },
-        {
-            "name": "Spanisch 5-7",
-            "language": "Spanisch",
-            "formatter": "zip-excel",
-            "template": "export/spanisch_5-7.xlsx"
+            "template": "export/spanisch_1-8.xlsx"
         },
         {
             "name": "Spanisch Andere",
