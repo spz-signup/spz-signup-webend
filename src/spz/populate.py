@@ -101,7 +101,10 @@ def populate_generic(time, attendance_filter, idx_prepare, idx_select):
         attendance.set_waiting_status(False)
         handled_attendances.append((attendance, attendance.informed_about_rejection))
         attendance.informed_about_rejection = True
-#herecodechange
+        
+        #applicant got a place
+        to_assign.remove(attendance.applicant)
+        
     try:
         db.session.commit()
         # XXX: send stats somewhere
