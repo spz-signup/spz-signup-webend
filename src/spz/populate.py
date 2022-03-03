@@ -103,7 +103,7 @@ def populate_generic(time, attendance_filter, idx_prepare, idx_select):
         attendance.informed_about_rejection = True
         
         #applicant got a place
-        to_assign.remove(attendance.applicant.attendances)
+        to_assign.remove(attendance.applicant.course)
         
     try:
         db.session.commit()
