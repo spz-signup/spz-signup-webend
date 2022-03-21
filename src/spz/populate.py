@@ -13,7 +13,7 @@ from spz import db, models, tasks
 
 from spz.mail import generate_status_mail
 
-from spz.util.WeightedRandomGenerator import WeightedRandomGenerator
+import random
 
 
 def eager_load_waiting():
@@ -124,38 +124,15 @@ def populate_rnd(time):
     # implementable in standard SQL
     # See: https://groups.google.com/forum/#!msg/sqlalchemy/AneqcriykeI/j4sayzZP1qQJ
 
-    weights = []
-
     def attendance_filter(att):
         return (att.course.language.signup_begin) < att.registered < (att.course.language.signup_rnd_window_end)
 
     def idx_prepare(to_assign):
-        # (attendance, weight) tuples from query would be possible, too;
-        # eager loading already takes care of not issuing tons of sql queries here
-        # XXX: re-decide if we should consider all attendances, or only some
-        nonlocal weights
-        weights = [
-            1.0 / max(
-                1.0,
-                len([
-                    att
-                    for att
-                    in attendance.applicant.attendances
-                ])
-            )
-            for attendance
-            in to_assign
-        ]
+        pass
 
     def idx_select(to_assign):
-        assert len(to_assign) == len(weights)
-
-        # weighted random selection
-        gen = WeightedRandomGenerator(weights)
-        idx = next(gen)
-
-        del weights[idx]
-        return idx
+        # random selection
+        return random.randint(0, len(to_assign) - 1)
 
     populate_generic(time, attendance_filter, idx_prepare, idx_select)
 
