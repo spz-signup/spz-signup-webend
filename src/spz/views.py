@@ -198,7 +198,7 @@ def signoff():
                     'für den Sie nicht angemeldet waren!')
             )
             err |= check_precondition_with_auth(
-                applicant.is_in_signoff_window(course),
+                applicant.is_in_signoff_window(course) or (datetime.utcnow() < course.language.signup_fcfs_begin),
                 _('Abmeldefrist abgelaufen: Zur Abmeldung bitte bei Ihrem Fachbereichsleiter melden!')
             )
 
