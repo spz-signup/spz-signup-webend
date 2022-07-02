@@ -24,13 +24,19 @@
             "name": "Spanisch",
             "language": "Spanisch",
             "formatter": "zip-excel",
-            "template": "export/spanisch_1-8.xlsx"
+            "template": "export/spanisch.xlsx"
         },
         {
             "name": "Spanisch Hueber",
             "language": "Spanisch",
             "formatter": "zip-excel",
-            "template": "export/spanisch_otros.xlsx"
+            "template": "export/spanisch_hueber.xlsx"
+        },
+        {
+            "name": "Spanisch Frank",
+            "language": "Spanisch",
+            "formatter": "zip-excel",
+            "template": "export/spanisch_frank.xlsx"
         }
     ]
 }
