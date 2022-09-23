@@ -102,7 +102,6 @@ def populate_generic(time, attendance_filter, idx_prepare, idx_select):
         handled_attendances.append((attendance, attendance.informed_about_rejection))
         attendance.informed_about_rejection = True
 
-        to_assign = list(filter(lambda x: x.applicant.id != attendance.applicant.id, to_assign))
     try:
         db.session.commit()
         # XXX: send stats somewhere
