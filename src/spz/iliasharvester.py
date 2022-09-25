@@ -66,6 +66,7 @@ def download_data():
         headers=headers
     )
     assert r1.status_code == 200
+    assert 'Sprachenzentrum' in r1.text
     cookies = r1.history[0].cookies  # use cookies of first request
 
     # get bunch of metadata
