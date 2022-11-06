@@ -23,7 +23,7 @@ def degrees_to_choicelist():
     ]
 
 
-@cache.cached(key_prefix='grExportaduations')
+@cache.cached(key_prefix='graduations')
 def graduations_to_choicelist():
     return [
         (x.id, x.name)
