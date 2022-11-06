@@ -68,6 +68,9 @@ def init_formatter(lookup_table, format):
 
 def export_course_list(courses, format, filename='Kursliste'):
     formatter = init_formatter(course_formatters, format)
+    if len(courses) == 1:
+        for course in courses:
+            filename = course.full_name
     for course in courses:
         formatter.begin_section(course.full_name)
         for applicant in course.course_list:
