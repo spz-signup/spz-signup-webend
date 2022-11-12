@@ -68,9 +68,7 @@ def init_formatter(lookup_table, format):
 
 def export_course_list(courses, format, filename='Kursliste'):
     formatter = init_formatter(course_formatters, format)
-    if len(courses) == 1:
-        for course in courses:
-            filename = course.full_name
+    filename = specify_export_name(courses)
     for course in courses:
         formatter.begin_section(course.full_name)
         for applicant in course.course_list:
@@ -82,3 +80,23 @@ def export_course_list(courses, format, filename='Kursliste'):
     resp.mimetype = formatter.mimetype
 
     return resp
+
+
+def specify_export_name(courses):
+    if len(courses) == 1:
+        return courses[0].full_name
+    else:
+        ref = courses[0].full_name.split()
+        ref_name = ref[0]
+        ref_level = ref[1]
+        is_same_level = True
+        for course in courses:
+            fragments = course.full_name.split()
+            if not fragments[0].__eq__(ref_name):
+                return 'Kursliste'
+            if not fragments[1].__eq__(ref_level):
+                is_same_level = False
+        if is_same_level:
+            return '{0} {1}'.format(ref_name, ref_level)
+        else:
+            return '{0}'.format(ref_name)
