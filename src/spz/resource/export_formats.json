@@ -11,11 +11,6 @@
             "template": "export/courselist.xlsx"
         },
         {
-            "name": "Excel Kursliste (eine Datei pro Kurs)",
-            "formatter": "zip-excel",
-            "template": "export/courselist.xlsx"
-        },
-        {
             "name": "Excel mit Zusatzfunktionen (eine Datei pro Kurs)",
             "formatter": "zip-excel",
             "template": "export/courselist-enhanced.xlsx"
@@ -36,6 +31,6 @@
             "language": "Spanisch",
             "formatter": "zip-excel",
             "template": "export/spanisch_hueber.xlsx"
-        }
+        },
     ]
 }
