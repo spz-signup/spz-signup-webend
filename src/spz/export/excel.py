@@ -21,6 +21,17 @@ def find_table(workbook, table_name):
         for table in sheet._tables:
             return sheet, table
 
+    """function to find information table with the course information
+    in table: Level, ECTS, course name, date of exam
+    """
+
+
+def find_course_table(name, tables):
+    for table in tables:
+        if table.displayName == name:
+            return table.ref
+
+
 
 def delete_last_row(sheet, range):
     for c in range.bottom:
@@ -63,6 +74,9 @@ class ExcelWriter(TableWriter):
         self.workbook.remove(self.template_sheet)
         return super().parse_template(expression_row)
 
+    def set_course_information(self, course):
+        pass
+
     def begin_section(self, section_name):
         title = sanitize_title(section_name)
         self.current_sheet = self.workbook.create_sheet(title=title, index=self.sheet_insert_index + self.section_count)
@@ -102,6 +116,22 @@ class ExcelZipWriter(ExcelWriter):
         self.tempfile = NamedTemporaryFile()
         self.zip = ZipFile(self.tempfile, 'w')
 
+    def set_course_information(self, course):
+        # set course information
+        self.current_sheet = self.workbook.get_sheet_by_name("Notenliste")
+        field_level = self.current_sheet["B42"]
+        field_level.value = course.ger
+        ects_points = None
+        if course.price <= 90:
+            ects_points = 2
+        else:
+            ects_points = 4
+        field_ects = self.current_sheet["B43"]
+        field_ects.value = ects_points
+        field_course_name = self.current_sheet["B44"]
+        field_course_name.value = course.full_name
+        
+
     def begin_section(self, section_name):
         # use title of template sheet
         super().begin_section(section_name=self.template_sheet.title)
@@ -122,8 +152,10 @@ class ExcelZipWriter(ExcelWriter):
 
 
 class SingleSectionExcelWriter(ExcelWriter):
-
     section = None
+
+    def set_course_information(self, course):
+        pass
 
     def begin_section(self, section_name):
         if not self.section:
