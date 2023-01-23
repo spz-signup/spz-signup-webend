@@ -70,6 +70,7 @@ def export_course_list(courses, format, filename='Kursliste'):
     formatter = init_formatter(course_formatters, format)
     filename = specify_export_name(courses)
     for course in courses:
+        formatter.set_course_information(course)
         formatter.begin_section(course.full_name)
         for applicant in course.course_list:
             formatter.write_element(dict(course=course, applicant=applicant))
