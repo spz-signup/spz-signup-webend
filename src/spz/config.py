@@ -91,7 +91,7 @@ class BaseConfig(object):
 
     CACHE_CONFIG = {'CACHE_TYPE': 'simple', 'CACHE_DEFAULT_TIMEOUT': 30}
 
-    PRIMARY_MAIL = 'no-reply@anmeldung.spz.kit.edu'
+    PRIMARY_MAIL = 'no-reply@spz.kit.edu'
 
     SEMESTER_NAME = 'Testsemester 2020'
 
