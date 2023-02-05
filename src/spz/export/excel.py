@@ -14,6 +14,7 @@ from openpyxl.worksheet.copier import WorksheetCopy
 from openpyxl.worksheet.table import Table
 from openpyxl.workbook.child import INVALID_TITLE_REGEX
 from zipfile import ZipFile
+from spz import app
 
 
 def find_table(workbook, table_name):
@@ -119,18 +120,52 @@ class ExcelZipWriter(ExcelWriter):
     def set_course_information(self, course):
         # set course information
         self.current_sheet = self.workbook.get_sheet_by_name("Notenliste")
-        field_level = self.current_sheet["B42"]
-        field_level.value = course.ger
+        course_information = []
+        expressions = []
+        starting_cell = None
+        # iterate sheet to find jinja expressions
+        for row in self.current_sheet.iter_rows(min_row=30, min_col=1, max_row=50, max_col=3):
+            for cell in row:
+                if cell.value is not None:
+                    key = cell.value
+                    options = [
+                        'course.ger',
+                        'course.ects_points',
+                        'course.full_name',
+                        'course.level',
+                        'course.full_name_english',
+                        'semester',
+                        'exam_date'
+                    ]
+                    # if one of the strings is equal, it gets added to the information list
+                    if any(key in word for word in options):
+                        if len(expressions) == 0:
+                            starting_cell = cell.coordinate
+                        expressions.append(key)
+                        cell.value = None
+        #TODO: set semester and semester_date in json file globally and import this data here
+        semester = "WS 2022-2023"
+        exam_date = "17.02.2023"
+        # gets converted into callable expression
+        course_information = [app.jinja_env.compile_expression(e) for e in expressions]
+        # convert jinja expressions into writable expression with the required data
+        expression_column = [cell_template(dict(course=course, semester=semester, exam_date=exam_date))
+                             for cell_template in course_information]
+
+        # write the information column starting at the first found cell
+        offset_count = 0
+        for expression in expression_column:
+            cell = self.current_sheet[starting_cell].offset(offset_count, 0)
+            cell.value = expression
+            offset_count += 1
+
+        #TODO: calculate ects points (define globally in course)
         ects_points = None
         if course.price <= 90:
             ects_points = 2
         else:
             ects_points = 4
-        field_ects = self.current_sheet["B43"]
-        field_ects.value = ects_points
-        field_course_name = self.current_sheet["B44"]
-        field_course_name.value = course.full_name
-        
+
 
     def begin_section(self, section_name):
         # use title of template sheet
