@@ -122,9 +122,10 @@ class ExcelZipWriter(ExcelWriter):
         self.current_sheet = self.workbook.get_sheet_by_name("Notenliste")
         course_information = []
         expressions = []
-        starting_cell = None
+        coordinates = []
+        max_row = self.current_sheet.max_row
         # iterate sheet to find jinja expressions
-        for row in self.current_sheet.iter_rows(min_row=30, min_col=1, max_row=50, max_col=3):
+        for row in self.current_sheet.iter_rows(min_row=30, min_col=1, max_row=max_row, max_col=3):
             for cell in row:
                 if cell.value is not None:
                     key = cell.value
@@ -139,12 +140,11 @@ class ExcelZipWriter(ExcelWriter):
                     ]
                     # if one of the strings is equal, it gets added to the information list
                     if any(key in word for word in options):
-                        if len(expressions) == 0:
-                            starting_cell = cell.coordinate
+                        coordinates.append(cell.coordinate)
                         expressions.append(key)
                         cell.value = None
-        #TODO: set semester and semester_date in json file globally and import this data here
-        semester = "WS 2022-2023"
+        #TODO: set semester and exam_date in json file globally and import this data here
+        semester = "WS 2022-23"
         exam_date = "17.02.2023"
         # gets converted into callable expression
         course_information = [app.jinja_env.compile_expression(e) for e in expressions]
@@ -153,11 +153,9 @@ class ExcelZipWriter(ExcelWriter):
                              for cell_template in course_information]
 
         # write the information column starting at the first found cell
-        offset_count = 0
-        for expression in expression_column:
-            cell = self.current_sheet[starting_cell].offset(offset_count, 0)
-            cell.value = expression
-            offset_count += 1
+        for i in range(len(expression_column)):
+            cell = self.current_sheet[coordinates[i]]
+            cell.value = expression_column[i]
 
         #TODO: calculate ects points (define globally in course)
         ects_points = None
