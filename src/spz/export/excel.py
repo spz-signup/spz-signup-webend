@@ -132,9 +132,9 @@ class ExcelZipWriter(ExcelWriter):
                     options = [
                         'course.ger',
                         'course.ects_points',
-                        'course.full_name',
-                        'course.level',
-                        'course.full_name_english',
+                        'course.name',
+                        'course.alternative',
+                        'course.name_english',
                         'semester',
                         'exam_date'
                     ]

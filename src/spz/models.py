@@ -388,6 +388,7 @@ class Course(db.Model):
         self.rating_highest = rating_highest
         self.rating_lowest = rating_lowest
         self.collision = collision
+        # !!! if the SPZ changes their course prices, this function needs to be updated !!!
         if self.price <= 90:
             self.ects_points = 2
         else:
@@ -470,6 +471,10 @@ class Course(db.Model):
         if self.alternative:
             result = '{0} {1}'.format(result, self.alternative)
         return result
+
+    @property
+    def name(self):
+        return '{0} {1}'.format(self.language.name, self.level)
 
     """ active attendants without debt """
     @property
