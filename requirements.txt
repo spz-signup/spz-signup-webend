@@ -31,7 +31,7 @@ fpdf2==2.4.2
 idna==2.10
 imagesize==1.2.0
 iniconfig==1.1.1
-ipython==7.31.1
+ipython==8.10.0
 ipython-genutils==0.2.0
 itsdangerous==1.1.0
 jdcal==1.4.1
