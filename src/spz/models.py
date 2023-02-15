@@ -476,6 +476,13 @@ class Course(db.Model):
     def name(self):
         return '{0} {1}'.format(self.language.name, self.level)
 
+    @property
+    def name_english(self):
+        if len(self.language.name_english) == 0:
+            return ""
+        else:
+            return '{0} {1}'.format(self.language.name_english, self.level)
+
     """ active attendants without debt """
     @property
     def course_list(self):
