@@ -120,7 +120,6 @@ class ExcelZipWriter(ExcelWriter):
     def set_course_information(self, course):
         # set course information
         self.current_sheet = self.workbook.get_sheet_by_name("Notenliste")
-        course_information = []
         expressions = []
         coordinates = []
         max_row = self.current_sheet.max_row
@@ -143,9 +142,9 @@ class ExcelZipWriter(ExcelWriter):
                         coordinates.append(cell.coordinate)
                         expressions.append(key)
                         cell.value = None
-        #TODO: set semester and exam_date in json file globally and import this data here
-        semester = "WS 2022-23"
-        exam_date = "17.02.2023"
+        #TODO: adapt semester name to format 'SS' or 'WS', agree to one format
+        semester = app.config['SEMESTER_NAME']
+        exam_date = app.config['EXAM_DATE']
         # gets converted into callable expression
         course_information = [app.jinja_env.compile_expression(e) for e in expressions]
         # convert jinja expressions into writable expression with the required data
@@ -156,13 +155,6 @@ class ExcelZipWriter(ExcelWriter):
         for i in range(len(expression_column)):
             cell = self.current_sheet[coordinates[i]]
             cell.value = expression_column[i]
-
-        #TODO: calculate ects points (define globally in course)
-        ects_points = None
-        if course.price <= 90:
-            ects_points = 2
-        else:
-            ects_points = 4
 
 
     def begin_section(self, section_name):

@@ -508,6 +508,7 @@ class Language(db.Model):
     """Represents a language for a :py:class:`course`.
 
        :param name: The language's name
+       :param name_english: The language's name in english
        :param signup_begin: The date time the signup begins **in UTC**
        :param signup_end: The date time the signup ends **in UTC**; constraint to **end > begin**
     """
@@ -516,6 +517,7 @@ class Language(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), unique=True, nullable=False)
+    name_english = db.Column(db.String(120), unique=True, nullable=True)
     reply_to = db.Column(db.String(120), nullable=False)
     courses = db.relationship('Course', backref='language', lazy='joined')
 
@@ -529,9 +531,10 @@ class Language(db.Model):
 
     signup_constraint = db.CheckConstraint(signup_end > signup_begin)
 
-    def __init__(self, name, reply_to, signup_begin, signup_rnd_window_end, signup_manual_end, signup_end,
+    def __init__(self, name, name_english, reply_to, signup_begin, signup_rnd_window_end, signup_manual_end, signup_end,
                  signup_auto_end):
         self.name = name
+        self.name_english = name_english
         self.reply_to = reply_to
         self.signup_begin = signup_begin
         self.signup_rnd_window_end = signup_rnd_window_end

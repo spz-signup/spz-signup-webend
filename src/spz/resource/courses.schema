@@ -11,6 +11,9 @@
                         "name": {
                             "type": "string"
                         },
+                        "name_english": {
+                            "type": "string"
+                        },
                         "reply_to": {
                             "type": "string",
                             "format": "email"

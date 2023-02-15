@@ -94,6 +94,7 @@ class BaseConfig(object):
     PRIMARY_MAIL = 'no-reply@anmeldung.spz.kit.edu'
 
     SEMESTER_NAME = 'Testsemester 2020'
+    EXAM_DATE = '01.01.1970'
 
     REPLY_TO = [
         'info@spz.kit.edu',
