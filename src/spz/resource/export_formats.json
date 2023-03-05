@@ -31,6 +31,6 @@
             "language": "Spanisch",
             "formatter": "zip-excel",
             "template": "export/spanisch_hueber.xlsx"
-        },
+        }
     ]
 }
