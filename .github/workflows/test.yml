@@ -10,7 +10,7 @@ jobs:
                 image: postgres:alpine
                 env:
                     POSTGRES_USER: postgres
-                    POSTGRES_PASSWORD: postgres
+                    POSTGRES_HOST_AUTH_METHOD: trust
                     POSTGRES_DB: spz
                 ports:
                     - 5432:5432
