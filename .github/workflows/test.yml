@@ -11,7 +11,7 @@ jobs:
                 env:
                     POSTGRES_USER: postgres
                     POSTGRES_PASSWORD: postgres
-                    POSTGRES_DB: postgres
+                    POSTGRES_DB: spz
                 ports:
                     - 5432:5432
                 options: >-
@@ -44,5 +44,4 @@ jobs:
                     flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
             -   name: Test with pytest
                 run: |
-                    psql -c 'create database spz;' -U postgres
                     pytest
