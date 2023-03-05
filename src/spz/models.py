@@ -282,6 +282,14 @@ class Applicant(db.Model):
     def in_course(self, course):
         return course in [attendance.course for attendance in self.attendances]
 
+    def active_courses(self):
+        return [
+            attendance.course
+            for attendance
+            in self.attendances
+            if not attendance.waiting
+        ]
+
     def active_in_parallel_course(self, course):
         # do not include the course queried for
         active_in_courses = [

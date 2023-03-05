@@ -79,11 +79,16 @@ def populate_generic(time, attendance_filter, idx_prepare, idx_select):
 
     # keep track of which attendances we set to active/waiting
     handled_attendances = []
+    accepted_applicants = []
 
-    idx_prepare(to_assign)
+    to_assign = idx_prepare(to_assign)
 
     while to_assign:
         attendance = to_assign.pop(idx_select(to_assign))
+
+        # Only assign one course per applicant per round
+        if attendance.applicant in accepted_applicants:
+            continue
 
         if attendance.applicant.active_in_parallel_course(attendance.course):
             # XXX: how can this happen? should we send a message to someone?
@@ -101,6 +106,7 @@ def populate_generic(time, attendance_filter, idx_prepare, idx_select):
         attendance.set_waiting_status(False)
         handled_attendances.append((attendance, attendance.informed_about_rejection))
         attendance.informed_about_rejection = True
+        accepted_applicants.append(attendance.applicant)
 
     try:
         db.session.commit()
@@ -127,7 +133,9 @@ def populate_rnd(time):
         return (att.course.language.signup_begin) < att.registered < (att.course.language.signup_rnd_window_end)
 
     def idx_prepare(to_assign):
-        pass
+        # Sort attendances by number of already accepted attendances of applicant. We will therefore prefer applicants
+        # with fewer accepted attendances instead of applicants who have more accepted attendances.
+        return sorted(to_assign, key=lambda attendance: len(attendance.applicant.active_courses()))
 
     def idx_select(to_assign):
         # random selection
@@ -148,7 +156,7 @@ def populate_fcfs(time):
         return True
 
     def idx_prepare(to_assign):
-        pass
+        return to_assign
 
     def idx_select(to_assign):
         return 0
