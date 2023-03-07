@@ -35,3 +35,6 @@ class CSVWriter(TableWriter):
 
     def get_data(self):
         return self.buf.getvalue()
+
+    def set_course_information(self, course):
+        return 0

@@ -357,6 +357,7 @@ class Course(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     language_id = db.Column(db.Integer, db.ForeignKey('language.id'))
     level = db.Column(db.String(120), nullable=False)
+    level_english = db.Column(db.String(120), nullable=True)
     alternative = db.Column(db.String(10), nullable=True)
     limit = db.Column(db.Integer, nullable=False)  # limit is SQL keyword
     price = db.Column(db.Integer, nullable=False)
@@ -377,13 +378,14 @@ class Course(db.Model):
     ))
 
     def __init__(
-        self, language, level, alternative, limit, price, ger=None, rating_highest=100, rating_lowest=0, collision=[]
+        self, language, level, alternative, limit, price, level_english=None, ger=None, rating_highest=100, rating_lowest=0, collision=[]
     ):
         self.language = language
         self.level = level
         self.alternative = alternative
         self.limit = limit
         self.price = price
+        self.level_english = level_english
         self.ger = ger
         self.rating_highest = rating_highest
         self.rating_lowest = rating_lowest
@@ -480,8 +482,10 @@ class Course(db.Model):
     def name_english(self):
         if len(self.language.name_english) == 0:
             return ""
-        else:
+        elif self.level_english is None:
             return '{0} {1}'.format(self.language.name_english, self.level)
+        else:
+            return '{0} {1}'.format(self.language.name_english, self.level_english)
 
     """ active attendants without debt """
     @property
