@@ -143,7 +143,7 @@ class ExcelZipWriter(ExcelWriter):
                         expressions.append(key)
                         cell.value = None
         #TODO: adapt semester name to format 'SS' or 'WS', agree to one format
-        semester = app.config['SEMESTER_NAME']
+        semester = app.config['SEMESTER_NAME_SHORT']
         exam_date = app.config['EXAM_DATE']
         # gets converted into callable expression
         course_information = [app.jinja_env.compile_expression(e) for e in expressions]
