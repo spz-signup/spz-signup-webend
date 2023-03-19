@@ -378,8 +378,8 @@ class Course(db.Model):
     ))
 
     def __init__(
-        self, language, level, alternative, limit, price, level_english=None, ger=None, rating_highest=100, rating_lowest=0, collision=[]
-    ):
+        self, language, level, alternative, limit, price, level_english=None, ger=None, rating_highest=100, rating_lowest=0, collision=[],
+    ects_points=2):
         self.language = language
         self.level = level
         self.alternative = alternative
@@ -390,11 +390,7 @@ class Course(db.Model):
         self.rating_highest = rating_highest
         self.rating_lowest = rating_lowest
         self.collision = collision
-        # !!! if the SPZ changes their course prices, this function needs to be updated !!!
-        if self.price <= 90:
-            self.ects_points = 2
-        else:
-            self.ects_points = 4
+        self.ects_points = ects_points
 
     def __repr__(self):
         return '<Course %r>' % (self.full_name)
