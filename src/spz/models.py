@@ -476,8 +476,8 @@ class Course(db.Model):
 
     @property
     def name_english(self):
-        if len(self.language.name_english) == 0:
-            return ""
+        if self.language.name_english is None:
+            pass
         elif self.level_english is None:
             return '{0} {1}'.format(self.language.name_english, self.level)
         else:
@@ -538,17 +538,16 @@ class Language(db.Model):
 
     signup_constraint = db.CheckConstraint(signup_end > signup_begin)
 
-    def __init__(self, name, name_english, reply_to, signup_begin, signup_rnd_window_end, signup_manual_end, signup_end,
-                 signup_auto_end):
+    def __init__(self, name, reply_to, signup_begin, signup_rnd_window_end, signup_manual_end, signup_end,
+                 signup_auto_end, name_english=None):
         self.name = name
-        self.name_english = name_english
         self.reply_to = reply_to
         self.signup_begin = signup_begin
         self.signup_rnd_window_end = signup_rnd_window_end
         self.signup_manual_end = signup_manual_end
         self.signup_end = signup_end
         self.signup_auto_end = signup_auto_end
-
+        self.name_english = name_english
     def __repr__(self):
         return '<Language %r>' % self.name
 
