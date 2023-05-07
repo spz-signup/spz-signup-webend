@@ -94,6 +94,9 @@ class BaseConfig(object):
     PRIMARY_MAIL = 'no-reply@spz.kit.edu'
 
     SEMESTER_NAME = 'Testsemester 2020'
+    # format should be 'SS 202X' (summer semester) or 'WS 202X-2Y' (winter semester)
+    SEMESTER_NAME_SHORT = 'TS 2020'
+    EXAM_DATE = '01.01.1970'
 
     REPLY_TO = [
         'info@spz.kit.edu',

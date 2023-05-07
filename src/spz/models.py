@@ -355,6 +355,7 @@ class Course(db.Model):
        :param rating_lowest: The course's lower bound of required rating.
        :param collision: Levels that collide with this course.
        :param has_waiting_list: Indicates if there is a waiting list for this course
+       :param ects_points: amount of ects credit points corresponding to the effort
 
        .. seealso:: the :py:data:`attendances` relationship
     """
@@ -364,6 +365,7 @@ class Course(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     language_id = db.Column(db.Integer, db.ForeignKey('language.id'))
     level = db.Column(db.String(120), nullable=False)
+    level_english = db.Column(db.String(120), nullable=True)
     alternative = db.Column(db.String(10), nullable=True)
     limit = db.Column(db.Integer, nullable=False)  # limit is SQL keyword
     price = db.Column(db.Integer, nullable=False)
@@ -372,6 +374,7 @@ class Course(db.Model):
     rating_lowest = db.Column(db.Integer, nullable=False)
     collision = db.Column(postgresql.ARRAY(db.String(120)), nullable=False)
     has_waiting_list = db.Column(db.Boolean, nullable=False, default=False)
+    ects_points = db.Column(db.Integer, nullable=False)
 
     unique_constraint = db.UniqueConstraint(language_id, level, alternative, ger)
     limit_constraint = db.CheckConstraint(limit > 0)
@@ -383,17 +386,19 @@ class Course(db.Model):
     ))
 
     def __init__(
-        self, language, level, alternative, limit, price, ger=None, rating_highest=100, rating_lowest=0, collision=[]
-    ):
+        self, language, level, alternative, limit, price, level_english=None, ger=None, rating_highest=100, rating_lowest=0, collision=[],
+    ects_points=2):
         self.language = language
         self.level = level
         self.alternative = alternative
         self.limit = limit
         self.price = price
+        self.level_english = level_english
         self.ger = ger
         self.rating_highest = rating_highest
         self.rating_lowest = rating_lowest
         self.collision = collision
+        self.ects_points = ects_points
 
     def __repr__(self):
         return '<Course %r>' % (self.full_name)
@@ -473,6 +478,19 @@ class Course(db.Model):
             result = '{0} {1}'.format(result, self.alternative)
         return result
 
+    @property
+    def name(self):
+        return '{0} {1}'.format(self.language.name, self.level)
+
+    @property
+    def name_english(self):
+        if self.language.name_english is None:
+            pass
+        elif self.level_english is None:
+            return '{0} {1}'.format(self.language.name_english, self.level)
+        else:
+            return '{0} {1}'.format(self.language.name_english, self.level_english)
+
     """ active attendants without debt """
     @property
     def course_list(self):
@@ -505,6 +523,7 @@ class Language(db.Model):
     """Represents a language for a :py:class:`course`.
 
        :param name: The language's name
+       :param name_english: The language's name in english
        :param signup_begin: The date time the signup begins **in UTC**
        :param signup_end: The date time the signup ends **in UTC**; constraint to **end > begin**
     """
@@ -513,6 +532,7 @@ class Language(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), unique=True, nullable=False)
+    name_english = db.Column(db.String(120), unique=True, nullable=True)
     reply_to = db.Column(db.String(120), nullable=False)
     courses = db.relationship('Course', backref='language', lazy='joined')
 
@@ -527,7 +547,7 @@ class Language(db.Model):
     signup_constraint = db.CheckConstraint(signup_end > signup_begin)
 
     def __init__(self, name, reply_to, signup_begin, signup_rnd_window_end, signup_manual_end, signup_end,
-                 signup_auto_end):
+                 signup_auto_end, name_english=None):
         self.name = name
         self.reply_to = reply_to
         self.signup_begin = signup_begin
@@ -535,7 +555,7 @@ class Language(db.Model):
         self.signup_manual_end = signup_manual_end
         self.signup_end = signup_end
         self.signup_auto_end = signup_auto_end
-
+        self.name_english = name_english
     def __repr__(self):
         return '<Language %r>' % self.name
 

@@ -73,7 +73,9 @@ def export_course_list(courses, format, filename='Kursliste'):
         formatter.begin_section(course.full_name)
         for applicant in course.course_list:
             formatter.write_element(dict(course=course, applicant=applicant))
+        formatter.set_course_information(course)
         formatter.end_section(course.full_name)
+
 
     resp = make_response(formatter.get_data())
     resp.headers['Content-Disposition'] = 'attachment; filename="{0}.{1}"'.format(filename, formatter.extension)

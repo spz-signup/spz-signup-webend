@@ -428,14 +428,21 @@ def notifications():
                     at_name.append(att.filename)
 
         try:
-            for recipient in form.get_recipients():
+            recipients = form.get_recipients()
+            for recipient in recipients:
+                if recipient.index == 0:
+                    cc_cached = form.get_cc()
+                    bcc_cached = form.get_bcc()
+                else:
+                    cc_cached = None
+                    bcc_cached = None
                 msg = Message(
                     sender=form.get_sender(),
                     recipients=[recipient],
                     subject=form.get_subject(),
                     body=form.get_body(),
-                    cc=form.get_cc(),
-                    bcc=form.get_bcc(),
+                    cc=cc_cached,
+                    bcc=bcc_cached,
                     charset='utf-8'
                 )
                 if form.get_attachments():

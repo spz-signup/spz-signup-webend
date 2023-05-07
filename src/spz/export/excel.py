@@ -14,12 +14,24 @@ from openpyxl.worksheet.copier import WorksheetCopy
 from openpyxl.worksheet.table import Table
 from openpyxl.workbook.child import INVALID_TITLE_REGEX
 from zipfile import ZipFile
+from spz import app
 
 
 def find_table(workbook, table_name):
     for sheet in workbook.worksheets:
         for table in sheet._tables:
             return sheet, table
+
+    """function to find information table with the course information
+    in table: Level, ECTS, course name, date of exam
+    """
+
+
+def find_course_table(name, tables):
+    for table in tables:
+        if table.displayName == name:
+            return table.ref
+
 
 
 def delete_last_row(sheet, range):
@@ -63,6 +75,9 @@ class ExcelWriter(TableWriter):
         self.workbook.remove(self.template_sheet)
         return super().parse_template(expression_row)
 
+    def set_course_information(self, course):
+        pass
+
     def begin_section(self, section_name):
         title = sanitize_title(section_name)
         self.current_sheet = self.workbook.create_sheet(title=title, index=self.sheet_insert_index + self.section_count)
@@ -102,6 +117,46 @@ class ExcelZipWriter(ExcelWriter):
         self.tempfile = NamedTemporaryFile()
         self.zip = ZipFile(self.tempfile, 'w')
 
+    def set_course_information(self, course):
+        # set course information
+        self.current_sheet = self.workbook.get_sheet_by_name("Notenliste")
+        expressions = []
+        coordinates = []
+        max_row = self.current_sheet.max_row
+        # iterate sheet to find jinja expressions
+        for row in self.current_sheet.iter_rows(min_row=30, min_col=1, max_row=max_row, max_col=3):
+            for cell in row:
+                if cell.value is not None:
+                    key = cell.value
+                    options = [
+                        'course.ger',
+                        'course.ects_points',
+                        'course.name',
+                        'course.alternative',
+                        'course.name_english',
+                        'semester',
+                        'exam_date'
+                    ]
+                    # if one of the strings is equal, it gets added to the information list
+                    if any(key in word for word in options):
+                        coordinates.append(cell.coordinate)
+                        expressions.append(key)
+                        cell.value = None
+
+        semester = app.config['SEMESTER_NAME_SHORT']
+        exam_date = app.config['EXAM_DATE']
+        # gets converted into callable expression
+        course_information = [app.jinja_env.compile_expression(e) for e in expressions]
+        # convert jinja expressions into writable expression with the required data
+        expression_column = [cell_template(dict(course=course, semester=semester, exam_date=exam_date))
+                             for cell_template in course_information]
+
+        # write the information column starting at the first found cell
+        for i in range(len(expression_column)):
+            cell = self.current_sheet[coordinates[i]]
+            cell.value = expression_column[i]
+
+
     def begin_section(self, section_name):
         # use title of template sheet
         super().begin_section(section_name=self.template_sheet.title)
@@ -122,8 +177,10 @@ class ExcelZipWriter(ExcelWriter):
 
 
 class SingleSectionExcelWriter(ExcelWriter):
-
     section = None
+
+    def set_course_information(self, course):
+        pass
 
     def begin_section(self, section_name):
         if not self.section:
