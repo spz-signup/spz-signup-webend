@@ -142,7 +142,7 @@ class ExcelZipWriter(ExcelWriter):
                         coordinates.append(cell.coordinate)
                         expressions.append(key)
                         cell.value = None
-        #TODO: adapt semester name to format 'SS' or 'WS', agree to one format
+
         semester = app.config['SEMESTER_NAME_SHORT']
         exam_date = app.config['EXAM_DATE']
         # gets converted into callable expression
