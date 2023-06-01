@@ -2,12 +2,25 @@
 {% from 'formhelpers.html' import csrf_field, render_input, render_option, render_radio, render_submit %}
 
 {% block caption %}
-Anmeldung {{ config['SEMESTER_NAME'] }}
+    Anmeldung {{ config['SEMESTER_NAME'] }}
 {% endblock caption %}
 
 
 {% block body %}
-<div class="row">
+    <div class="row">
+        <a href="https://oidc.scc.kit.edu/auth/realms/kit">
+            <div class="ui animated fade button kit-green" tabindex="0">
+                <div class="visible content inline">
+                    <img width="35em" class="center aligned" src="{{ url_for('static', filename='img/favicon.ico') }}">
+                    <span class="center aligned" style="font-size: 2.5em">Sign-up with KIT Account</span>
+                </div>
+                <div class="hidden content">
+                    <span class="center aligned" style="font-size: 2em">KIT Students</span>
+                </div>
+            </div>
+        </a>
+
+
         <form id="signup" class="ui form" method="post" data-persist="garlic">
             {{ csrf_field() }}
             <h3 class="ui dividing header">Kurswahl</h3>
@@ -37,18 +50,19 @@ Anmeldung {{ config['SEMESTER_NAME'] }}
                 {{ render_radio(form.graduation, required=False, icon='file text outline') }}
             </div>
             <div class="ui message">
-                Alle Teilnehmer erhalten zwei Auto-E-Mails: Eine Bestätigungsmail und eine mit der Info über den Ausgang der Verlosung. Sollten Sie diese Mails 48h nach Verlosung noch nicht erhalten haben,
+                Alle Teilnehmer erhalten zwei Auto-E-Mails: Eine Bestätigungsmail und eine mit der Info über den Ausgang
+                der Verlosung. Sollten Sie diese Mails 48h nach Verlosung noch nicht erhalten haben,
                 melden Sie sich bitte bei Ihrem Fachleiter.
             </div>
             {{ render_submit(submit='Absenden') }}
         </form>
-</div>
+    </div>
 {% endblock body %}
 
 
 {% block scripts %}
-{{ super() }}
-{% assets "signup_js" %}
-<script src="{{ ASSET_URL }}"></script>
-{% endassets %}
+    {{ super() }}
+    {% assets "signup_js" %}
+        <script src="{{ ASSET_URL }}"></script>
+    {% endassets %}
 {% endblock scripts %}
