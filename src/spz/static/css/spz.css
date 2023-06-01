@@ -367,3 +367,9 @@ dt:first-child {
 dd {
     margin-left: 2em;
 }
+
+/* KIT-green on login box */
+.kit-green {
+background-color: #009682;
+border-color: #009682;
+}
