@@ -1,5 +1,6 @@
 {% extends 'baselayout.html' %}
 {% from 'formhelpers.html' import csrf_field, render_input, render_option, render_radio, render_submit %}
+{% from spz import oid_authentification %}
 
 {% block caption %}
     Anmeldung {{ config['SEMESTER_NAME'] }}
@@ -8,7 +9,7 @@
 
 {% block body %}
     <div class="row">
-        <a href="https://oidc.scc.kit.edu/auth/realms/kit">
+        <a href="{% get_url }" >
             <div class="ui animated fade button kit-green" tabindex="0">
                 <div class="visible content inline">
                     <img width="35em" class="center aligned" src="{{ url_for('static', filename='img/favicon.ico') }}">

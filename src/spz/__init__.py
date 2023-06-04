@@ -209,3 +209,6 @@ for errno, handler in handlers:
 
 # activate logging
 from spz import log  # NOQA
+
+# activate oauth2
+from spz import oid_authentication
