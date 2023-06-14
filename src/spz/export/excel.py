@@ -33,7 +33,6 @@ def find_course_table(name, tables):
             return table.ref
 
 
-
 def delete_last_row(sheet, range):
     for c in range.bottom:
         sheet.cell(*c).value = None
@@ -73,6 +72,9 @@ class ExcelWriter(TableWriter):
         expression_row = [self.template_sheet.cell(*c).value for c in self.template_range.bottom]
         delete_last_row(self.template_sheet, self.template_range)  # this row contains the jinja-expressions
         self.workbook.remove(self.template_sheet)
+
+        self.check_for_expressions()
+
         return super().parse_template(expression_row)
 
     def set_course_information(self, course):
@@ -104,6 +106,39 @@ class ExcelWriter(TableWriter):
             stream = file.read()
         return stream
 
+    def check_for_expressions(self):
+        # set course information
+        self.information_sheet = self.workbook.get_sheet_by_name("Notenliste")
+        expressions = []
+        self.coordinates = []
+        max_row = self.information_sheet.max_row
+        # iterate sheet to find jinja expressions
+        # for row in self.information_sheet.iter_rows(min_row=30, min_col=1, max_row=max_row, max_col=3):
+        for row in self.information_sheet.iter_rows(min_row=0, min_col=0, max_row=max_row, max_col=0):
+            for cell in row:
+                if cell.value is not None:
+                    key = cell.value
+                    options = [
+                        'course.ger',
+                        'course.ects_points',
+                        'course.name',
+                        'course.alternative',
+                        'course.name_english',
+                        'semester',
+                        'exam_date'
+                    ]
+                    # in case of integers they need to be converted to a string
+                    if type(key) is int:
+                        key = str(key)
+                    # if one of the strings is equal, it gets added to the information list
+                    if any(key in word for word in options):
+                        self.coordinates.append(cell.coordinate)
+                        expressions.append(key)
+                        cell.value = None
+
+        # gets converted into callable expression
+        self.course_information = [app.jinja_env.compile_expression(e) for e in expressions]
+
 
 class ExcelZipWriter(ExcelWriter):
     """ The ExcelZipWriter begins a new .xlsx file for each new section.
@@ -118,44 +153,16 @@ class ExcelZipWriter(ExcelWriter):
         self.zip = ZipFile(self.tempfile, 'w')
 
     def set_course_information(self, course):
-        # set course information
-        self.current_sheet = self.workbook.get_sheet_by_name("Notenliste")
-        expressions = []
-        coordinates = []
-        max_row = self.current_sheet.max_row
-        # iterate sheet to find jinja expressions
-        for row in self.current_sheet.iter_rows(min_row=30, min_col=1, max_row=max_row, max_col=3):
-            for cell in row:
-                if cell.value is not None:
-                    key = cell.value
-                    options = [
-                        'course.ger',
-                        'course.ects_points',
-                        'course.name',
-                        'course.alternative',
-                        'course.name_english',
-                        'semester',
-                        'exam_date'
-                    ]
-                    # if one of the strings is equal, it gets added to the information list
-                    if any(key in word for word in options):
-                        coordinates.append(cell.coordinate)
-                        expressions.append(key)
-                        cell.value = None
-
         semester = app.config['SEMESTER_NAME_SHORT']
         exam_date = app.config['EXAM_DATE']
-        # gets converted into callable expression
-        course_information = [app.jinja_env.compile_expression(e) for e in expressions]
         # convert jinja expressions into writable expression with the required data
         expression_column = [cell_template(dict(course=course, semester=semester, exam_date=exam_date))
-                             for cell_template in course_information]
+                             for cell_template in self.course_information]
 
         # write the information column starting at the first found cell
         for i in range(len(expression_column)):
-            cell = self.current_sheet[coordinates[i]]
+            cell = self.information_sheet[self.coordinates[i]]
             cell.value = expression_column[i]
-
 
     def begin_section(self, section_name):
         # use title of template sheet
