@@ -26,6 +26,7 @@ from jinja2 import Markup
 
 from spz import assets
 from spz.config import Development, Production, Testing
+from spz import oid_authentication
 
 
 class CustomFlask(Flask):
@@ -189,6 +190,8 @@ routes = [
 
     ('/internal/login', views.login, ['GET', 'POST']),
     ('/internal/logout', views.logout, ['GET', 'POST']),
+
+    ('/background_oid_process', oid_authentication.prepare_request(), ['GET', 'POST'])
 ]
 
 for rule, view_func, methods in routes:
@@ -210,5 +213,3 @@ for errno, handler in handlers:
 # activate logging
 from spz import log  # NOQA
 
-# activate oauth2
-from spz import oid_authentication
