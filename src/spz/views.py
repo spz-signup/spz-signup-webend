@@ -27,6 +27,11 @@ from spz.export import export_course_list
 
 from flask_babel import gettext as _
 
+# initiate OpenID Connect
+from spz.oid_authentication import Oid
+
+oid = Oid()
+
 
 def check_precondition_with_auth(cond, msg, auth=False):
     """Check precondition and flash message if not satisfied.
@@ -90,8 +95,8 @@ def index():
         err |= check_precondition_with_auth(
             not preterm or token_payload.lower() == applicant.mail.lower(),
             _('Die eingegebene E-Mail-Adresse entspricht nicht der hinterlegten. '
-                'Bitte verwenden Sie die Adresse, an welche Sie auch die Einladung zur prioritären '
-                'Anmeldung erhalten haben!'),
+              'Bitte verwenden Sie die Adresse, an welche Sie auch die Einladung zur prioritären '
+              'Anmeldung erhalten haben!'),
             user_has_special_rights
         )
         err |= check_precondition_with_auth(
@@ -103,7 +108,7 @@ def index():
         err |= check_precondition_with_auth(
             course.allows(applicant),
             _('Sie haben nicht die vorausgesetzten Sprachtest-Ergebnisse um diesen Kurs zu wählen! '
-                '(Hinweis: Der Datenabgleich mit Ilias erfolgt automatisch alle 15 Minuten.)'),
+              '(Hinweis: Der Datenabgleich mit Ilias erfolgt automatisch alle 15 Minuten.)'),
             user_has_special_rights
         )
         err |= check_precondition_with_auth(
@@ -119,8 +124,8 @@ def index():
         err |= check_precondition_with_auth(
             len(applicant.doppelgangers) == 0,
             _('Sie haben sich bereits mit einer anderen E-Mailadresse für einen Kurs angemeldet. '
-                'Benutzen Sie dieselbe Adresse wie bei Ihrer ersten Anmeldung erneut. '
-                'Bei Fragen oder Problemen kontaktieren Sie bitte Ihren Fachleiter.'),
+              'Benutzen Sie dieselbe Adresse wie bei Ihrer ersten Anmeldung erneut. '
+              'Bei Fragen oder Problemen kontaktieren Sie bitte Ihren Fachleiter.'),
             user_has_special_rights
         )
         err |= check_precondition_with_auth(
@@ -195,7 +200,7 @@ def signoff():
             err |= check_precondition_with_auth(
                 applicant.in_course(course),
                 _('Abmeldung fehlgeschlagen: Sie können sich nicht von einem Kurs abmelden, '
-                    'für den Sie nicht angemeldet waren!')
+                  'für den Sie nicht angemeldet waren!')
             )
             err |= check_precondition_with_auth(
                 applicant.is_in_signoff_window(course) or (datetime.utcnow() < course.language.signup_fcfs_begin),
@@ -211,7 +216,7 @@ def signoff():
                     db.session.rollback()
                     flash(
                         _('Konnte nicht erfolgreich abmelden, bitte erneut versuchen: %(error)s',
-                            error=e), 'negative')
+                          error=e), 'negative')
 
     return dict(form=form)
 
@@ -263,8 +268,8 @@ def registrations_import():
                     db.session.commit()
                     flash(
                         _('Import OK: %(deleted)s Einträge gelöscht, %(added)s Einträge hinzugefügt',
-                            deleted=num_deleted,
-                            added=len(unique_registrations)),
+                          deleted=num_deleted,
+                          added=len(unique_registrations)),
                         'success')
                 except Exception as e:
                     db.session.rollback()
@@ -322,8 +327,8 @@ def approvals_import():
                     db.session.commit()
                     flash(
                         _('Import OK: %(deleted)s Einträge gelöscht, %(added)s Einträge hinzugefügt',
-                            deleted=num_deleted,
-                            added=len(approvals)),
+                          deleted=num_deleted,
+                          added=len(approvals)),
                         'success')
                 except Exception as e:  # csv, index or db could go wrong here..
                     db.session.rollback()
@@ -353,7 +358,7 @@ def extract_approvals(fp, priority):
         line
         for line in stripped_lines
         if line and not line.startswith('"Name";"Benutzername";"Matrikelnummer"') and
-        not line.startswith('"Name";"Login";"Matriculation number"')
+           not line.startswith('"Name";"Login";"Matriculation number"')
     )
     filecontent = csv.reader(filtered_lines, delimiter=';')  # XXX: hardcoded?
 
@@ -524,8 +529,8 @@ def course(id):
             db.session.commit()
             flash(
                 _('Kurs "%(name)s" wurde gelöscht, %(deleted)s wartende Teilnahme(n) wurden entfernt.',
-                    name=name,
-                    deleted=deleted),
+                  name=name,
+                  deleted=deleted),
                 'success')
             return redirect(url_for('lists'))
 
@@ -569,7 +574,7 @@ def applicant(id):
                     remove_attendance(applicant, remove_from, notify)
                     flash(
                         _('Der Bewerber wurde aus dem Kurs "(%(name)s)" genommen',
-                            name=remove_from.full_name),
+                          name=remove_from.full_name),
                         'success')
                     db.session.commit()
                 except Exception as e:
@@ -589,7 +594,7 @@ def applicant(id):
                     db.session.rollback()
                     flash(
                         _('Der Bewerber konnte nicht für den Kurs eingetragen werden: %(error)s',
-                            error=e),
+                          error=e),
                         'negative')
 
             return redirect(url_for('applicant', id=applicant.id))
@@ -655,7 +660,7 @@ def add_attendance(applicant, course, notify):
     if not course.allows(applicant):
         flash(
             _('Der Teilnehmer hat eigentlich nicht die entsprechenden Sprachtest-Ergebnisse. '
-                'Teilnehmer wurde trotzdem eingetragen.'),
+              'Teilnehmer wurde trotzdem eingetragen.'),
             'warning'
         )
 
@@ -713,8 +718,8 @@ def payments():
                                  func.avg(models.Attendance.amountpaid),
                                  func.min(models.Attendance.amountpaid),
                                  func.max(models.Attendance.amountpaid)) \
-                          .filter(not_(models.Attendance.waiting), models.Attendance.discount != 1) \
-                          .group_by(models.Attendance.paidbycash)
+        .filter(not_(models.Attendance.waiting), models.Attendance.discount != 1) \
+        .group_by(models.Attendance.paidbycash)
 
     desc = ['cash', 'sum', 'count', 'avg', 'min', 'max']
     stats = [dict(list(zip(desc, tup))) for tup in stat_list]
@@ -778,7 +783,7 @@ def statistics():
 @templated('internal/statistics/free_courses.html')
 def free_courses():
     rv = models.Course.query.join(models.Language.courses) \
-                      .order_by(models.Language.name, models.Course.level, models.Course.alternative)
+        .order_by(models.Language.name, models.Course.level, models.Course.alternative)
 
     return dict(courses=rv)
 
@@ -787,10 +792,10 @@ def free_courses():
 @templated('internal/statistics/origins_breakdown.html')
 def origins_breakdown():
     rv = db.session.query(models.Origin, func.count()) \
-                   .join(models.Applicant, models.Attendance) \
-                   .filter(not_(models.Attendance.waiting)) \
-                   .group_by(models.Origin) \
-                   .order_by(models.Origin.name)
+        .join(models.Applicant, models.Attendance) \
+        .filter(not_(models.Attendance.waiting)) \
+        .group_by(models.Origin) \
+        .order_by(models.Origin.name)
 
     return dict(origins_breakdown=rv)
 
@@ -845,9 +850,9 @@ def preterm():
 
     # always show preterm signups in this view
     attendances = models.Attendance.query \
-                        .join(models.Course, models.Language, models.Applicant) \
-                        .filter(models.Attendance.registered < models.Language.signup_begin) \
-                        .order_by(models.Applicant.last_name, models.Applicant.first_name)
+        .join(models.Course, models.Language, models.Applicant) \
+        .filter(models.Attendance.registered < models.Language.signup_begin) \
+        .order_by(models.Applicant.last_name, models.Applicant.first_name)
 
     return dict(form=form, token=token, preterm_signups=attendances)
 
@@ -896,7 +901,7 @@ def unique():
             db.session.rollback()
             flash(
                 _('Die Kurse konnten nicht von wartenden Teilnehmern mit aktivem Parallelkurs bereinigt werden:'
-                    ' %(error)s', error=e),
+                  ' %(error)s', error=e),
                 'negative'
             )
             return redirect(url_for('unique'))
@@ -922,3 +927,9 @@ def logout():
     logout_user()
     flash(_('Tschau!'), 'success')
     return redirect(url_for('login'))
+
+
+@templated('/background_oid_process')
+def oid_authentication():
+    oid.prepare_request(session={}, scope="openid", response_type="code", claims="aud",
+                        send_parameters_via="request_object")

@@ -1,6 +1,6 @@
 {% extends 'baselayout.html' %}
 {% from 'formhelpers.html' import csrf_field, render_input, render_option, render_radio, render_submit %}
-{% from spz import oid_authentification %}
+
 
 {% block caption %}
     Anmeldung {{ config['SEMESTER_NAME'] }}
@@ -8,9 +8,10 @@
 
 
 {% block body %}
-    <form action="/background_oid_process/" method="post">
+
+    <form>
         <div class="row">
-            <a href="{{ url }}">
+            <a {{ url_for('background_oid_process') }}>
                 <div class="ui animated fade button kit-green" tabindex="0">
                     <div class="visible content inline">
                         <img width="35em" class="center aligned"
@@ -24,8 +25,6 @@
             </a>
         </div>
     </form>
-
-
     <form id="signup" class="ui form" method="post" data-persist="garlic">
         {{ csrf_field() }}
         <h3 class="ui dividing header">Kurswahl</h3>
