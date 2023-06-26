@@ -430,19 +430,20 @@ def notifications():
         try:
             recipients = form.get_recipients()
             for recipient in recipients:
-                if recipient.index == 0:
+                # TODO: fix following code to send email to cc and bcc recipients only once
+                '''if recipient.index == 0:
                     cc_cached = form.get_cc()
                     bcc_cached = form.get_bcc()
                 else:
                     cc_cached = None
-                    bcc_cached = None
+                    bcc_cached = None'''
                 msg = Message(
                     sender=form.get_sender(),
                     recipients=[recipient],
                     subject=form.get_subject(),
                     body=form.get_body(),
-                    cc=cc_cached,
-                    bcc=bcc_cached,
+                    cc=form.get_cc(),
+                    bcc=form.get_bcc(),
                     charset='utf-8'
                 )
                 if form.get_attachments():
