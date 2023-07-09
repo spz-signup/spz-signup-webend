@@ -28,9 +28,10 @@ from spz.export import export_course_list
 from flask_babel import gettext as _
 
 # initiate OpenID Connect
-from spz.oid_authentication import Oid
+#from spz.oidc.oidc_authentication import Oid
 
-oid = Oid()
+
+
 
 
 def check_precondition_with_auth(cond, msg, auth=False):
@@ -929,7 +930,7 @@ def logout():
     return redirect(url_for('login'))
 
 
-@templated('/background_oid_process')
-def oid_authentication():
-    oid.prepare_request(session={}, scope="openid", response_type="code", claims="aud",
-                        send_parameters_via="request_object")
+'''def oidc_get_url():
+
+    return redirect(url)
+'''

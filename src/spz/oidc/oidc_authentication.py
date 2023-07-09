@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-"""The login handler for OpenID Connect Single Sign On with KIT institution
+"""The request handler for OpenID Connect Single Sign On with KIT institution
 
-   Holds the login and data exchange funcionality.
+   Holds the data exchange funcionality.
 """
 
 import hashlib
@@ -126,6 +126,7 @@ class Oid:
         print("Redirect to %s" % login_url)
 
         return login_url
+
 
     def get_access_token(self):
         pass

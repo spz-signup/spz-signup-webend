@@ -694,3 +694,4 @@ class ExportCourseForm(FlaskForm):
         self.format.choices = [
             (f.id, f.descriptive_name) for f in models.ExportFormat.list_formatters(languages=languages)
         ]
+

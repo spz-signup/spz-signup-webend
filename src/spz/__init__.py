@@ -27,6 +27,7 @@ from jinja2 import Markup
 from spz import assets
 from spz.config import Development, Production, Testing
 
+
 class CustomFlask(Flask):
     """Internal customizations to the Flask class.
 
@@ -37,7 +38,6 @@ class CustomFlask(Flask):
 
 app = CustomFlask(__name__, instance_relative_config=True)
 
-
 # Configuration loading
 if app.env == 'development':
     config_object = Development()
@@ -47,10 +47,8 @@ elif app.env == 'testing':
     config_object = Testing()
 app.config.from_object(config_object)
 
-
 if 'SPZ_CFG_FILE' in os.environ:
     app.config.from_pyfile(os.environ['SPZ_CFG_FILE'])  # load override values from external directory
-
 
 # set up login system
 login_manager = LoginManager()
@@ -67,7 +65,6 @@ def login_by_id(id):
 
 # set up CSRF protection
 CSRFProtect(app)
-
 
 # helper for random length, random content comment (e.g. for BREACH protection)
 rlrc_rng = random.SystemRandom()
@@ -87,7 +84,6 @@ def rlrc_comment():
 app.jinja_env.globals['include_raw'] = lambda filename: Markup(app.jinja_loader.get_source(app.jinja_env, filename)[0])
 app.jinja_env.globals['rlrc_comment'] = rlrc_comment
 
-
 # Assets handling; keep the spz.assets module in sync with the static directory
 assets_env = Environment(app)
 
@@ -96,25 +92,26 @@ bundles = assets.get_bundles()
 for name, bundle in bundles.items():
     assets_env.register(name, bundle)
 
-
 # Set up logging before anything else, in order to catch early errors
 if not app.debug and app.config.get('LOGFILE', None):
     from logging import FileHandler
+
     file_handler = FileHandler(app.config['LOGFILE'])
     app.logger.addHandler(file_handler)
-
 
 # modify app for uwsgi
 if app.debug:
     from werkzeug.debug import DebuggedApplication
+
     app.wsgi_app = DebuggedApplication(app.wsgi_app, True)
 elif app.config.get('PROFILING', False):
     from werkzeug.contrib.profiler import ProfilerMiddleware
+
     app.wsgi_app = ProfilerMiddleware(app.wsgi_app)
 elif app.config.get('LINTING', False):
     from werkzeug.contrib.lint import LintMiddleware
-    app.wsgi_app = LintMiddleware(app.wsgi_app)
 
+    app.wsgi_app = LintMiddleware(app.wsgi_app)
 
 # Database handling
 db = SQLAlchemy(app)
@@ -128,14 +125,13 @@ cache = Cache(app, config=app.config['CACHE_CONFIG'])
 # I18n setup
 babel = Babel(app)
 
-
 # Register all views here
 from spz import views, errorhandlers, pdf  # NOQA
-
-
+from spz.oidc import oidc_login
 
 routes = [
     ('/', views.index, ['GET', 'POST']),
+    ('/oidc_url', oidc_login, ['GET']),
     ('/licenses', views.licenses, ['GET']),
     ('/vacancies', views.vacancies, ['GET']),
     ('/signoff', views.signoff, ['GET', 'POST']),
@@ -190,12 +186,10 @@ routes = [
     ('/internal/login', views.login, ['GET', 'POST']),
     ('/internal/logout', views.logout, ['GET', 'POST']),
 
-    #('/background_oid_process', views.oid_authentication(), ['GET', 'POST'])
 ]
 
 for rule, view_func, methods in routes:
     app.add_url_rule(rule, view_func=view_func, methods=methods)
-
 
 handlers = [
     (400, errorhandlers.bad_request),
@@ -211,4 +205,3 @@ for errno, handler in handlers:
 
 # activate logging
 from spz import log  # NOQA
-
