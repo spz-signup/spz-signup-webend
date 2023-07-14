@@ -73,8 +73,6 @@ class ExcelWriter(TableWriter):
         delete_last_row(self.template_sheet, self.template_range)  # this row contains the jinja-expressions
         self.workbook.remove(self.template_sheet)
 
-        self.check_for_expressions()
-
         return super().parse_template(expression_row)
 
     def set_course_information(self, course):
@@ -105,6 +103,22 @@ class ExcelWriter(TableWriter):
             file.seek(0)
             stream = file.read()
         return stream
+
+
+
+
+class ExcelZipWriter(ExcelWriter):
+    """ The ExcelZipWriter begins a new .xlsx file for each new section.
+    """
+
+    mimetype = 'application/zip'
+    extension = 'zip'
+
+    def __init__(self, template):
+        ExcelWriter.__init__(self, template)
+        self.check_for_expressions()
+        self.tempfile = NamedTemporaryFile()
+        self.zip = ZipFile(self.tempfile, 'w')
 
     def check_for_expressions(self):
         # set course information
@@ -138,19 +152,6 @@ class ExcelWriter(TableWriter):
 
         # gets converted into callable expression
         self.course_information = [app.jinja_env.compile_expression(e) for e in expressions]
-
-
-class ExcelZipWriter(ExcelWriter):
-    """ The ExcelZipWriter begins a new .xlsx file for each new section.
-    """
-
-    mimetype = 'application/zip'
-    extension = 'zip'
-
-    def __init__(self, template):
-        ExcelWriter.__init__(self, template)
-        self.tempfile = NamedTemporaryFile()
-        self.zip = ZipFile(self.tempfile, 'w')
 
     def set_course_information(self, course):
         semester = app.config['SEMESTER_NAME_SHORT']
