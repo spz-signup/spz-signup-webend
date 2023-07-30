@@ -42,6 +42,7 @@ class Oid:
     def __init__(self):
         self.credentials = {}
         self.kit_config = {}
+        self.TempState = None
         meta_data_url = ISSUER + '/.well-known/openid-configuration'
         print('Fetching config from: %s' % meta_data_url)
         meta_data = urlopen(meta_data_url)
@@ -62,6 +63,7 @@ class Oid:
     authorization_url = 'https://oidc.scc.kit.edu/auth/realms/kit/protocol/openid-connect/auth'
     end_session_url = 'https://oidc.scc.kit.edu/auth/realms/kit/protocol/openid-connect/logout'
 
+
     def prepare_request(self, session, scope, response_type, claims, send_parameters_via,
                         ui_locales=None, forceConsent=None, max_age=None, acr=None,
                         allowConsentOptionDeselection=None, forceAuthN=None):
@@ -69,6 +71,7 @@ class Oid:
         # state is a random string
         state = ''.join(random.choices(string.ascii_uppercase + string.digits, k=N))
         session['state'] = state
+        self.TempState = state
         # code_verifier is a string with 100 positions
         session['code_verifier'] = code_verifier = ''.join(
             random.choices(string.ascii_uppercase + string.digits, k=100)).encode('utf-8')
@@ -127,6 +130,16 @@ class Oid:
 
         return login_url
 
+    def link_extractor(self, text):
+        data = {}
+
+        snippets = text.split('?')
+        response_data = snippets[1].split('&')
+        for entry in response_data:
+            pair = entry.split('=')
+            data[pair[0]] = pair[1]
+
+        return data
 
     def get_access_token(self):
         pass
