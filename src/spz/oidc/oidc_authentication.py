@@ -7,12 +7,15 @@
 
 import hashlib
 import json
+import ssl
 import os
 import time
+import urllib.request
 from urllib.parse import urlencode
-from urllib.request import urlopen
+from urllib.request import urlopen, Request
 from urllib.error import URLError
-from urllib.request import Request
+import requests_oauthlib
+import requests
 
 from jwkest.jwk import KEYS
 from jwkest.jws import JWS
@@ -38,11 +41,26 @@ def base64_urlencode(s):
     return base64.urlsafe_b64encode(s).split('='.encode('utf-8'))[0]
 
 
+def get_ssl_context(config):
+    """
+    :return a ssl context with verify and hostnames settings
+    """
+    ctx = ssl.create_default_context()
+
+    if 'verify_ssl_server' in config and not bool(config['verify_ssl_server']):
+        print('Not verifying ssl certificates')
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+    return ctx
+
+
 class Oid:
     def __init__(self):
         self.credentials = {}
         self.kit_config = {}
         self.TempState = None
+        self.TempCodeVerifier = None
+        self.ctx = get_ssl_context(self.kit_config)
         meta_data_url = ISSUER + '/.well-known/openid-configuration'
         print('Fetching config from: %s' % meta_data_url)
         meta_data = urlopen(meta_data_url)
@@ -52,17 +70,14 @@ class Oid:
             print('Unexpected response on discovery document: %s' % meta_data)
 
         self.credentials['client_id'] = 'anmeldung-spz-kit-edu'
-        self.credentials['secret'] = 'myclientsecret'
+        # !!! Never upload secret to github !!! set to 'myclientsecret'
+        self.credentials['secret_key'] = 'myclientsecret'
 
         # missing to check ssl context here
 
         self.client_data = None
 
-    client_id = 'anmeldung-spz-kit-edu'
-
-    authorization_url = 'https://oidc.scc.kit.edu/auth/realms/kit/protocol/openid-connect/auth'
-    end_session_url = 'https://oidc.scc.kit.edu/auth/realms/kit/protocol/openid-connect/logout'
-
+        self.redirect_uri = "https://anmeldung.spz.kit.edu"
 
     def prepare_request(self, session, scope, response_type, claims, send_parameters_via,
                         ui_locales=None, forceConsent=None, max_age=None, acr=None,
@@ -75,9 +90,10 @@ class Oid:
         # code_verifier is a string with 100 positions
         session['code_verifier'] = code_verifier = ''.join(
             random.choices(string.ascii_uppercase + string.digits, k=100)).encode('utf-8')
-        session["flow"] = response_type
 
+        session["flow"] = response_type
         code_challenge = base64_urlencode(hashlib.sha256(code_verifier).digest())
+        self.TempCodeVerifier = code_verifier
 
         request_args = {'scope': scope,
                         'response_type': response_type,
@@ -85,7 +101,7 @@ class Oid:
                         'state': state,
                         'code_challenge': code_challenge,
                         'code_challenge_method': "S256",
-                        'redirect_uri': "https://anmeldung.spz.kit.edu"}
+                        'redirect_uri': self.redirect_uri}
 
         if acr:
             request_args["acr_values"] = acr
@@ -141,8 +157,50 @@ class Oid:
 
         return data
 
-    def get_access_token(self):
-        pass
+    def get_access_token(self, code, code_verifier):
+        """
+        :param code: The code received with the authorization request
+        :param code_verifier: The code challenge attribute sent in first url redirect
+        :return the json response containing the tokens
+        """
+        token_url = self.kit_config['token_endpoint']
 
-    def request_data(self):
-        pass
+        data = {
+            'grant_type': 'authorization_code',
+            'code': code,
+            'code_verifier': code_verifier,
+            'redirect_uri': self.redirect_uri,
+            'client_id': self.credentials['client_id'],
+            'client_secret': self.credentials['secret_key']
+        }
+
+        """
+        # build request with data and headers
+        params = urlencode(data).encode('utf-8')
+        try:
+            request = Request(token_url, data=params, headers=headers)
+        except urllib.error.URLError as e:
+            # Unable to create our request, here the reason
+            print("Unable to create your request: {error}".format(error=str(e)))
+        else:
+            # give the code to receive tokens
+            try:
+                token_response = urlopen(request)
+            except URLError as e:
+                print("Could not exchange code for tokens")
+                raise e
+            return json.loads(token_response).read().decode('utf-8')
+        """
+
+        # use requests lib for post request to exchange code for token
+        token_response = requests.post(token_url, data=data)
+        return token_response.text
+
+    def request_data(self, access_token):
+        header = {
+            'Authorization': 'Bearer {}'.format(access_token)
+        }
+        request_url = self.kit_config['pushed_authorization_request_endpoint']
+        response = requests.get(request_url, headers=header)
+
+        return response
