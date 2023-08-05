@@ -14,6 +14,7 @@ import urllib.request
 from urllib.parse import urlencode
 from urllib.request import urlopen, Request
 from urllib.error import URLError
+
 import requests_oauthlib
 import requests
 
@@ -61,9 +62,9 @@ class Oid:
         self.TempState = None
         self.TempCodeVerifier = None
         self.ctx = get_ssl_context(self.kit_config)
-        meta_data_url = ISSUER + '/.well-known/openid-configuration'
-        print('Fetching config from: %s' % meta_data_url)
-        meta_data = urlopen(meta_data_url)
+        self.meta_data_url = ISSUER + '/.well-known/openid-configuration'
+        print('Fetching config from: %s' % self.meta_data_url)
+        meta_data = urlopen(self.meta_data_url)
         if meta_data:
             self.kit_config.update(json.load(meta_data))
         else:
@@ -194,13 +195,24 @@ class Oid:
 
         # use requests lib for post request to exchange code for token
         token_response = requests.post(token_url, data=data)
-        return token_response.text
+        return token_response.json()
 
     def request_data(self, access_token):
         header = {
-            'Authorization': 'Bearer {}'.format(access_token)
+            'Authorization': 'Bearer {}'.format(access_token),
+            'claim': 'family_name'
         }
-        request_url = self.kit_config['pushed_authorization_request_endpoint']
+        request_url = self.kit_config['userinfo_endpoint']
         response = requests.get(request_url, headers=header)
 
         return response
+
+    def decode_id_token(self, token: str):
+        fragments = token.split(".")
+        if len(fragments) != 3:
+            raise Exception("Incorrect id token format: " + token)
+        payload = fragments[1]
+        padded = payload + '=' * (4 - len(payload) % 4)
+        decoded = base64.b64decode(padded)
+        return json.loads(decoded)
+
