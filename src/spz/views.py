@@ -76,7 +76,7 @@ def index():
     # check for OID Connect redirect return link, in case of authentication
     current_url = request.url
     # TODO: check for more attributes than only state (session_state and code f. e.)
-    if "state" in current_url:
+    if "state" and "code" in current_url:
         # TODO: check, if url has correct structure and all necessary parts
         oidc_callback(current_url)
 

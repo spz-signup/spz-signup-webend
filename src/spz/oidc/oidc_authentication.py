@@ -8,14 +8,10 @@
 import hashlib
 import json
 import ssl
-import os
-import time
-import urllib.request
 from urllib.parse import urlencode
-from urllib.request import urlopen, Request
+from urllib.request import urlopen
 from urllib.error import URLError
 
-import requests_oauthlib
 import requests
 
 from jwkest.jwk import KEYS
@@ -24,6 +20,8 @@ from jwkest.jws import JWS
 import string
 import random
 import base64
+
+from spz import app
 
 ISSUER = 'https://oidc.scc.kit.edu/auth/realms/kit'
 
@@ -59,8 +57,6 @@ class Oid:
     def __init__(self):
         self.credentials = {}
         self.kit_config = {}
-        self.TempState = None
-        self.TempCodeVerifier = None
         self.ctx = get_ssl_context(self.kit_config)
         self.meta_data_url = ISSUER + '/.well-known/openid-configuration'
         print('Fetching config from: %s' % self.meta_data_url)
@@ -70,31 +66,29 @@ class Oid:
         else:
             print('Unexpected response on discovery document: %s' % meta_data)
 
-        self.credentials['client_id'] = 'anmeldung-spz-kit-edu'
-        # !!! Never upload secret to github !!! set to 'myclientsecret'
-        self.credentials['secret_key'] = 'myclientsecret'
+        self.credentials['client_id'] = app.config['CLIENT_ID']
+        self.credentials['secret_key'] = app.config['CLIENT_SECRET']
 
         # missing to check ssl context here
 
-        self.client_data = None
+        self.redirect_uri = app.config['SPZ_URL']
 
-        self.redirect_uri = "https://anmeldung.spz.kit.edu"
-
-    def prepare_request(self, session, scope, response_type, claims, send_parameters_via,
-                        ui_locales=None, forceConsent=None, max_age=None, acr=None,
-                        allowConsentOptionDeselection=None, forceAuthN=None):
+    def generate_state(self):
         N = 7
-        # state is a random string
-        state = ''.join(random.choices(string.ascii_uppercase + string.digits, k=N))
-        session['state'] = state
-        self.TempState = state
-        # code_verifier is a string with 100 positions
-        session['code_verifier'] = code_verifier = ''.join(
-            random.choices(string.ascii_uppercase + string.digits, k=100)).encode('utf-8')
+        return ''.join(random.choices(string.ascii_uppercase + string.digits, k=N))
 
+    def generate_code_verifier(self):
+        return ''.join(random.choices(string.ascii_uppercase + string.digits, k=100)).encode('utf-8')
+
+    def prepare_request(self, session, scope, response_type, claims, send_parameters_via, state,
+                        code_verifier, ui_locales=None, forceConsent=None, max_age=None, acr=None,
+                        allowConsentOptionDeselection=None, forceAuthN=None):
+        # state is a random string
+        session['state'] = state
+        # code_verifier is a string with 100 positions
+        session['code_verifier'] = code_verifier
         session["flow"] = response_type
         code_challenge = base64_urlencode(hashlib.sha256(code_verifier).digest())
-        self.TempCodeVerifier = code_verifier
 
         request_args = {'scope': scope,
                         'response_type': response_type,
@@ -175,37 +169,34 @@ class Oid:
             'client_secret': self.credentials['secret_key']
         }
 
-        """
-        # build request with data and headers
-        params = urlencode(data).encode('utf-8')
-        try:
-            request = Request(token_url, data=params, headers=headers)
-        except urllib.error.URLError as e:
-            # Unable to create our request, here the reason
-            print("Unable to create your request: {error}".format(error=str(e)))
-        else:
-            # give the code to receive tokens
-            try:
-                token_response = urlopen(request)
-            except URLError as e:
-                print("Could not exchange code for tokens")
-                raise e
-            return json.loads(token_response).read().decode('utf-8')
-        """
-
         # use requests lib for post request to exchange code for token
         token_response = requests.post(token_url, data=data)
+        # write some log entries for easier exception handling
+        print("Fetch Token request status code: {}".format(token_response.status_code))
+        # write error message to logs, if request is not successful
+        if not token_response.status_code == 200:
+            print("Message received: {}".format(token_response.text))
         return token_response.json()
 
     def request_data(self, access_token):
+        """
+        :param access_token: The access token received in method get_access_token to access protected resources
+        """
         header = {
             'Authorization': 'Bearer {}'.format(access_token),
-            'claim': 'family_name'
         }
         request_url = self.kit_config['userinfo_endpoint']
         response = requests.get(request_url, headers=header)
 
-        return response
+        # write some log entries for exception handling
+        print("Access Protected resources request status code: {}".format(response.status_code))
+        # write error message to logs, if request is not successful
+        if not response.status_code == 200:
+            for header in response.headers:
+                print(header + ": " + response.headers[header])
+            return response.text
+        else:
+            return response.json()
 
     def decode_id_token(self, token: str):
         fragments = token.split(".")

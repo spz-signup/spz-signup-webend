@@ -131,7 +131,10 @@ class BaseConfig(object):
     ILIAS_REFID = '123'
 
     # config for Open ID Connect authentication
-
+    SPZ_URL = 'https://anmeldung.spz.kit.edu'
+    CLIENT_ID = 'anmeldung-spz-kit-edu'
+    # !!! Never upload secret to gitHub !!! set to 'myclientsecret'
+    CLIENT_SECRET = 'myclientsecret'
 
 
 class Development(BaseConfig):
