@@ -27,7 +27,7 @@ from spz.export import export_course_list
 
 from flask_babel import gettext as _
 
-from spz.oidc import lookup_current_user, oidc_callback
+from spz.oidc import oidc_callback
 
 
 def check_precondition_with_auth(cond, msg, auth=False):
@@ -73,15 +73,6 @@ def index():
     elif one_time_token:
         flash(_('Token für Prioritäranmeldung ungültig!'), 'negative')
 
-    # check for OID Connect redirect return link, in case of authentication
-    current_url = request.url
-    # TODO: check for more attributes than only state (session_state and code f. e.)
-    if "state" and "code" in current_url:
-        # TODO: check, if url has correct structure and all necessary parts
-        oidc_callback(current_url)
-
-    # check, if Open ID Connect log in to KIT account already has been performed
-    lookup_current_user()
 
     if form.validate_on_submit():
         applicant = form.get_applicant()

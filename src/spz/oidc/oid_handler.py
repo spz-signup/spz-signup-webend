@@ -10,7 +10,6 @@ import json
 import ssl
 from urllib.parse import urlencode
 from urllib.request import urlopen
-from urllib.error import URLError
 
 import requests
 
@@ -53,7 +52,7 @@ def get_ssl_context(config):
     return ctx
 
 
-class Oid:
+class Oid_handler:
     def __init__(self):
         self.credentials = {}
         self.kit_config = {}
@@ -69,10 +68,6 @@ class Oid:
         self.credentials['client_id'] = app.config['CLIENT_ID']
         self.credentials['secret_key'] = app.config['CLIENT_SECRET']
 
-        # missing to check ssl context here
-
-        self.redirect_uri = app.config['SPZ_URL']
-
     def generate_state(self):
         N = 7
         return ''.join(random.choices(string.ascii_uppercase + string.digits, k=N))
@@ -80,9 +75,8 @@ class Oid:
     def generate_code_verifier(self):
         return ''.join(random.choices(string.ascii_uppercase + string.digits, k=100)).encode('utf-8')
 
-    def prepare_request(self, session, scope, response_type, claims, send_parameters_via, state,
-                        code_verifier, ui_locales=None, forceConsent=None, max_age=None, acr=None,
-                        allowConsentOptionDeselection=None, forceAuthN=None):
+    def prepare_request(self, session, scope, response_type, send_parameters_via, state,
+                        code_verifier, redirect_uri):
         # state is a random string
         session['state'] = state
         # code_verifier is a string with 100 positions
@@ -96,28 +90,7 @@ class Oid:
                         'state': state,
                         'code_challenge': code_challenge,
                         'code_challenge_method': "S256",
-                        'redirect_uri': self.redirect_uri}
-
-        if acr:
-            request_args["acr_values"] = acr
-
-        if ui_locales:
-            request_args["ui_locales"] = ui_locales
-
-        if max_age:
-            request_args["max_age"] = max_age
-
-        if forceAuthN:
-            request_args["prompt"] = "login"
-
-        if claims:
-            request_args["claims"] = claims
-
-        if forceConsent:
-            if allowConsentOptionDeselection:
-                request_args["prompt"] = request_args.get("prompt", "") + " consent consent_allow_deselection"
-            else:
-                request_args["prompt"] = request_args.get("prompt", "") + " consent"
+                        'redirect_uri': redirect_uri}
 
         delimiter = "?" if self.kit_config['authorization_endpoint'].find("?") < 0 else "&"
 
@@ -126,11 +99,11 @@ class Oid:
             request_args = dict(
                 request=make_request_object(request_object_claims, self.credentials.get("request_object_key", None)),
                 client_id=request_args["client_id"],
-                code_challenge=request_args["code_challenge"],  # FIXME: Curity can't currently handle PCKE if not
+                code_challenge=request_args["code_challenge"],
                 code_challenge_method=request_args["code_challenge_method"],  # provided on query string
                 scope=request_args["scope"],
                 response_type=request_args["response_type"],
-                redirect_uri=request_args["redirect_uri"]  # FIXME: Curity requires this even if in request obj)
+                redirect_uri=request_args["redirect_uri"]
             )
         elif send_parameters_via == "request_uri":
             request_args = None
@@ -152,10 +125,10 @@ class Oid:
 
         return data
 
-    def get_access_token(self, code, code_verifier):
+    def get_access_token(self, code, code_verifier, redirect_uri):
         """
         :param code: The code received with the authorization request
-        :param code_verifier: The code challenge attribute sent in first url redirect
+        :param code_verifier: The code challenge attribute sent in first url redirect before encoding
         :return the json response containing the tokens
         """
         token_url = self.kit_config['token_endpoint']
@@ -164,7 +137,7 @@ class Oid:
             'grant_type': 'authorization_code',
             'code': code,
             'code_verifier': code_verifier,
-            'redirect_uri': self.redirect_uri,
+            'redirect_uri': redirect_uri,
             'client_id': self.credentials['client_id'],
             'client_secret': self.credentials['secret_key']
         }

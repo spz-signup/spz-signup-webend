@@ -127,12 +127,9 @@ babel = Babel(app)
 
 # Register all views here
 from spz import views, errorhandlers, pdf  # NOQA
-from spz.oidc import oidc_login, oidc_logout
 
 routes = [
     ('/', views.index, ['GET', 'POST']),
-    ('/oidc_url', oidc_login, ['GET']),
-    ('/oidc_logout', oidc_logout, ['GET']),
     ('/licenses', views.licenses, ['GET']),
     ('/vacancies', views.vacancies, ['GET']),
     ('/signoff', views.signoff, ['GET', 'POST']),

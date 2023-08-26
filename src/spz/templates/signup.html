@@ -8,31 +8,6 @@
 
 {% block body %}
 
-    {% if session['session_state'] %}
-        {% if session['user'] %}
-            <h1>Hello {{ session['user'] }}</h1>
-        {% endif %}
-        <a href="{{ url_for('oidc_logout') }}">Logout from KIT Account</a>
-    {% else %}
-        <form action="/oidc_url" method="get">
-            <div class="row">
-
-                <button class="ui animated fade button kit-green" tabindex="0" type="submit">
-                    <div>
-                        <div class="visible content inline">
-                            <img width="35em" class="center aligned"
-                                 src="{{ url_for('static', filename='img/favicon.ico') }}">
-                            <span class="center aligned" style="font-size: 2.5em">Sign-up with KIT Account</span>
-                        </div>
-                        <div class="hidden content">
-                            <span class="center aligned" style="font-size: 2em">KIT Students</span>
-                        </div>
-                    </div>
-                </button>
-            </div>
-        </form>
-    {% endif %}
-
     <form id="signup" class="ui form" method="post" data-persist="garlic">
         {{ csrf_field() }}
         <h3 class="ui dividing header">Kurswahl</h3>

@@ -16,93 +16,72 @@
    Step 2 and 3 are included in the oidc_callback method
 """
 
-from flask_openid import OpenID
+from flask import session, flash, redirect, url_for
+from spz.oidc.oid_handler import Oid_handler
 
-from spz import app
-from flask import g, session, flash, redirect, render_template, request, url_for
-from spz.oidc.oidc_authentication import Oid
-
-oid = OpenID(app)
-request_handler = Oid()
-
-# a list of all used session parameters
-session_parameters = ["state", "code_verifier", "session_state", "code", "access_token", "refresh_token",
-                      "id_token"]
+request_handler = Oid_handler()
 
 
-@app.before_request
-def lookup_current_user():
-    g.user = None
-    if 'session_state' in session:
-        flash('Successfully logged in to KIT OIDC :)')
-    else:
-        flash('Authentication not performed :(')
+def oidc_url(redirect_uri):
+    """
+    Generates a request url for an openid connect login at KIT server.
 
+    Redirect to this url to be able to log in via KIT credentials.
 
-@oid.loginhandler
-def oidc_login():
-    if g.user is not None:
-        return redirect(oid.get_next_url())
+    :param redirect_uri: redirect to anmeldung.spz.kit.edu or a subpage of this base url
+    :return dictionary with state, code_verifier and the url itself
+    """
     # generate random keys
-    session['state'] = request_handler.generate_state()
-    session['code_verifier'] = request_handler.generate_code_verifier()
+    state = request_handler.generate_state()
+    code_verifier = request_handler.generate_code_verifier()
+    # standard scope is openid, full info can be obtained with 'openid profile'
+    url = request_handler.prepare_request(session={}, scope="openid profile", response_type="code",
+                                          send_parameters_via="request_object", state=state,
+                                          code_verifier=code_verifier, redirect_uri=redirect_uri)
+    args = {
+        "state": state,
+        "code_verifier": code_verifier,
+        "url": url
+    }
+    return args
 
-    # standard scope is openid, full name can be obtained with 'openid profile'
-    url = request_handler.prepare_request(session={}, scope="openid", response_type="code", claims="aud",
-                                          send_parameters_via="request_object", state=session['state'],
-                                          code_verifier=session['code_verifier'])
-    return redirect(url)
 
+def oidc_callback(url, state, code_verifier, redirect_uri):
+    """
+    After performing the login at KIT server, the user gets redirected back to our web page
 
-@oid.after_login
-def oidc_callback(url):
+    This method receives the url, where the KIT server has redirected to (current url in the browser window).
+
+    Then it requests an access token at the kit server using the client credentials (client name, secret key)
+    and some tokens exchanged in the first request.
+
+    If the authentication is successfully, an access token is returned to our web page
+
+    After completing this step, the method oidc_get_resources can be called using the received access token
+
+    :param url: the url, where the kit server has redirected back
+    :param state: the state received in the oidc_url method
+    :param code: the code token
+    :param code_verifier: the code_verifier received in the oidc_url method
+    :param redirect_uri: give the KIT server a redirect url starting with anmeldung.spz.kit.edu
+    :return a dictionary of the received data from KIT server
+    """
     response_data = request_handler.link_extractor(url)
     # check equality of state which was sent from spz webserver and received from kit server
-    if not response_data['state'] == session['state']:
-        flash('Invalid Request -> session is being deleted, because ' + response_data['state'] +
-              ' is different to ' + session['state'] + ", protection against CRFS attacks")
-        oidc_logout()
+    if not response_data['state'] == state:
+        return ('Invalid Request, because ' + response_data['state'] +
+                ' is different to ' + state + ", protection against CRFS attacks")
     else:
-        flash('Response Arguments ---------------------')
-        for key, value in response_data.items():
-            session[key] = value
-            flash(key + ' : ' + value)
-
-        token = request_handler.get_access_token(session['code'], session['code_verifier'])
-        if 'access_token' and 'refresh_token' in token:
-            session['access_token'] = token['access_token']
-            session['refresh_token'] = token['refresh_token']
-
-            flash("access token: " + session['access_token'])
-            flash("refresh token: " + session['refresh_token'])
-        if 'id_token' in token:
-            session['id_token'] = token['id_token']
-
-            flash("id token: " + session['id_token'])
-
-            # decode id token
-            decoded_id = request_handler.decode_id_token(session['id_token'])
-            # save kit email in session for further use
-            if 'eduperson_principal_name' in decoded_id:
-                session['email'] = decoded_id['eduperson_principal_name']
-                flash("Following Email saved in Session: " + session['email'])
-                flash("eduperson_scoped_affiliation: " + decoded_id['eduperson_scoped_affiliation'][0])
-                flash("preferred_username: " + decoded_id['preferred_username'])
-
-        # ToDo: Do we need this, if we get the same information in id_token in request before?
-        if 'access_token' in session:
-            # get protected resources
-            request_data = request_handler.request_data(session['access_token'])
-
-            flash('Data transmitted: ' + str(request_data))
-    return redirect(url_for("index"))
+        token = request_handler.get_access_token(response_data['code'], code_verifier, redirect_uri)
+        return token
 
 
-def oidc_logout():
-    # delete all session parameters
-    for param in session_parameters:
-        if param in session:
-            session.pop(param)
-    # logout from kit oidc, activate if wished
-    logout_url = request_handler.kit_config['end_session_endpoint']
-    return redirect(url_for('index'))
+def oidc_get_resources(access_token):
+    """
+    Receive protected user data using the access token obtained in the step before
+
+    :param access_token: access token received in the oidc_callback function
+    :return received user data
+    """
+    request_data = request_handler.request_data(access_token)
+    return request_data
