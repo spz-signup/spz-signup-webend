@@ -8,6 +8,7 @@ Mail Zentrale
 
 
 {% block internal_body %}
+
 <div class="row">
     <form class="ui form" method="post" id="confirm" enctype="multipart/form-data">
         {{ csrf_field() }}
@@ -33,5 +34,8 @@ Mail Zentrale
         </div>
         {{ render_submit(submit='Abschicken')}}
     </form>
+    {{ ckeditor.load(pkg_type="standard") }}
+    {{ ckeditor.config(name='mail_body') }}
 </div>
+
 {% endblock internal_body %}
