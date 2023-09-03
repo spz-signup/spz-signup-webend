@@ -81,7 +81,7 @@ class Oid_handler:
         session['state'] = state
         # code_verifier is a string with 100 positions
         session['code_verifier'] = code_verifier
-        session["flow"] = response_type
+        session['flow'] = response_type
         code_challenge = base64_urlencode(hashlib.sha256(code_verifier).digest())
 
         request_args = {'scope': scope,
