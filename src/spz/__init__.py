@@ -130,6 +130,8 @@ from spz import views, errorhandlers, pdf  # NOQA
 
 routes = [
     ('/', views.index, ['GET', 'POST']),
+    ('/signupinternal/<int:course_id>', views.signupinternal, ['GET', 'POST']),
+    ('/signupexternal/<int:course_id>', views.signupexternal, ['GET', 'POST']),
     ('/licenses', views.licenses, ['GET']),
     ('/vacancies', views.vacancies, ['GET']),
     ('/signoff', views.signoff, ['GET', 'POST']),

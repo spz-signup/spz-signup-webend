@@ -113,6 +113,11 @@ body {
     width: 100%;
 }
 
+.ui.form input:read-only {
+    background-color: #f9f9f9;
+    cursor: not-allowed;
+}
+
 /***************************************
  **** Tri-state toggles ****************
  **************************************/

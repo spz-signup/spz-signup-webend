@@ -686,11 +686,13 @@ class Origin(db.Model):
     name = db.Column(db.String(60), unique=True, nullable=False)
     short_name = db.Column(db.String(10), nullable=False)
     validate_registration = db.Column(db.Boolean, nullable=False)
+    is_internal = db.Column(db.Boolean, nullable=False)
 
-    def __init__(self, name, short_name, validate_registration):
+    def __init__(self, name, short_name, validate_registration, is_internal):
         self.name = name
         self.short_name = short_name
         self.validate_registration = validate_registration
+        self.is_internal = is_internal
 
     def __repr__(self):
         return '<Origin %r>' % self.name
@@ -1024,3 +1026,21 @@ class ExportFormat(db.Model):
             ExportFormat.language == None,  # NOQA
             ExportFormat.language_id.in_(language_ids)
         )).all()
+
+class OAuthToken(db.Model):
+    """Format used when exporting course lists
+
+       :param id: unique ID
+       :param state: OAuth state
+       :param code_verifier: OAuth code verifier
+    """
+    __tablename__ = 'oauth_token'
+
+    id = db.Column(db.Integer, primary_key=True)
+    state = db.Column(db.String(), nullable=False)
+    code_verifier = db.Column(db.String(), nullable=False)
+    user_data = db.Column(db.String(), nullable=True)
+
+    def __init__(self, state, code_verifier):
+        self.state = state
+        self.code_verifier = code_verifier
