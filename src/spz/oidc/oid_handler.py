@@ -12,6 +12,7 @@ from urllib.parse import urlencode
 from urllib.request import urlopen
 
 import requests
+import pkce
 
 from jwkest.jwk import KEYS
 from jwkest.jws import JWS
@@ -69,11 +70,10 @@ class Oid_handler:
         self.credentials['secret_key'] = app.config['CLIENT_SECRET']
 
     def generate_state(self):
-        N = 7
-        return ''.join(random.choices(string.ascii_uppercase + string.digits, k=N))
+        return ''.join(random.choices(string.ascii_uppercase + string.digits, k=7))
 
     def generate_code_verifier(self):
-        return ''.join(random.choices(string.ascii_uppercase + string.digits, k=100)).encode('utf-8')
+        return pkce.generate_code_verifier(length=100)
 
     def prepare_request(self, session, scope, response_type, send_parameters_via, state,
                         code_verifier, redirect_uri):
@@ -82,7 +82,7 @@ class Oid_handler:
         # code_verifier is a string with 100 positions
         session['code_verifier'] = code_verifier
         session['flow'] = response_type
-        code_challenge = base64_urlencode(hashlib.sha256(code_verifier).digest())
+        code_challenge = pkce.get_code_challenge(code_verifier)
 
         request_args = {'scope': scope,
                         'response_type': response_type,

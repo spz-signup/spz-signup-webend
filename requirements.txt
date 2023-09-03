@@ -90,3 +90,4 @@ wcwidth==0.2.5
 webassets==2.0
 Werkzeug==1.0.1
 WTForms==2.3.3
+pkce==1.0.3
