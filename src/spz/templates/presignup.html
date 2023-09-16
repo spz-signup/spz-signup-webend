@@ -1,0 +1,31 @@
+{% extends 'baselayout.html' %}
+{% from 'formhelpers.html' import csrf_field, render_input, render_option, render_radio, render_submit %}
+
+{% block caption %}
+Anmeldung {{ config['SEMESTER_NAME'] }}
+{% endblock caption %}
+
+
+{% block body %}
+<div class="row">
+        <form id="signup" class="ui form" method="post" data-persist="garlic">
+            {{ csrf_field() }}
+            <h3 class="ui dividing header">Kurswahl</h3>
+            {{ render_option(form.course, icon='cube') }}
+            <span class="help-block">Englischkurse setzen entsprechende Testresultate voraus. <a href="/vacancies">Restplätze anzeigen.</a></span>
+
+            <div class="ui section divider"></div>
+            <div class="ui fluid buttons">
+                <button type="submit" name="type" value="internal" class="ui positive button confirm">Anmeldung KIT-Angehörige</button>
+                <div class="or" data-text="/"></div>
+                <button type="submit" name="type" value="external" class="ui button">Anmeldung Externe</button>
+            </div>
+            <span class="help-block">Studierende und Mitarbeiter*innen des KIT nutzen bitte die Anmeldung für KIT-Angehörige. Angehörige anderer Hochschulen und Gasthörer*innen nutzen die Anmeldung für Externe.</span>
+        </form>
+</div>
+{% endblock body %}
+
+
+{% block scripts %}
+{{ super() }}
+{% endblock scripts %}

@@ -113,6 +113,11 @@ body {
     width: 100%;
 }
 
+.ui.form input:read-only {
+    background-color: #f9f9f9;
+    cursor: not-allowed;
+}
+
 /***************************************
  **** Tri-state toggles ****************
  **************************************/
@@ -366,4 +371,10 @@ dt:first-child {
 
 dd {
     margin-left: 2em;
+}
+
+/* KIT-green on login box */
+.kit-green {
+background-color: #009682;
+border-color: #009682;
 }

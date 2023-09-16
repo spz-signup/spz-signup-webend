@@ -8,6 +8,7 @@
 import socket
 import re
 import csv
+import json
 from datetime import datetime
 
 from redis import ConnectionError
@@ -26,6 +27,8 @@ from spz.mail import generate_status_mail
 from spz.export import export_course_list
 
 from flask_babel import gettext as _
+
+from spz.oidc import oidc_callback, oidc_url, oidc_get_resources
 
 
 def check_precondition_with_auth(cond, msg, auth=False):
@@ -47,7 +50,7 @@ def check_precondition_with_auth(cond, msg, auth=False):
         return False
 
 
-@templated('signup.html')
+@templated('presignup.html')
 def index():
     one_time_token = request.args.get('token', None)
 
@@ -61,8 +64,256 @@ def index():
     ) if one_time_token else None
 
     # show all forms to authenticated users (normal or via one_time_token)
-    form = forms.SignupForm(show_all_courses=(current_user.is_authenticated or token_payload))
+    form = forms.PreSignupForm(show_all_courses=(current_user.is_authenticated or token_payload))
     time = datetime.utcnow()
+
+    if current_user.is_authenticated:
+        flash(_('Angemeldet: Vorzeitige Registrierung möglich. Falls unerwünscht, bitte abmelden.'), 'info')
+    if token_payload:
+        flash(_('Prioritäranmeldung aktiv!'), 'info')
+    elif one_time_token:
+        flash(_('Token für Prioritäranmeldung ungültig!'), 'negative')
+
+
+    if form.validate_on_submit():
+        course = form.get_course()
+        user_has_special_rights = current_user.is_authenticated and current_user.can_edit_course(course)
+        preterm = token_payload
+
+        # signup at all times only with token or privileged users
+        err = check_precondition_with_auth(
+            course.language.is_open_for_signup(time) or preterm,
+            _(
+                'Bitte gedulden Sie sich, die Anmeldung für diese Sprache ist erst möglich in %(date)s',
+                date=course.language.until_signup_fmt()
+            ),
+            user_has_special_rights
+        )
+
+        if err:
+            return dict(form=form)
+
+        if form.get_is_internal():
+            oidc_redirect_url = app.config['SPZ_URL'] + url_for('signupinternal', course_id=course.id)
+            oidc_redirect_config = oidc_url(oidc_redirect_url)
+
+            oauth_token = models.OAuthToken(
+                state=oidc_redirect_config['state'],
+                code_verifier=oidc_redirect_config['code_verifier']
+            )
+            db.session.add(oauth_token)
+            db.session.commit()
+
+            return redirect(oidc_redirect_config['url'])
+
+        return redirect(url_for('signupexternal', course_id=course.id))
+
+    return dict(form=form)
+
+
+@templated('signupinternal.html')
+def signupinternal(course_id):
+    course = models.Course.query.get_or_404(course_id)
+    form = forms.SignupFormInternal(course_id)
+
+    time = datetime.utcnow()
+    one_time_token = request.args.get('token', None)
+
+    # token_payload will contain the linked mail address if valid or None otherwise
+    token_payload = token.validate_once(
+        token=one_time_token,
+        payload_wanted=None,
+        namespace='preterm',
+        db_model=models.Applicant,
+        db_column=models.Applicant.mail
+    ) if one_time_token else None
+
+    if current_user.is_authenticated:
+        flash(_('Angemeldet: Vorzeitige Registrierung möglich. Falls unerwünscht, bitte abmelden.'), 'info')
+    if token_payload:
+        flash(_('Prioritäranmeldung aktiv!'), 'info')
+    elif one_time_token:
+        flash(_('Token für Prioritäranmeldung ungültig!'), 'negative')
+
+    if form.validate_on_submit():
+        o_auth_state = form.get_state()
+        o_auth_token = models.OAuthToken.query.filter(models.OAuthToken.state == o_auth_state).one()
+        o_auth_user_data = json.loads(o_auth_token.user_data)
+        applicant = form.get_applicant()
+        course = form.get_course()
+        user_has_special_rights = current_user.is_authenticated and current_user.can_edit_course(course)
+        preterm = applicant.mail and token_payload
+
+        err = check_precondition_with_auth(
+            all(attribute in o_auth_user_data for attribute in
+                ['eduperson_scoped_affiliation', 'given_name', 'family_name', 'eduperson_principal_name']),
+            _('Bei der Anmeldung für KIT-Angehörige ist ein Fehler aufgetreten. Bitte nutzen Sie die Anmeldung für Externe.')
+        )
+
+        # Check that user is either employee or student
+        err |= check_precondition_with_auth(
+            any(affiliation in o_auth_user_data['eduperson_scoped_affiliation'] for affiliation in
+                ['employee@kit.edu', 'student@kit.edu']),
+            _('Die Anmeldung für KIT-Angehörige ist nur für Studierende und Mitarbeiter*innnen des KIT möglich. Angehörige anderer Hochschulen und Gasthörer*innen nutzen die Anmeldung für Externe.')
+        )
+
+        # Check that we have a matriculation number for students or a username for employees
+        err |= check_precondition_with_auth(
+            ('student@kit.edu' in o_auth_user_data[
+                'eduperson_scoped_affiliation'] and 'matriculationNumber' in o_auth_user_data) or (
+                    'employee@kit.edu' in o_auth_user_data[
+                    'eduperson_scoped_affiliation'] and 'preferred_username' in o_auth_user_data),
+            _('Bei der Anmeldung für KIT-Angehörige ist ein Fehler aufgetreten. Bitte nutzen Sie die Anmeldung für Externe.')
+        )
+
+        # signup at all times only with token or privileged users
+        err = check_precondition_with_auth(
+            course.language.is_open_for_signup(time) or preterm,
+            _(
+                'Bitte gedulden Sie sich, die Anmeldung für diese Sprache ist erst möglich in %(date)s',
+                date=course.language.until_signup_fmt()
+            ),
+            user_has_special_rights
+        )
+        # when using a token, submitted mail address has to match the one stored in payload
+        err |= check_precondition_with_auth(
+            not preterm or token_payload.lower() == applicant.mail.lower(),
+            _('Die eingegebene E-Mail-Adresse entspricht nicht der hinterlegten. '
+              'Bitte verwenden Sie die Adresse, an welche Sie auch die Einladung zur prioritären '
+              'Anmeldung erhalten haben!'),
+            user_has_special_rights
+        )
+        err |= check_precondition_with_auth(
+            not course.has_rating_restrictions() or applicant.has_submitted_tag(),
+            _('Bei Kursen mit Zugangsbeschränkungen kann die Matrikelnummer nicht nachgereicht werden. '
+              'Bitte geben Sie eine Matrikelnummer an.'),
+            user_has_special_rights
+        )
+        err |= check_precondition_with_auth(
+            course.allows(applicant),
+            _('Sie haben nicht die vorausgesetzten Sprachtest-Ergebnisse um diesen Kurs zu wählen! '
+              '(Hinweis: Der Datenabgleich mit Ilias erfolgt automatisch alle 15 Minuten.)'),
+            user_has_special_rights
+        )
+        err |= check_precondition_with_auth(
+            not applicant.in_course(course) and not applicant.active_in_parallel_course(course),
+            _('Sie sind bereits für diesen Kurs oder einem Parallelkurs angemeldet!'),
+            user_has_special_rights
+        )
+        err |= check_precondition_with_auth(
+            not applicant.over_limit(),
+            _('Sie haben das Limit an Bewerbungen bereits erreicht!'),
+            user_has_special_rights
+        )
+        err |= check_precondition_with_auth(
+            len(applicant.doppelgangers) == 0,
+            _('Sie haben sich bereits mit einer anderen E-Mailadresse für einen Kurs angemeldet. '
+              'Benutzen Sie dieselbe Adresse wie bei Ihrer ersten Anmeldung erneut. '
+              'Bei Fragen oder Problemen kontaktieren Sie bitte Ihren Fachleiter.'),
+            user_has_special_rights
+        )
+        err |= check_precondition_with_auth(
+            not course.is_overbooked,  # no transaction guarantees here, but overbooking is some sort of soft limit
+            _('Der Kurs ist hoffnungslos überbelegt. Darum werden keine Registrierungen mehr entgegengenommen!'),
+            user_has_special_rights
+        )
+        if err:
+            db.session.rollback()
+            return redirect(url_for('index'))
+
+
+        # Run the final insert isolated in a transaction, with rollback semantics
+        # As of 2015, we simply put everyone into the waiting list by default and then randomly insert, see #39
+        try:
+            waiting = not preterm
+            informed_about_rejection = waiting and course.language.is_open_for_signup_fcfs(time)
+            applicant.add_course_attendance(
+                course,
+                form.get_graduation(),
+                waiting=waiting,
+                discount=applicant.current_discount(),
+                informed_about_rejection=informed_about_rejection
+            )
+            db.session.add(applicant)
+            db.session.delete(o_auth_token)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            flash(_('Ihre Kurswahl konnte nicht registriert werden: %(error)s', error=e), 'negative')
+            return dict(form=form)
+
+        # Preterm signups are in by default and management wants us to send mail immediately
+        try:
+            tasks.send_slow.delay(generate_status_mail(applicant, course, time))
+        except (AssertionError, socket.error, ConnectionError) as e:
+            flash(_('Eine Bestätigungsmail konnte nicht verschickt werden: %(error)s', error=e), 'negative')
+
+        # Finally redirect the user to an confirmation page, too
+        return render_template('confirm.html', applicant=applicant, course=course)
+
+    if not 'state' in request.args:
+        return redirect(url_for('index'))
+
+    o_auth_state = request.args['state']
+    o_auth_token = models.OAuthToken.query.filter(models.OAuthToken.state == o_auth_state).one()
+
+    o_auth_access_token = oidc_callback(
+        url=request.url,
+        state=o_auth_token.state,
+        code_verifier=o_auth_token.code_verifier,
+        redirect_uri=app.config['SPZ_URL'] + url_for('signupinternal', course_id=course.id)
+    )
+    o_auth_user_data = oidc_get_resources(o_auth_access_token['access_token'])
+
+    o_auth_token.user_data = json.dumps(o_auth_user_data)
+    db.session.commit()
+
+    # Check that o_auth_user_data contains all data we need
+    err = check_precondition_with_auth(
+        all(attribute in o_auth_user_data for attribute in ['eduperson_scoped_affiliation', 'given_name', 'family_name', 'eduperson_principal_name']),
+        _('Bei der Anmeldung für KIT-Angehörige ist ein Fehler aufgetreten. Bitte nutzen Sie die Anmeldung für Externe.')
+    )
+
+    # Check that user is either employee or student
+    err |= check_precondition_with_auth(
+        any(affiliation in o_auth_user_data['eduperson_scoped_affiliation'] for affiliation in ['employee@kit.edu', 'student@kit.edu']),
+        _('Die Anmeldung für KIT-Angehörige ist nur für Studierende und Mitarbeiter*innnen des KIT möglich. Angehörige anderer Hochschulen und Gasthörer*innen nutzen die Anmeldung für Externe.')
+    )
+
+    # Check that we have a matriculation number for students or a username for employees
+    err |= check_precondition_with_auth(
+        ('student@kit.edu' in o_auth_user_data['eduperson_scoped_affiliation'] and 'matriculationNumber' in o_auth_user_data) or ('employee@kit.edu' in o_auth_user_data['eduperson_scoped_affiliation'] and 'preferred_username' in o_auth_user_data),
+        _('Bei der Anmeldung für KIT-Angehörige ist ein Fehler aufgetreten. Bitte nutzen Sie die Anmeldung für Externe.')
+    )
+
+    if err:
+        return redirect(url_for('index'))
+
+    form.state.data = o_auth_token.state
+    form.first_name.data = o_auth_user_data['given_name']
+    form.last_name.data = o_auth_user_data['family_name']
+    form.mail.data = o_auth_user_data['eduperson_principal_name']
+    form.confirm_mail.data = o_auth_user_data['eduperson_principal_name']
+    form.tag.data = o_auth_user_data['matriculationNumber'] if 'student@kit.edu' in o_auth_user_data['eduperson_scoped_affiliation'] else o_auth_user_data['preferred_username']
+
+    return dict(course=course, form=form)
+
+
+@templated('signupexternal.html')
+def signupexternal(course_id):
+    course = models.Course.query.get_or_404(course_id)
+    form = forms.SignupFormExternal(course_id)
+    time = datetime.utcnow()
+    one_time_token = request.args.get('token', None)
+
+    # token_payload will contain the linked mail address if valid or None otherwise
+    token_payload = token.validate_once(
+        token=one_time_token,
+        payload_wanted=None,
+        namespace='preterm',
+        db_model=models.Applicant,
+        db_column=models.Applicant.mail
+    ) if one_time_token else None
 
     if current_user.is_authenticated:
         flash(_('Angemeldet: Vorzeitige Registrierung möglich. Falls unerwünscht, bitte abmelden.'), 'info')
@@ -73,7 +324,6 @@ def index():
 
     if form.validate_on_submit():
         applicant = form.get_applicant()
-        course = form.get_course()
         user_has_special_rights = current_user.is_authenticated and current_user.can_edit_course(course)
         preterm = applicant.mail and token_payload
 
@@ -90,20 +340,19 @@ def index():
         err |= check_precondition_with_auth(
             not preterm or token_payload.lower() == applicant.mail.lower(),
             _('Die eingegebene E-Mail-Adresse entspricht nicht der hinterlegten. '
-                'Bitte verwenden Sie die Adresse, an welche Sie auch die Einladung zur prioritären '
-                'Anmeldung erhalten haben!'),
+              'Bitte verwenden Sie die Adresse, an welche Sie auch die Einladung zur prioritären '
+              'Anmeldung erhalten haben!'),
             user_has_special_rights
         )
         err |= check_precondition_with_auth(
             not course.has_rating_restrictions() or applicant.has_submitted_tag(),
-            _('Bei Kursen mit Zugangsbeschränkungen kann die Matrikelnummer nicht nachgereicht werden. '
-              'Bitte geben Sie eine Matrikelnummer an.'),
+            _('Bitte geben Sie eine Sprachenzentrum ID an.'),
             user_has_special_rights
         )
         err |= check_precondition_with_auth(
             course.allows(applicant),
             _('Sie haben nicht die vorausgesetzten Sprachtest-Ergebnisse um diesen Kurs zu wählen! '
-                '(Hinweis: Der Datenabgleich mit Ilias erfolgt automatisch alle 15 Minuten.)'),
+              '(Hinweis: Der Datenabgleich mit Ilias erfolgt automatisch alle 15 Minuten.)'),
             user_has_special_rights
         )
         err |= check_precondition_with_auth(
@@ -119,8 +368,8 @@ def index():
         err |= check_precondition_with_auth(
             len(applicant.doppelgangers) == 0,
             _('Sie haben sich bereits mit einer anderen E-Mailadresse für einen Kurs angemeldet. '
-                'Benutzen Sie dieselbe Adresse wie bei Ihrer ersten Anmeldung erneut. '
-                'Bei Fragen oder Problemen kontaktieren Sie bitte Ihren Fachleiter.'),
+              'Benutzen Sie dieselbe Adresse wie bei Ihrer ersten Anmeldung erneut. '
+              'Bei Fragen oder Problemen kontaktieren Sie bitte Ihren Fachleiter.'),
             user_has_special_rights
         )
         err |= check_precondition_with_auth(
@@ -130,7 +379,7 @@ def index():
         )
         if err:
             db.session.rollback()
-            return dict(form=form)
+            return dict(form=form, course=course)
 
         # Run the final insert isolated in a transaction, with rollback semantics
         # As of 2015, we simply put everyone into the waiting list by default and then randomly insert, see #39
@@ -138,8 +387,8 @@ def index():
             waiting = not preterm
             informed_about_rejection = waiting and course.language.is_open_for_signup_fcfs(time)
             applicant.add_course_attendance(
-                course,
-                form.get_graduation(),
+                course=course,
+                graduation=None,
                 waiting=waiting,
                 discount=applicant.current_discount(),
                 informed_about_rejection=informed_about_rejection
@@ -149,7 +398,7 @@ def index():
         except Exception as e:
             db.session.rollback()
             flash(_('Ihre Kurswahl konnte nicht registriert werden: %(error)s', error=e), 'negative')
-            return dict(form=form)
+            return dict(form=form, course=course)
 
         # Preterm signups are in by default and management wants us to send mail immediately
         try:
@@ -157,10 +406,10 @@ def index():
         except (AssertionError, socket.error, ConnectionError) as e:
             flash(_('Eine Bestätigungsmail konnte nicht verschickt werden: %(error)s', error=e), 'negative')
 
-        # Finally redirect the user to an confirmation page, too
+        # Finally redirect the user to a confirmation page, too
         return render_template('confirm.html', applicant=applicant, course=course)
 
-    return dict(form=form)
+    return dict(course=course, form=form)
 
 
 @templated('vacancies.html')
@@ -195,7 +444,7 @@ def signoff():
             err |= check_precondition_with_auth(
                 applicant.in_course(course),
                 _('Abmeldung fehlgeschlagen: Sie können sich nicht von einem Kurs abmelden, '
-                    'für den Sie nicht angemeldet waren!')
+                  'für den Sie nicht angemeldet waren!')
             )
             err |= check_precondition_with_auth(
                 applicant.is_in_signoff_window(course) or (datetime.utcnow() < course.language.signup_fcfs_begin),
@@ -211,7 +460,7 @@ def signoff():
                     db.session.rollback()
                     flash(
                         _('Konnte nicht erfolgreich abmelden, bitte erneut versuchen: %(error)s',
-                            error=e), 'negative')
+                          error=e), 'negative')
 
     return dict(form=form)
 
@@ -263,8 +512,8 @@ def registrations_import():
                     db.session.commit()
                     flash(
                         _('Import OK: %(deleted)s Einträge gelöscht, %(added)s Einträge hinzugefügt',
-                            deleted=num_deleted,
-                            added=len(unique_registrations)),
+                          deleted=num_deleted,
+                          added=len(unique_registrations)),
                         'success')
                 except Exception as e:
                     db.session.rollback()
@@ -322,8 +571,8 @@ def approvals_import():
                     db.session.commit()
                     flash(
                         _('Import OK: %(deleted)s Einträge gelöscht, %(added)s Einträge hinzugefügt',
-                            deleted=num_deleted,
-                            added=len(approvals)),
+                          deleted=num_deleted,
+                          added=len(approvals)),
                         'success')
                 except Exception as e:  # csv, index or db could go wrong here..
                     db.session.rollback()
@@ -353,7 +602,7 @@ def extract_approvals(fp, priority):
         line
         for line in stripped_lines
         if line and not line.startswith('"Name";"Benutzername";"Matrikelnummer"') and
-        not line.startswith('"Name";"Login";"Matriculation number"')
+           not line.startswith('"Name";"Login";"Matriculation number"')
     )
     filecontent = csv.reader(filtered_lines, delimiter=';')  # XXX: hardcoded?
 
@@ -525,8 +774,8 @@ def course(id):
             db.session.commit()
             flash(
                 _('Kurs "%(name)s" wurde gelöscht, %(deleted)s wartende Teilnahme(n) wurden entfernt.',
-                    name=name,
-                    deleted=deleted),
+                  name=name,
+                  deleted=deleted),
                 'success')
             return redirect(url_for('lists'))
 
@@ -570,7 +819,7 @@ def applicant(id):
                     remove_attendance(applicant, remove_from, notify)
                     flash(
                         _('Der Bewerber wurde aus dem Kurs "(%(name)s)" genommen',
-                            name=remove_from.full_name),
+                          name=remove_from.full_name),
                         'success')
                     db.session.commit()
                 except Exception as e:
@@ -590,7 +839,7 @@ def applicant(id):
                     db.session.rollback()
                     flash(
                         _('Der Bewerber konnte nicht für den Kurs eingetragen werden: %(error)s',
-                            error=e),
+                          error=e),
                         'negative')
 
             return redirect(url_for('applicant', id=applicant.id))
@@ -656,7 +905,7 @@ def add_attendance(applicant, course, notify):
     if not course.allows(applicant):
         flash(
             _('Der Teilnehmer hat eigentlich nicht die entsprechenden Sprachtest-Ergebnisse. '
-                'Teilnehmer wurde trotzdem eingetragen.'),
+              'Teilnehmer wurde trotzdem eingetragen.'),
             'warning'
         )
 
@@ -714,8 +963,8 @@ def payments():
                                  func.avg(models.Attendance.amountpaid),
                                  func.min(models.Attendance.amountpaid),
                                  func.max(models.Attendance.amountpaid)) \
-                          .filter(not_(models.Attendance.waiting), models.Attendance.discount != 1) \
-                          .group_by(models.Attendance.paidbycash)
+        .filter(not_(models.Attendance.waiting), models.Attendance.discount != 1) \
+        .group_by(models.Attendance.paidbycash)
 
     desc = ['cash', 'sum', 'count', 'avg', 'min', 'max']
     stats = [dict(list(zip(desc, tup))) for tup in stat_list]
@@ -779,7 +1028,7 @@ def statistics():
 @templated('internal/statistics/free_courses.html')
 def free_courses():
     rv = models.Course.query.join(models.Language.courses) \
-                      .order_by(models.Language.name, models.Course.level, models.Course.alternative)
+        .order_by(models.Language.name, models.Course.level, models.Course.alternative)
 
     return dict(courses=rv)
 
@@ -788,10 +1037,10 @@ def free_courses():
 @templated('internal/statistics/origins_breakdown.html')
 def origins_breakdown():
     rv = db.session.query(models.Origin, func.count()) \
-                   .join(models.Applicant, models.Attendance) \
-                   .filter(not_(models.Attendance.waiting)) \
-                   .group_by(models.Origin) \
-                   .order_by(models.Origin.name)
+        .join(models.Applicant, models.Attendance) \
+        .filter(not_(models.Attendance.waiting)) \
+        .group_by(models.Origin) \
+        .order_by(models.Origin.name)
 
     return dict(origins_breakdown=rv)
 
@@ -846,9 +1095,9 @@ def preterm():
 
     # always show preterm signups in this view
     attendances = models.Attendance.query \
-                        .join(models.Course, models.Language, models.Applicant) \
-                        .filter(models.Attendance.registered < models.Language.signup_begin) \
-                        .order_by(models.Applicant.last_name, models.Applicant.first_name)
+        .join(models.Course, models.Language, models.Applicant) \
+        .filter(models.Attendance.registered < models.Language.signup_begin) \
+        .order_by(models.Applicant.last_name, models.Applicant.first_name)
 
     return dict(form=form, token=token, preterm_signups=attendances)
 
@@ -897,7 +1146,7 @@ def unique():
             db.session.rollback()
             flash(
                 _('Die Kurse konnten nicht von wartenden Teilnehmern mit aktivem Parallelkurs bereinigt werden:'
-                    ' %(error)s', error=e),
+                  ' %(error)s', error=e),
                 'negative'
             )
             return redirect(url_for('unique'))
@@ -923,3 +1172,9 @@ def logout():
     logout_user()
     flash(_('Tschau!'), 'success')
     return redirect(url_for('login'))
+
+
+'''def oidc_get_url():
+
+    return redirect(url)
+'''

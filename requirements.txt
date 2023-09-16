@@ -57,6 +57,7 @@ pycodestyle==2.6.0
 pyflakes==2.2.0
 Pygments==2.8.0
 pyinotify==0.9.6
+pyjwkest==1.4.2
 pyparsing==2.4.7
 pyrsistent==0.17.3
 PySimpleSOAP==1.16.2
@@ -89,3 +90,4 @@ wcwidth==0.2.5
 webassets==2.0
 Werkzeug==1.0.1
 WTForms==2.3.3
+pkce==1.0.3

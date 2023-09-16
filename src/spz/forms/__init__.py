@@ -28,7 +28,9 @@ __all__ = [
     'PaymentForm',
     'PretermForm',
     'SearchForm',
-    'SignupForm',
+    'PreSignupForm',
+    'SignupFormExternal',
+    'SignupFormInternal',
     'StatusForm',
     'UniqueForm',
     'TagForm',
@@ -110,8 +112,43 @@ class SignoffForm(FlaskForm):
         else:
             return None
 
+class PreSignupForm(FlaskForm):
+    """Represents the pre-signup form where users select if they are internal or external
+    """
 
-class SignupForm(FlaskForm):
+    type = StringField('type')
+    course = SelectField(
+        'Kurse',
+        [validators.DataRequired('Kurs muss angegeben werden')],
+        coerce=int
+    )
+
+    # Hack: The form is evaluated only once; but we want the choices to be in sync with the database values
+    # see: http://wtforms.simplecodes.com/docs/0.6.1/fields.html#wtforms.fields.SelectField
+    def __init__(self, show_all_courses=False, *args, **kwargs):
+        super(PreSignupForm, self).__init__(*args, **kwargs)
+        self._populate(show_all_courses)
+
+    def _populate(self, show_all_courses):
+        if show_all_courses:
+            self.course.choices = cached.all_courses_to_choicelist()
+        else:
+            self.course.choices = cached.upcoming_courses_to_choicelist()
+
+    # Accessors, to encapsulate the way the form represents and retrieves objects
+    # This especially ensures that optional fields only get queried if a value is present
+
+    def get_course(self):
+        return models.Course.query.get(self.course.data)
+
+    def get_is_internal(self):
+        return self.type.data == 'internal'
+
+    def get_is_external(self):
+        return self.type.data == 'external'
+
+
+class SignupFormExternal(FlaskForm):
     """Represents the main sign up form.
 
        Get's populated with choices from the backend.
@@ -126,7 +163,117 @@ class SignupForm(FlaskForm):
     )
     last_name = StringField(
         'Nachname',
-        [validators.Length(1, 60, 'Länge muss zwischen 1 and 60 sein')]
+        [validators.Length(1, 60, 'Länge muss zwischen 1 and 60 Zeichen sein')]
+    )
+    phone = StringField(
+        'Telefon',
+        [
+            validators.Length(max=20, message='Länge darf maximal 20 Zeichen sein'),
+            validators.PhoneValidator()
+        ]
+    )
+    mail = StringField(
+        'E-Mail',
+        [
+            validators.Length(max=120, message='Länge muss zwischen 1 und 120 Zeichen sein'),
+            validators.EmailPlusValidator()
+        ]
+    )
+
+    confirm_mail = StringField(
+        'E-Mail bestätigen',
+        [validators.EqualTo('mail', message='E-Mailadressen müssen übereinstimmen.')]
+    )
+
+    origin = SelectField(
+        'Bewerberkreis',
+        [validators.DataRequired('Herkunft muss angegeben werden')],
+        coerce=int
+    )
+
+    tag = StringField(
+        'Sprachenzentrum ID',
+        [
+            validators.Length(max=30, message='Länge darf maximal 30 Zeichen sein')
+        ]
+    )
+
+    course = IntegerField(
+        'Kurs',
+        [validators.DataRequired('Kurs muss angegeben werden')],
+    )
+
+    # Hack: The form is evaluated only once; but we want the choices to be in sync with the database values
+    # see: http://wtforms.simplecodes.com/docs/0.6.1/fields.html#wtforms.fields.SelectField
+    def __init__(self, course_id, *args, **kwargs):
+        super(SignupFormExternal, self).__init__(*args, **kwargs)
+        self._populate(course_id)
+
+    def _populate(self, course_id):
+        self.origin.choices = cached.external_origins_to_choicelist()
+        self.course.data = course_id
+
+    # Accessors, to encapsulate the way the form represents and retrieves objects
+    # This especially ensures that optional fields only get queried if a value is present
+
+    def get_first_name(self):
+        return self.first_name.data
+
+    def get_last_name(self):
+        return self.last_name.data
+
+    def get_phone(self):
+        return self.phone.data
+
+    def get_mail(self):
+        return self.mail.data
+
+    def get_origin(self):
+        return models.Origin.query.get(self.origin.data)
+
+    def get_tag(self):
+        return self.tag.data.strip() if self.tag.data and len(self.tag.data.strip()) > 0 else None  # Empty to None
+
+    def get_course(self):
+        return models.Course.query.get(self.course.data)
+
+    # Creates an applicant or returns it from the system, if already registered.
+    def get_applicant(self):
+        existing = models.Applicant.query.filter(
+            func.lower(models.Applicant.mail) == func.lower(self.get_mail())
+        ).first()
+
+        if existing:  # XXX: Return the applicant based on the assumption that the mail _address_ alone is an identidy
+            return existing
+
+        return models.Applicant(
+            mail=self.get_mail(),
+            tag=self.get_tag(),
+            first_name=self.get_first_name(),
+            last_name=self.get_last_name(),
+            phone=self.get_phone(),
+            degree=None,
+            semester=None,
+            origin=self.get_origin()
+        )
+
+
+class SignupFormInternal(FlaskForm):
+    """Represents the main sign up form for internal people.
+
+       Get's populated with choices from the backend.
+       Gathers the user's input and validates it against the provided constraints.
+
+       .. note:: Keep this fully cacheable (i.e. do not query the database for every new form)
+    """
+
+    first_name = StringField(
+        'Vorname',
+        [validators.Length(1, 60, 'Länge muss zwischen 1 und 60 Zeichen sein')]
+    )
+    last_name = StringField(
+        'Nachname',
+        [validators.Length(1, 60, 'Länge muss zwischen 1 and 60 Zeichen sein')]
     )
     phone = StringField(
         'Telefon',
@@ -157,10 +304,6 @@ class SignupForm(FlaskForm):
     tag = StringField(
         'Matrikelnummer',
         [
-            validators.RequiredDependingOnOrigin('Matrikelnummer muss angegeben werden'),
-            # validators.TagDependingOnOrigin(),
-            # DON'T! Our data set of registration might be incomplete.
-            # So we kinda accept that students might get a "you have to pay" mail but are at least able to sign up.
             validators.Length(max=30, message='Länge darf maximal 30 Zeichen sein')
         ]
     )
@@ -173,6 +316,7 @@ class SignupForm(FlaskForm):
         ],
         coerce=int
     )
+
     graduation = SelectField(
         'Kursabschluss',
         [
@@ -181,6 +325,7 @@ class SignupForm(FlaskForm):
         ],
         coerce=int
     )
+
     semester = IntegerField(
         'Fachsemester',
         [
@@ -189,26 +334,28 @@ class SignupForm(FlaskForm):
             validators.NumberRange(min=1, max=26, message='Anzahl der Fachsemester muss zwischen 1 und 26 liegen')
         ]
     )
-    course = SelectField(
-        'Kurse',
+
+    state = StringField(
+        'State',
+        [validators.DataRequired('State muss angegeben werden')],
+    )
+
+    course = IntegerField(
+        'Kurs',
         [validators.DataRequired('Kurs muss angegeben werden')],
-        coerce=int
     )
 
     # Hack: The form is evaluated only once; but we want the choices to be in sync with the database values
     # see: http://wtforms.simplecodes.com/docs/0.6.1/fields.html#wtforms.fields.SelectField
-    def __init__(self, show_all_courses=False, *args, **kwargs):
-        super(SignupForm, self).__init__(*args, **kwargs)
-        self._populate(show_all_courses)
+    def __init__(self, course_id, *args, **kwargs):
+        super(SignupFormInternal, self).__init__(*args, **kwargs)
+        self._populate(course_id)
 
-    def _populate(self, show_all_courses):
+    def _populate(self, course_id):
         self.degree.choices = cached.degrees_to_choicelist()
         self.graduation.choices = cached.graduations_to_choicelist()
-        self.origin.choices = cached.origins_to_choicelist()
-        if show_all_courses:
-            self.course.choices = cached.all_courses_to_choicelist()
-        else:
-            self.course.choices = cached.upcoming_courses_to_choicelist()
+        self.origin.choices = cached.internal_origins_to_choicelist()
+        self.course.data = course_id
 
     # Accessors, to encapsulate the way the form represents and retrieves objects
     # This especially ensures that optional fields only get queried if a value is present
@@ -228,9 +375,6 @@ class SignupForm(FlaskForm):
     def get_origin(self):
         return models.Origin.query.get(self.origin.data)
 
-    def get_tag(self):
-        return self.tag.data.strip() if self.tag.data and len(self.tag.data.strip()) > 0 else None  # Empty to None
-
     def get_degree(self):
         return models.Degree.query.get(self.degree.data) if self.degree.data else None
 
@@ -240,8 +384,14 @@ class SignupForm(FlaskForm):
     def get_semester(self):
         return self.semester.data if self.semester.data else None
 
+    def get_tag(self):
+        return self.tag.data if self.tag.data else None
+
     def get_course(self):
         return models.Course.query.get(self.course.data)
+
+    def get_state(self):
+        return self.state.data
 
     # Creates an applicant or returns it from the system, if already registered.
     def get_applicant(self):
@@ -694,3 +844,4 @@ class ExportCourseForm(FlaskForm):
         self.format.choices = [
             (f.id, f.descriptive_name) for f in models.ExportFormat.list_formatters(languages=languages)
         ]
+
