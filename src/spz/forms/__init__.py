@@ -318,7 +318,7 @@ class SignupFormInternal(FlaskForm):
     )
 
     graduation = SelectField(
-        'Kursabschluss',
+        'Kursabschluss (nur für statistische Zwecke)',
         [
             validators.RequiredDependingOnOrigin('Angabe des Abschlusses ist für Sie Pflicht'),
             validators.Optional()
