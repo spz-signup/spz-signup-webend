@@ -148,7 +148,7 @@ class Oid_handler:
         print("Fetch Token request status code: {}".format(token_response.status_code))
         # write error message to logs, if request is not successful
         if not token_response.status_code == 200:
-            print("Message received: {}".format(token_response.text))
+            print("Message received: {}, Request payload: {}".format(token_response.text, json.dumps(data)))
         return token_response.json()
 
     def request_data(self, access_token):
