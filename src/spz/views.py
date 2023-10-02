@@ -94,7 +94,7 @@ def index():
             return dict(form=form)
 
         if form.get_is_internal():
-            oidc_redirect_url = app.config['SPZ_URL'] + url_for('signupinternal', course_id=course.id)
+            oidc_redirect_url = app.config['SPZ_URL'] + url_for('signupinternal', course_id=course.id, token=one_time_token)
             oidc_redirect_config = oidc_url(oidc_redirect_url)
 
             oauth_token = models.OAuthToken(
@@ -106,7 +106,7 @@ def index():
 
             return redirect(oidc_redirect_config['url'])
 
-        return redirect(url_for('signupexternal', course_id=course.id))
+        return redirect(url_for('signupexternal', course_id=course.id, token=one_time_token))
 
     return dict(form=form)
 
