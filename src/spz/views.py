@@ -261,7 +261,7 @@ def signupinternal(course_id):
         url=request.url,
         state=o_auth_token.state,
         code_verifier=o_auth_token.code_verifier,
-        redirect_uri=app.config['SPZ_URL'] + url_for('signupinternal', course_id=course.id)
+        redirect_uri=app.config['SPZ_URL'] + url_for('signupinternal', course_id=course.id, token=one_time_token)
     )
     o_auth_user_data = oidc_get_resources(o_auth_access_token['access_token'])
 
