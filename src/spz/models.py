@@ -203,6 +203,7 @@ class Applicant(db.Model):
     origin = db.relationship("Origin", backref="applicants", lazy="joined")
 
     discounted = db.Column(db.Boolean)
+    is_student = db.Column(db.Boolean)
 
     # See {add,remove}_course_attendance member functions below
     attendances = db.relationship("Attendance", backref="applicant", cascade='all, delete-orphan', lazy="joined")
@@ -221,6 +222,7 @@ class Applicant(db.Model):
         self.semester = semester
         self.origin = origin
         self.discounted = False
+        self.is_student = False
         rng = random.SystemRandom()
         self.signoff_id = ''.join(
             rng.choice(string.ascii_letters + string.digits)
@@ -248,8 +250,6 @@ class Applicant(db.Model):
             self.attendances.remove(attendance)
         return len(remove) > 0
 
-    def is_student(self):
-        return Registration.exists(self.tag)
 
     def best_rating(self):
         """Results best rating, prioritize sticky entries."""
@@ -274,7 +274,7 @@ class Applicant(db.Model):
     """ Discount (factor) for the next course beeing entered """
     def current_discount(self):
         attends = len([attendance for attendance in self.attendances if not attendance.waiting])
-        if self.is_student() and attends == 0:
+        if self.is_student and attends == 0:
             return Attendance.MAX_DISCOUNT  # one free course for students
         else:
             return Attendance.MAX_DISCOUNT / 2 if self.discounted else 0  # discounted applicants get 50% off

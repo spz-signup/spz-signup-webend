@@ -144,6 +144,11 @@ def signupinternal(course_id):
         user_has_special_rights = current_user.is_authenticated and current_user.can_edit_course(course)
         preterm = applicant.mail and token_payload
 
+        # check, if applicant is kit student (qualifies for one course free of charge)
+        for affiliation in o_auth_user_data['eduperson_scoped_affiliation']:
+            if affiliation == 'student@kit.edu':
+                applicant.is_student = True
+
         err = check_precondition_with_auth(
             all(attribute in o_auth_user_data for attribute in
                 ['eduperson_scoped_affiliation', 'given_name', 'family_name', 'eduperson_principal_name']),
@@ -927,7 +932,7 @@ def add_attendance(applicant, course, notify):
 def remove_attendance(applicant, course, notify):
     success = applicant.remove_course_attendance(course)
     if success:
-        if applicant.is_student():  # transfer free attendance
+        if applicant.is_student:  # transfer free attendance
             active_courses = [a for a in applicant.attendances if not a.waiting]
             free_courses = [a for a in active_courses if a.discount >= 1]
             if active_courses and not free_courses:
