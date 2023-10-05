@@ -74,7 +74,6 @@ def index():
     elif one_time_token:
         flash(_('Token für Prioritäranmeldung ungültig!'), 'negative')
 
-
     if form.validate_on_submit():
         course = form.get_course()
         user_has_special_rights = current_user.is_authenticated and current_user.can_edit_course(course)
@@ -94,7 +93,8 @@ def index():
             return dict(form=form)
 
         if form.get_is_internal():
-            oidc_redirect_url = app.config['SPZ_URL'] + url_for('signupinternal', course_id=course.id, token=one_time_token)
+            oidc_redirect_url = app.config['SPZ_URL'] + url_for('signupinternal', course_id=course.id,
+                                                                token=one_time_token)
             oidc_redirect_config = oidc_url(oidc_redirect_url)
 
             oauth_token = models.OAuthToken(
@@ -161,8 +161,8 @@ def signupinternal(course_id):
         err |= check_precondition_with_auth(
             ('student@kit.edu' in o_auth_user_data[
                 'eduperson_scoped_affiliation'] and 'matriculationNumber' in o_auth_user_data) or (
-                    'employee@kit.edu' in o_auth_user_data[
-                    'eduperson_scoped_affiliation'] and 'preferred_username' in o_auth_user_data),
+                'employee@kit.edu' in o_auth_user_data[
+                'eduperson_scoped_affiliation'] and 'preferred_username' in o_auth_user_data),
             _('Bei der Anmeldung für KIT-Angehörige ist ein Fehler aufgetreten. Bitte nutzen Sie die Anmeldung für Externe.')
         )
 
@@ -221,7 +221,6 @@ def signupinternal(course_id):
             db.session.rollback()
             return redirect(url_for('index'))
 
-
         # Run the final insert isolated in a transaction, with rollback semantics
         # As of 2015, we simply put everyone into the waiting list by default and then randomly insert, see #39
         try:
@@ -257,44 +256,52 @@ def signupinternal(course_id):
     o_auth_state = request.args['state']
     o_auth_token = models.OAuthToken.query.filter(models.OAuthToken.state == o_auth_state).one()
 
-    o_auth_access_token = oidc_callback(
-        url=request.url,
-        state=o_auth_token.state,
-        code_verifier=o_auth_token.code_verifier,
-        redirect_uri=app.config['SPZ_URL'] + url_for('signupinternal', course_id=course.id, token=one_time_token)
-    )
-    o_auth_user_data = oidc_get_resources(o_auth_access_token['access_token'])
+    if not o_auth_token.request_has_been_made:
+        o_auth_access_token = oidc_callback(
+            url=request.url,
+            state=o_auth_token.state,
+            code_verifier=o_auth_token.code_verifier,
+            redirect_uri=app.config['SPZ_URL'] + url_for('signupinternal', course_id=course.id, token=one_time_token)
+        )
+        o_auth_token.request_has_been_made = True
+        o_auth_user_data = oidc_get_resources(o_auth_access_token['access_token'])
 
-    o_auth_token.user_data = json.dumps(o_auth_user_data)
-    db.session.commit()
+        o_auth_token.user_data = json.dumps(o_auth_user_data)
+        db.session.commit()
 
-    # Check that o_auth_user_data contains all data we need
-    err = check_precondition_with_auth(
-        all(attribute in o_auth_user_data for attribute in ['eduperson_scoped_affiliation', 'given_name', 'family_name', 'eduperson_principal_name']),
-        _('Bei der Anmeldung für KIT-Angehörige ist ein Fehler aufgetreten. Bitte nutzen Sie die Anmeldung für Externe.')
-    )
+        # Check that o_auth_user_data contains all data we need
+        err = check_precondition_with_auth(
+            all(attribute in o_auth_user_data for attribute in
+                ['eduperson_scoped_affiliation', 'given_name', 'family_name', 'eduperson_principal_name']),
+            _('Bei der Anmeldung für KIT-Angehörige ist ein Fehler aufgetreten. Bitte nutzen Sie die Anmeldung für Externe.')
+        )
 
-    # Check that user is either employee or student
-    err |= check_precondition_with_auth(
-        any(affiliation in o_auth_user_data['eduperson_scoped_affiliation'] for affiliation in ['employee@kit.edu', 'student@kit.edu']),
-        _('Die Anmeldung für KIT-Angehörige ist nur für Studierende und Mitarbeiter*innnen des KIT möglich. Angehörige anderer Hochschulen und Gasthörer*innen nutzen die Anmeldung für Externe.')
-    )
+        # Check that user is either employee or student
+        err |= check_precondition_with_auth(
+            any(affiliation in o_auth_user_data['eduperson_scoped_affiliation'] for affiliation in
+                ['employee@kit.edu', 'student@kit.edu']),
+            _('Die Anmeldung für KIT-Angehörige ist nur für Studierende und Mitarbeiter*innnen des KIT möglich. Angehörige anderer Hochschulen und Gasthörer*innen nutzen die Anmeldung für Externe.')
+        )
 
-    # Check that we have a matriculation number for students or a username for employees
-    err |= check_precondition_with_auth(
-        ('student@kit.edu' in o_auth_user_data['eduperson_scoped_affiliation'] and 'matriculationNumber' in o_auth_user_data) or ('employee@kit.edu' in o_auth_user_data['eduperson_scoped_affiliation'] and 'preferred_username' in o_auth_user_data),
-        _('Bei der Anmeldung für KIT-Angehörige ist ein Fehler aufgetreten. Bitte nutzen Sie die Anmeldung für Externe.')
-    )
+        # Check that we have a matriculation number for students or a username for employees
+        err |= check_precondition_with_auth(
+            ('student@kit.edu' in o_auth_user_data[
+                'eduperson_scoped_affiliation'] and 'matriculationNumber' in o_auth_user_data) or (
+                'employee@kit.edu' in o_auth_user_data[
+                'eduperson_scoped_affiliation'] and 'preferred_username' in o_auth_user_data),
+            _('Bei der Anmeldung für KIT-Angehörige ist ein Fehler aufgetreten. Bitte nutzen Sie die Anmeldung für Externe.')
+        )
 
-    if err:
-        return redirect(url_for('index'))
+        if err:
+            return redirect(url_for('index'))
 
-    form.state.data = o_auth_token.state
-    form.first_name.data = o_auth_user_data['given_name']
-    form.last_name.data = o_auth_user_data['family_name']
-    form.mail.data = o_auth_user_data['eduperson_principal_name']
-    form.confirm_mail.data = o_auth_user_data['eduperson_principal_name']
-    form.tag.data = o_auth_user_data['matriculationNumber'] if 'student@kit.edu' in o_auth_user_data['eduperson_scoped_affiliation'] else o_auth_user_data['preferred_username']
+        form.state.data = o_auth_token.state
+        form.first_name.data = o_auth_user_data['given_name']
+        form.last_name.data = o_auth_user_data['family_name']
+        form.mail.data = o_auth_user_data['eduperson_principal_name']
+        form.confirm_mail.data = o_auth_user_data['eduperson_principal_name']
+        form.tag.data = o_auth_user_data['matriculationNumber'] if 'student@kit.edu' in o_auth_user_data[
+            'eduperson_scoped_affiliation'] else o_auth_user_data['preferred_username']
 
     return dict(course=course, form=form)
 

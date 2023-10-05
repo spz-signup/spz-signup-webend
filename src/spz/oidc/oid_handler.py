@@ -53,6 +53,16 @@ def get_ssl_context(config):
     return ctx
 
 
+def decode_id_token(token: str):
+    fragments = token.split(".")
+    if len(fragments) != 3:
+        raise Exception("Incorrect id token format: " + token)
+    payload = fragments[1]
+    padded = payload + '=' * (4 - len(payload) % 4)
+    decoded = base64.b64decode(padded)
+    return json.loads(decoded)
+
+
 class Oid_handler:
     def __init__(self):
         self.credentials = {}
@@ -149,6 +159,9 @@ class Oid_handler:
         # write error message to logs, if request is not successful
         if not token_response.status_code == 200:
             print("Message received: {}, Request payload: {}".format(token_response.text, json.dumps(data)))
+        else:
+            id_token = decode_id_token(token_response.json()['id_token'])
+            print("user: " + id_token['preferred_username'])
         return token_response.json()
 
     def request_data(self, access_token):
@@ -170,13 +183,4 @@ class Oid_handler:
             return response.text
         else:
             return response.json()
-
-    def decode_id_token(self, token: str):
-        fragments = token.split(".")
-        if len(fragments) != 3:
-            raise Exception("Incorrect id token format: " + token)
-        payload = fragments[1]
-        padded = payload + '=' * (4 - len(payload) % 4)
-        decoded = base64.b64decode(padded)
-        return json.loads(decoded)
 

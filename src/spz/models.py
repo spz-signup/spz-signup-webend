@@ -1028,7 +1028,7 @@ class ExportFormat(db.Model):
         )).all()
 
 class OAuthToken(db.Model):
-    """Format used when exporting course lists
+    """Token used to store data while oidc flow with kit server
 
        :param id: unique ID
        :param state: OAuth state
@@ -1040,7 +1040,9 @@ class OAuthToken(db.Model):
     state = db.Column(db.String(), nullable=False)
     code_verifier = db.Column(db.String(), nullable=False)
     user_data = db.Column(db.String(), nullable=True)
+    request_has_been_made = db.Column(db.Boolean)
 
     def __init__(self, state, code_verifier):
         self.state = state
         self.code_verifier = code_verifier
+        self.request_has_been_made = False
