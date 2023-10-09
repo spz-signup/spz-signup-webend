@@ -115,6 +115,8 @@ def index():
 def signupinternal(course_id):
     course = models.Course.query.get_or_404(course_id)
     form = forms.SignupFormInternal(course_id)
+    # attribute used to custom-tailor select options depending on their status (student or employee)
+    is_student = False
 
     time = datetime.utcnow()
     one_time_token = request.args.get('token', None)
@@ -308,7 +310,18 @@ def signupinternal(course_id):
         form.tag.data = o_auth_user_data['matriculationNumber'] if 'student@kit.edu' in o_auth_user_data[
             'eduperson_scoped_affiliation'] else o_auth_user_data['preferred_username']
 
-    return dict(course=course, form=form)
+        # get information if requester is employee or student
+        for affiliation in o_auth_user_data['eduperson_scoped_affiliation']:
+            if affiliation == 'student@kit.edu':
+                is_student = True
+        if not is_student:
+            # preselect employee option in origin field
+            for num, key in form.origin.choices:
+                if key == 'KIT (Mitarbeiter*in)':
+                    form.origin.process_data(num)
+
+
+    return dict(course=course, form=form, is_student=is_student)
 
 
 @templated('signupexternal.html')
