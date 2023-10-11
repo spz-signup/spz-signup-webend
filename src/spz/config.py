@@ -5,6 +5,7 @@
     Values can be overridden by specifying 'SPZ_CFG_FILE' environment variable.
 """
 
+import json
 from datetime import timedelta
 
 from kombu import Queue
@@ -128,6 +129,12 @@ class BaseConfig(object):
     ILIAS_USERNAME = 'soap_spz'
     ILIAS_PASSWORD = 'mysecretpassword'
     ILIAS_REFID = '123'
+
+    # config for Open ID Connect authentication
+    SPZ_URL = 'https://anmeldung.spz.kit.edu'
+    CLIENT_ID = 'anmeldung-spz-kit-edu'
+    # !!! Never upload secret to gitHub !!! set to 'myclientsecret'
+    CLIENT_SECRET = 'myclientsecret'
 
 
 class Development(BaseConfig):

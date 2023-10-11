@@ -7,6 +7,7 @@ SPZ Signup App
           - Felix Rittler <felix.rittler@web.de>
           - Tobias Dierich <spz@tobiasdierich.de>
           - Simon Zimmermann <timzi777@gmail.com>
+          - Jan Fenker <urvdp@student.kit.edu>
 :Organization: Sprachenzentrum KIT Karlsruhe
 :Source: https://github.com/spz-signup/spz-signup-app
 

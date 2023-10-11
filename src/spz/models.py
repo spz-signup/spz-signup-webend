@@ -203,6 +203,7 @@ class Applicant(db.Model):
     origin = db.relationship("Origin", backref="applicants", lazy="joined")
 
     discounted = db.Column(db.Boolean)
+    is_student = db.Column(db.Boolean)
 
     # See {add,remove}_course_attendance member functions below
     attendances = db.relationship("Attendance", backref="applicant", cascade='all, delete-orphan', lazy="joined")
@@ -221,6 +222,7 @@ class Applicant(db.Model):
         self.semester = semester
         self.origin = origin
         self.discounted = False
+        self.is_student = False
         rng = random.SystemRandom()
         self.signoff_id = ''.join(
             rng.choice(string.ascii_letters + string.digits)
@@ -248,8 +250,6 @@ class Applicant(db.Model):
             self.attendances.remove(attendance)
         return len(remove) > 0
 
-    def is_student(self):
-        return Registration.exists(self.tag)
 
     def best_rating(self):
         """Results best rating, prioritize sticky entries."""
@@ -274,7 +274,7 @@ class Applicant(db.Model):
     """ Discount (factor) for the next course beeing entered """
     def current_discount(self):
         attends = len([attendance for attendance in self.attendances if not attendance.waiting])
-        if self.is_student() and attends == 0:
+        if self.is_student and attends == 0:
             return Attendance.MAX_DISCOUNT  # one free course for students
         else:
             return Attendance.MAX_DISCOUNT / 2 if self.discounted else 0  # discounted applicants get 50% off
@@ -686,11 +686,13 @@ class Origin(db.Model):
     name = db.Column(db.String(60), unique=True, nullable=False)
     short_name = db.Column(db.String(10), nullable=False)
     validate_registration = db.Column(db.Boolean, nullable=False)
+    is_internal = db.Column(db.Boolean, nullable=False)
 
-    def __init__(self, name, short_name, validate_registration):
+    def __init__(self, name, short_name, validate_registration, is_internal):
         self.name = name
         self.short_name = short_name
         self.validate_registration = validate_registration
+        self.is_internal = is_internal
 
     def __repr__(self):
         return '<Origin %r>' % self.name
@@ -1024,3 +1026,23 @@ class ExportFormat(db.Model):
             ExportFormat.language == None,  # NOQA
             ExportFormat.language_id.in_(language_ids)
         )).all()
+
+class OAuthToken(db.Model):
+    """Token used to store data while oidc flow with kit server
+
+       :param id: unique ID
+       :param state: OAuth state
+       :param code_verifier: OAuth code verifier
+    """
+    __tablename__ = 'oauth_token'
+
+    id = db.Column(db.Integer, primary_key=True)
+    state = db.Column(db.String(), nullable=False)
+    code_verifier = db.Column(db.String(), nullable=False)
+    user_data = db.Column(db.String(), nullable=True)
+    request_has_been_made = db.Column(db.Boolean)
+
+    def __init__(self, state, code_verifier):
+        self.state = state
+        self.code_verifier = code_verifier
+        self.request_has_been_made = False

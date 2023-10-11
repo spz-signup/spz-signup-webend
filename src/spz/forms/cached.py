@@ -40,6 +40,21 @@ def origins_to_choicelist():
         in models.Origin.query.order_by(models.Origin.id.asc())
     ]
 
+@cache.cached(key_prefix='internal_origins')
+def internal_origins_to_choicelist():
+    return [
+        (x.id, '{0}'.format(x.name))
+        for x
+        in models.Origin.query.filter(models.Origin.is_internal == True).order_by(models.Origin.id.asc())
+    ]
+
+@cache.cached(key_prefix='external_origins')
+def external_origins_to_choicelist():
+    return [
+        (x.id, '{0}'.format(x.name))
+        for x
+        in models.Origin.query.filter(models.Origin.is_internal == False).order_by(models.Origin.id.asc())
+    ]
 
 @cache.cached(key_prefix='languages')
 def languages_to_choicelist():
