@@ -14,6 +14,7 @@ from flask_login import current_user
 from markupsafe import Markup
 from wtforms import widgets, StringField, SelectField, SelectMultipleField, IntegerField, Label
 from wtforms import TextAreaField, BooleanField, DecimalField, MultipleFileField
+from flask_ckeditor import CKEditorField
 
 from spz import app, models, token
 
@@ -472,7 +473,7 @@ class NotificationForm(FlaskForm):
         'Betreff',
         [validators.Length(1, 200, 'Betreff muss zwischen 1 und 200 Zeichen enthalten')]
     )
-    mail_body = TextAreaField(
+    mail_body = CKEditorField(
         'Nachricht',
         [validators.Length(1, 2000, 'Nachricht muss zwischen 1 und 2000 Zeichen enthalten')]
     )

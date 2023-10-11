@@ -21,6 +21,7 @@ from flask_mail import Mail
 from flask_caching import Cache
 from flask_wtf import CSRFProtect
 from flask_babel import Babel
+from flask_ckeditor import CKEditor
 
 from jinja2 import Markup
 
@@ -124,6 +125,10 @@ cache = Cache(app, config=app.config['CACHE_CONFIG'])
 
 # I18n setup
 babel = Babel(app)
+
+# Rich Text Editor setup
+ckeditor = CKEditor(app)
+
 
 # Register all views here
 from spz import views, errorhandlers, pdf  # NOQA

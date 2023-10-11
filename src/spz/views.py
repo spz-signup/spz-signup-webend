@@ -702,22 +702,22 @@ def notifications():
                     at_name.append(att.filename)
 
         try:
+            has_sent_cc = False
             recipients = form.get_recipients()
             for recipient in recipients:
-                # TODO: fix following code to send email to cc and bcc recipients only once
-                '''if recipient.index == 0:
+                cc_cached = None
+                bcc_cached = None
+                if not has_sent_cc:
                     cc_cached = form.get_cc()
                     bcc_cached = form.get_bcc()
-                else:
-                    cc_cached = None
-                    bcc_cached = None'''
+                    has_sent_cc = True
                 msg = Message(
                     sender=form.get_sender(),
                     recipients=[recipient],
                     subject=form.get_subject(),
                     body=form.get_body(),
-                    cc=form.get_cc(),
-                    bcc=form.get_bcc(),
+                    cc=cc_cached,
+                    bcc=bcc_cached,
                     charset='utf-8'
                 )
                 if form.get_attachments():
