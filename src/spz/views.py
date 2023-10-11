@@ -703,14 +703,13 @@ def notifications():
 
         try:
             has_sent_cc = False
-            count = 1
             recipients = form.get_recipients()
             for recipient in recipients:
                 cc_cached = None
                 bcc_cached = None
                 if not has_sent_cc:
                     cc_cached = form.get_cc()
-                    bcc_cached = form.ge<t_bcc()
+                    bcc_cached = form.get_bcc()
                     has_sent_cc = True
                 msg = Message(
                     sender=form.get_sender(),
@@ -721,11 +720,6 @@ def notifications():
                     bcc=bcc_cached,
                     charset='utf-8'
                 )
-                if msg.bcc is None:
-                    print('--bcc is empty-- has passed: ' + str(count))
-                    count = count + 1
-                else:
-                    print('Mail in bcc sent to: ' + str(msg.bcc))
                 if form.get_attachments():
                     for (mime, data, name) in zip(at_mime, at_data, at_name):
                         msg.attach(name, mime, data)
