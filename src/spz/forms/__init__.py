@@ -846,3 +846,16 @@ class ExportCourseForm(FlaskForm):
             (f.id, f.descriptive_name) for f in models.ExportFormat.list_formatters(languages=languages)
         ]
 
+class CourseForm(FlaskForm):
+    """Form for selecting students participating in the same course.
+
+
+    """
+    choices = widgets.ListWidget(prefix_label=False)
+    checkbox = widgets.CheckboxInput()
+
+    def get_checkbox(self):
+        return self.checkbox
+
+    def get_choices(self):
+        return self.choices

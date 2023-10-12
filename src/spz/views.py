@@ -779,8 +779,9 @@ def language(id):
 def course(id):
     course = models.Course.query.get_or_404(id)
     form = forms.DeleteCourseForm()
+    #form = forms.CourseForm()
 
-    if form.validate_on_submit() and current_user.superuser:
+    if "delete-course-form" in request.form and form.validate_on_submit() and current_user.superuser:
         try:
             deleted = 0
             name = course.full_name
@@ -811,7 +812,12 @@ def course(id):
                 'error'
             )
 
-    return dict(course=course)
+    if "select-form" in request.form and form.validate_on_submit() and current_user.superuser:
+        for checkbox in request.form.getlist('check'):
+            flash("I exist")
+            print(checkbox)
+    return render_template('internal/course.html', course=course)
+    #return dict(course=course)
 
 
 @login_required

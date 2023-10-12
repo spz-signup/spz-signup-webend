@@ -129,11 +129,11 @@ class BillGenerator(SPZPDF):
         this.breite = 128
         now = datetime.now()
         if now.month < 3:
-            semester = 'Wintersemester {0}/{1}'.format(now.year-1, now.year)
+            semester = 'Wintersemester {0}/{1}'.format(now.year - 1, now.year)
         elif now.month < 9:
             semester = 'Sommersemester {0}'.format(now.year)
         else:
-            semester = 'Wintersemester {0}/{1}'.format(now.year, now.year+1)
+            semester = 'Wintersemester {0}/{1}'.format(now.year, now.year + 1)
         this.font_normal(8)
         this.cell(80, 5, 'Karlsruher Institut für Technologie (KIT)', 0, 0)
         this.cell(48, 5, semester, 0, 0, 'R')
@@ -346,3 +346,69 @@ def print_bill(applicant_id, course_id):
     bill.cell(bill.breite, 6, str3, 0, 1, 'C')
 
     return bill.gen_response('Quittung {0}'.format(attendance.applicant.last_name))
+
+
+class ParticipationCertGenerator(SPZPDF):
+    def header(this):
+        this.width = 40
+        this.height = 10
+        now = datetime.now()
+        if now.month < 3:
+            this.semester = 'Wintersemester {0}/{1}'.format(now.year - 1, now.year)
+            this.weeks = 14
+        elif now.month < 9:
+            this.semester = 'Sommersemester {0}'.format(now.year)
+            this.weeks = 13
+        else:
+            this.semester = 'Wintersemester {0}/{1}'.format(now.year, now.year + 1)
+            this.weeks = 14
+        this.set_font('Helvetica', '', size=36)
+        this.image("spz/static/img/kit-logo.png", x=15, y=16, w=40)
+        this.text(x=160, y=30, txt='SpZ')
+        this.set_font(size=10, style='B')
+        this.text(x=160, y=37, txt='Sprachenzentrum')
+
+    def generateParticipationCertificate(this, full_name, tag, course, ects, ger, date):
+        # font size setting of the page
+
+        this.set_font('Helvetica', '', size=16)
+        this.set_font(style="B" "U")
+        # self.pdf.set_font(style="U")
+        this.text(x=45, y=55, txt="Teilnahmeschein")
+        this.set_font(style="U", size=15)
+        this.text(x=90, y=55, txt=" (keine ECTS-Berechtigung)")
+        this.set_font(style='', size=13)
+        this.set_y(65)
+        this.set_x(15)
+        this.cell(this.width, this.height, 'Frau/Herr', 0, 0)
+        this.cell(200, this.height, full_name, 0, 1)
+        this.set_x(15)
+        this.cell(this.width, this.height, 'Matr.-Nr.', 0, 0)
+        this.cell(200, this.height, str(tag), 0, 1)
+        this.set_x(15)
+        this.cell(this.width, 12, 'hat im', 0, 0)
+        this.cell(200, this.height, this.semester, 0, 1)
+        this.set_x(15)
+        this.cell(this.width, this.height, 'am Sprachkurs', 0, 0)
+        this.cell(200, this.height, course, 0, 1)
+        this.set_x(55)
+        this.cell(2, this.height, '( ', 0, 0)
+        this.set_font(style='B')
+        this.cell(7, this.height, str(this.weeks), 0, 0)
+        this.set_font(style='')
+        this.cell(25, this.height, 'Wochen zu', 0, 0)
+        this.set_font(style='B')
+        this.cell(3, this.height, str(ects), 0, 0)
+        this.set_font(style='')
+        this.cell(150, this.height, ' SWS) regelm\u00e4\u00DFig teilgenommen.', 0, 1)
+        this.set_x(15)
+        this.cell(150, this.height, 'Dieser Kurs entspricht dem Niveau ' + ger
+                  + ' des GER (Gem.Europ.Referenzrahmen)', 0, 1)
+        this.set_x(15)
+        this.cell(75, 30, 'Karlsruhe, den ' + str(date), 0, 0)
+        this.cell(200, 30, '___________________________', 0, 2)
+        this.set_font(size=10)
+        this.cell(w=62, h=-20, txt='Unterschrift', align='C')
+
+        this.output("Teilnahmeschein_Muster.pdf")
+        this.pdf = fpdf.FPDF(orientation='P', unit='mm', format='A4')
