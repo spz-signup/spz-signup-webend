@@ -9,6 +9,8 @@
 
 {% block internal_body %}
     <form id="select-form" class="ui form" method="post">
+        {{ csrf_field() }}
+        {{ form.identifier(hidden=True, value='form-select') }}
         <div class="row">
             {{ csrf_field() }}
             <div class="ui message">
@@ -51,7 +53,8 @@
                     <tr>
                         <td>
                             <div class="checkbox">
-                                <input type="checkbox" name="check">
+                                <input type="checkbox" name="applicants"
+                                       value="{{ attendance.applicant.mail }}">
                             </div>
                         </td>
                         <td><a
@@ -77,13 +80,14 @@
             </table>
         </div>
         <div class="ui section divider">
-            <button type="submit" class="fluid ui positive button" name="submit-button">PDF Generieren</button>
+            <button type="submit" value="submit-pdf" class="fluid ui positive button" name="submit-button">PDF Generieren</button>
         </div>
     </form>
     {% if current_user.superuser %}
         <div class="row">
             <form id="delete-course-form" class="ui form" method="post">
                 {{ csrf_field() }}
+                {{ form_delete.identifier(hidden=True, value='form-delete') }}
                 {# Do we need csrf when using post? #}
                 <h3 class="ui dividing header">Alle wartenden Teilnehmer entfernen und Kurs löschen</h3>
                 <p>Zuvor müssen alle aktiven Teilnehmer manuell aus dem Kurs entfernt worden sein.</p>

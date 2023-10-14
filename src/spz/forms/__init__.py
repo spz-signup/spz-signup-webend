@@ -20,7 +20,6 @@ from spz import app, models, token
 
 from . import cached, validators
 
-
 __all__ = [
     'ApplicantForm',
     'LanguageForm',
@@ -41,7 +40,6 @@ __all__ = [
 
 
 class TriStateField(IntegerField):
-
     tristate_conversion = [False, None, True]
 
     def __init__(self, labels, **kwargs):
@@ -112,6 +110,7 @@ class SignoffForm(FlaskForm):
             return existing
         else:
             return None
+
 
 class PreSignupForm(FlaskForm):
     """Represents the pre-signup form where users select if they are internal or external
@@ -416,7 +415,6 @@ class SignupFormInternal(FlaskForm):
 
 
 class VacanciesForm(FlaskForm):
-
     status_filter = SelectMultipleField(
         'Status',
         coerce=int
@@ -448,14 +446,14 @@ class VacanciesForm(FlaskForm):
             .order_by(models.Course.ger) \
             .order_by(models.Course.vacancies) \
             .filter(and_(
-                or_(
-                    not_(models.Course.is_full),
-                    and_(
-                        models.Course.is_full,
-                        models.Course.count_attendances(waiting=True) <= app.config['SHORT_WAITING_LIST'])
-                )),
-                and_(models.Language.signup_begin <= datetime.utcnow(), models.Language.signup_end >= datetime.utcnow())
-            ) \
+            or_(
+                not_(models.Course.is_full),
+                and_(
+                    models.Course.is_full,
+                    models.Course.count_attendances(waiting=True) <= app.config['SHORT_WAITING_LIST'])
+            )),
+            and_(models.Language.signup_begin <= datetime.utcnow(), models.Language.signup_end >= datetime.utcnow())
+        ) \
             .all()
         return itertools.groupby(courses, lambda course: (course.language, course.ger))
 
@@ -775,7 +773,7 @@ class UniqueForm(LanguageForm):
 class DeleteCourseForm(FlaskForm):
     """Represents a form for deleting a course.
     """
-    pass
+    identifier = StringField()
 
 
 class PretermForm(FlaskForm):
@@ -846,16 +844,8 @@ class ExportCourseForm(FlaskForm):
             (f.id, f.descriptive_name) for f in models.ExportFormat.list_formatters(languages=languages)
         ]
 
+
 class CourseForm(FlaskForm):
-    """Form for selecting students participating in the same course.
-
-
+    """ A form to select different participants in that specific course
     """
-    choices = widgets.ListWidget(prefix_label=False)
-    checkbox = widgets.CheckboxInput()
-
-    def get_checkbox(self):
-        return self.checkbox
-
-    def get_choices(self):
-        return self.choices
+    identifier = StringField()

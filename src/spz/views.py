@@ -320,7 +320,6 @@ def signupinternal(course_id):
                 if key == 'KIT (Mitarbeiter*in)':
                     form.origin.process_data(num)
 
-
     return dict(course=course, form=form, is_student=is_student)
 
 
@@ -778,10 +777,15 @@ def language(id):
 @templated('internal/course.html')
 def course(id):
     course = models.Course.query.get_or_404(id)
-    form = forms.DeleteCourseForm()
-    #form = forms.CourseForm()
+    form = forms.CourseForm()
+    form_delete = forms.DeleteCourseForm()
 
-    if "delete-course-form" in request.form and form.validate_on_submit() and current_user.superuser:
+    if form.identifier.data == 'form-select' and form.validate_on_submit() and current_user.superuser:
+        if len(request.form.getlist('applicants')) == 0:
+            flash('Mindestens ein/e Kursteilnehmer/in muss zum PDF-Erstellen ausgewählt sein.')
+        else:
+            flash(json.dumps(request.form.getlist('applicants')))
+    if form.identifier.data == 'form-delete' and form_delete.validate_on_submit() and current_user.superuser:
         try:
             deleted = 0
             name = course.full_name
@@ -794,14 +798,14 @@ def course(id):
                     # TODO: handle active attendances automatically or make deleting them easier
                     flash(_('Der Kurs kann nicht gelöscht werden, weil aktive Teilnahmen bestehen.'), 'error')
                     db.session.rollback()
-                    return dict(course=course)
+                return dict(course=course)
 
             db.session.delete(course)
             db.session.commit()
             flash(
                 _('Kurs "%(name)s" wurde gelöscht, %(deleted)s wartende Teilnahme(n) wurden entfernt.',
-                  name=name,
-                  deleted=deleted),
+                name=name,
+                deleted=deleted),
                 'success')
             return redirect(url_for('lists'))
 
@@ -811,13 +815,7 @@ def course(id):
                 _('Der Kurs konnte nicht gelöscht werden: %(error)s', error=e),
                 'error'
             )
-
-    if "select-form" in request.form and form.validate_on_submit() and current_user.superuser:
-        for checkbox in request.form.getlist('check'):
-            flash("I exist")
-            print(checkbox)
-    return render_template('internal/course.html', course=course)
-    #return dict(course=course)
+    return dict(course=course, form=form, form_delete=form_delete)
 
 
 @login_required
