@@ -30,6 +30,9 @@ from flask_babel import gettext as _
 
 from spz.oidc import oidc_callback, oidc_url, oidc_get_resources
 
+from spz.pdf_zip import PdfZipWriter, html_response
+from spz.pdf import generate_participation_cert
+
 
 def check_precondition_with_auth(cond, msg, auth=False):
     """Check precondition and flash message if not satisfied.
@@ -780,11 +783,36 @@ def course(id):
     form = forms.CourseForm()
     form_delete = forms.DeleteCourseForm()
 
+    # we have two forms on this page, to differ between them a hidden identifier tag is used
+
     if form.identifier.data == 'form-select' and form.validate_on_submit() and current_user.superuser:
         if len(request.form.getlist('applicants')) == 0:
             flash('Mindestens ein/e Kursteilnehmer/in muss zum PDF-Erstellen ausgewählt sein.')
         else:
-            flash(json.dumps(request.form.getlist('applicants')))
+            # the checkbox value tag 'applicants' holds the mail of selected students
+            # value tag is used for identification of applicant in db
+            requested = request.form.getlist('applicants')
+            applicants = []
+            for entry in requested:
+                for applicant in course.course_list:
+                    if entry == applicant.mail:
+                        applicants.append(applicant)
+            # TODO flash warning, if it is tried to create certificate for student(s) on waiting list
+            zip_file = PdfZipWriter()
+            for a in applicants:
+                pdf = generate_participation_cert(
+                    full_name=a.full_name,
+                    tag=a.tag,
+                    course=course.full_name,
+                    ects=course.ects_points,
+                    ger=course.ger,
+                    date=app.config['EXAM_DATE']
+                )
+                # write created pdf-cert to zip file
+                zip_file.write_to_zip(pdf, "T_{0}_{1}".format(course.full_name, a.full_name))
+
+            return html_response(zip_file, "Teilnahmescheine_{}".format(course.full_name))
+
     if form.identifier.data == 'form-delete' and form_delete.validate_on_submit() and current_user.superuser:
         try:
             deleted = 0
@@ -804,8 +832,8 @@ def course(id):
             db.session.commit()
             flash(
                 _('Kurs "%(name)s" wurde gelöscht, %(deleted)s wartende Teilnahme(n) wurden entfernt.',
-                name=name,
-                deleted=deleted),
+                  name=name,
+                  deleted=deleted),
                 'success')
             return redirect(url_for('lists'))
 
@@ -1202,8 +1230,3 @@ def logout():
     flash(_('Tschau!'), 'success')
     return redirect(url_for('login'))
 
-
-'''def oidc_get_url():
-
-    return redirect(url)
-'''
