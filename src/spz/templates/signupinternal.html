@@ -32,8 +32,13 @@
                 <div class="kit-only">
                     <h3 class="ui dividing header">Angaben zum Studium</h3>
                     <div class="grouped fields">
-                        {{ render_option(form.degree, required=False, icon='student') }}
-                        {{ render_input(form.semester, placeholder='1', type='number', required=False, required_extras='step="1" type="range" min="1" max="26"', icon='calendar') }}
+                        {% if is_student %}
+                            {{ render_option(form.degree, icon='student') }}
+                            {{ render_input(form.semester, placeholder='1', type='number', required_extras='step="1" type="range" min="1" max="26"', icon='calendar') }}
+                        {% else %}
+                            {{ render_option(form.degree, required=False, icon='student') }}
+                            {{ render_input(form.semester, placeholder='1', type='number', required=False, required_extras='step="1" type="range" min="1" max="26"', icon='calendar') }}
+                        {% endif %}
                     </div>
                     {{ render_radio(form.graduation, required=False, icon='file text outline') }}
                 </div>

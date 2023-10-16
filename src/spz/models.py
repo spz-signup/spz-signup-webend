@@ -1041,8 +1041,11 @@ class OAuthToken(db.Model):
     code_verifier = db.Column(db.String(), nullable=False)
     user_data = db.Column(db.String(), nullable=True)
     request_has_been_made = db.Column(db.Boolean)
+    is_student = db.Column(db.Boolean)
 
     def __init__(self, state, code_verifier):
         self.state = state
         self.code_verifier = code_verifier
         self.request_has_been_made = False
+        self.is_student = False
+
