@@ -719,7 +719,7 @@ def notifications():
                     sender=form.get_sender(),
                     recipients=[recipient],
                     subject=form.get_subject(),
-                    body=form.get_body(),
+                    html=form.get_body(),
                     cc=cc_cached,
                     bcc=bcc_cached,
                     charset='utf-8'
