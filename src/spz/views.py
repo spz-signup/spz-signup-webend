@@ -118,8 +118,7 @@ def index():
 def signupinternal(course_id):
     course = models.Course.query.get_or_404(course_id)
     form = forms.SignupFormInternal(course_id)
-    # attribute used to custom-tailor select options depending on their status (student or employee)
-    is_student = False
+    is_student = True
 
     time = datetime.utcnow()
     one_time_token = request.args.get('token', None)
@@ -139,6 +138,75 @@ def signupinternal(course_id):
         flash(_('Prioritäranmeldung aktiv!'), 'info')
     elif one_time_token:
         flash(_('Token für Prioritäranmeldung ungültig!'), 'negative')
+
+    if not 'state' in request.args:
+        return redirect(url_for('index'))
+
+    o_auth_state = request.args['state']
+    o_auth_token = models.OAuthToken.query.filter(models.OAuthToken.state == o_auth_state).one()
+
+    if not o_auth_token.request_has_been_made:
+        o_auth_access_token = oidc_callback(
+            url=request.url,
+            state=o_auth_token.state,
+            code_verifier=o_auth_token.code_verifier,
+            redirect_uri=app.config['SPZ_URL'] + url_for('signupinternal', course_id=course.id, token=one_time_token)
+        )
+        o_auth_token.request_has_been_made = True
+        o_auth_user_data = oidc_get_resources(o_auth_access_token['access_token'])
+
+        o_auth_token.user_data = json.dumps(o_auth_user_data)
+        db.session.commit()
+
+        # Check that o_auth_user_data contains all data we need
+        err = check_precondition_with_auth(
+            all(attribute in o_auth_user_data for attribute in
+                ['eduperson_scoped_affiliation', 'given_name', 'family_name', 'eduperson_principal_name']),
+            _('Bei der Anmeldung für KIT-Angehörige ist ein Fehler aufgetreten. Bitte nutzen Sie die Anmeldung für Externe.')
+        )
+
+        # Check that user is either employee or student
+        err |= check_precondition_with_auth(
+            any(affiliation in o_auth_user_data['eduperson_scoped_affiliation'] for affiliation in
+                ['employee@kit.edu', 'student@kit.edu']),
+            _('Die Anmeldung für KIT-Angehörige ist nur für Studierende und Mitarbeiter*innnen des KIT möglich. Angehörige anderer Hochschulen und Gasthörer*innen nutzen die Anmeldung für Externe.')
+        )
+
+        # Check that we have a matriculation number for students or a username for employees
+        err |= check_precondition_with_auth(
+            ('student@kit.edu' in o_auth_user_data[
+                'eduperson_scoped_affiliation'] and 'matriculationNumber' in o_auth_user_data) or (
+                'employee@kit.edu' in o_auth_user_data[
+                'eduperson_scoped_affiliation'] and 'preferred_username' in o_auth_user_data),
+            _('Bei der Anmeldung für KIT-Angehörige ist ein Fehler aufgetreten. Bitte nutzen Sie die Anmeldung für Externe.')
+        )
+
+        if err:
+            return redirect(url_for('index'))
+
+        form.state.data = o_auth_token.state
+        form.first_name.data = o_auth_user_data['given_name']
+        form.last_name.data = o_auth_user_data['family_name']
+        form.mail.data = o_auth_user_data['eduperson_principal_name']
+        form.confirm_mail.data = o_auth_user_data['eduperson_principal_name']
+        form.tag.data = o_auth_user_data['matriculationNumber'] if 'student@kit.edu' in o_auth_user_data[
+            'eduperson_scoped_affiliation'] else o_auth_user_data['preferred_username']
+
+        # get information if requester is employee or student
+        for affiliation in o_auth_user_data['eduperson_scoped_affiliation']:
+            if affiliation == 'student@kit.edu':
+                # save information in temporary session token
+                o_auth_token.is_student = True
+                db.session.commit()
+        if not o_auth_token.is_student:
+            # preselect employee option in origin field
+            form.origin.choices = [(12, 'KIT (Mitarbeiter*in)')]
+            """for num, key in form.origin.choices:
+                if key == 'KIT (Mitarbeiter*in)':
+                    form.origin.process_data(num)"""
+
+    # set is_student value
+    is_student = o_auth_token.is_student
 
     if form.validate_on_submit():
         o_auth_state = form.get_state()
@@ -259,69 +327,6 @@ def signupinternal(course_id):
 
         # Finally redirect the user to an confirmation page, too
         return render_template('confirm.html', applicant=applicant, course=course)
-
-    if not 'state' in request.args:
-        return redirect(url_for('index'))
-
-    o_auth_state = request.args['state']
-    o_auth_token = models.OAuthToken.query.filter(models.OAuthToken.state == o_auth_state).one()
-
-    if not o_auth_token.request_has_been_made:
-        o_auth_access_token = oidc_callback(
-            url=request.url,
-            state=o_auth_token.state,
-            code_verifier=o_auth_token.code_verifier,
-            redirect_uri=app.config['SPZ_URL'] + url_for('signupinternal', course_id=course.id, token=one_time_token)
-        )
-        o_auth_token.request_has_been_made = True
-        o_auth_user_data = oidc_get_resources(o_auth_access_token['access_token'])
-
-        o_auth_token.user_data = json.dumps(o_auth_user_data)
-        db.session.commit()
-
-        # Check that o_auth_user_data contains all data we need
-        err = check_precondition_with_auth(
-            all(attribute in o_auth_user_data for attribute in
-                ['eduperson_scoped_affiliation', 'given_name', 'family_name', 'eduperson_principal_name']),
-            _('Bei der Anmeldung für KIT-Angehörige ist ein Fehler aufgetreten. Bitte nutzen Sie die Anmeldung für Externe.')
-        )
-
-        # Check that user is either employee or student
-        err |= check_precondition_with_auth(
-            any(affiliation in o_auth_user_data['eduperson_scoped_affiliation'] for affiliation in
-                ['employee@kit.edu', 'student@kit.edu']),
-            _('Die Anmeldung für KIT-Angehörige ist nur für Studierende und Mitarbeiter*innnen des KIT möglich. Angehörige anderer Hochschulen und Gasthörer*innen nutzen die Anmeldung für Externe.')
-        )
-
-        # Check that we have a matriculation number for students or a username for employees
-        err |= check_precondition_with_auth(
-            ('student@kit.edu' in o_auth_user_data[
-                'eduperson_scoped_affiliation'] and 'matriculationNumber' in o_auth_user_data) or (
-                'employee@kit.edu' in o_auth_user_data[
-                'eduperson_scoped_affiliation'] and 'preferred_username' in o_auth_user_data),
-            _('Bei der Anmeldung für KIT-Angehörige ist ein Fehler aufgetreten. Bitte nutzen Sie die Anmeldung für Externe.')
-        )
-
-        if err:
-            return redirect(url_for('index'))
-
-        form.state.data = o_auth_token.state
-        form.first_name.data = o_auth_user_data['given_name']
-        form.last_name.data = o_auth_user_data['family_name']
-        form.mail.data = o_auth_user_data['eduperson_principal_name']
-        form.confirm_mail.data = o_auth_user_data['eduperson_principal_name']
-        form.tag.data = o_auth_user_data['matriculationNumber'] if 'student@kit.edu' in o_auth_user_data[
-            'eduperson_scoped_affiliation'] else o_auth_user_data['preferred_username']
-
-        # get information if requester is employee or student
-        for affiliation in o_auth_user_data['eduperson_scoped_affiliation']:
-            if affiliation == 'student@kit.edu':
-                is_student = True
-        if not is_student:
-            # preselect employee option in origin field
-            for num, key in form.origin.choices:
-                if key == 'KIT (Mitarbeiter*in)':
-                    form.origin.process_data(num)
 
     return dict(course=course, form=form, is_student=is_student)
 
@@ -717,7 +722,7 @@ def notifications():
                     sender=form.get_sender(),
                     recipients=[recipient],
                     subject=form.get_subject(),
-                    body=form.get_body(),
+                    html=form.get_body(),
                     cc=cc_cached,
                     bcc=bcc_cached,
                     charset='utf-8'
