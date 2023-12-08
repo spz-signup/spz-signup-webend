@@ -5,6 +5,7 @@
 
 from datetime import datetime
 import fpdf
+import os
 
 from flask import make_response
 from flask_login import login_required
@@ -15,8 +16,8 @@ from spz import app, models
 class SPZPDF(fpdf.FPDF):
     """Base class used for ALL PDF generators here."""
 
-    def __init__(self):
-        super(SPZPDF, self).__init__(orientation='L', unit='mm', format='A4', font_cache_dir='/tmp')
+    def __init__(self, orientation='L'): # orientation: L=Landscape, P=Portrait
+        super(SPZPDF, self).__init__(orientation=orientation, unit='mm', format='A4', font_cache_dir='/tmp')
         self.add_font('DejaVu', '', '/usr/share/fonts/truetype/dejavu/DejaVuSansCondensed.ttf', uni=True)
         self.add_font('DejaVu', 'B', '/usr/share/fonts/truetype/dejavu/DejaVuSansCondensed-Bold.ttf', uni=True)
 
@@ -129,11 +130,11 @@ class BillGenerator(SPZPDF):
         this.breite = 128
         now = datetime.now()
         if now.month < 3:
-            semester = 'Wintersemester {0}/{1}'.format(now.year-1, now.year)
+            semester = 'Wintersemester {0}/{1}'.format(now.year - 1, now.year)
         elif now.month < 9:
             semester = 'Sommersemester {0}'.format(now.year)
         else:
-            semester = 'Wintersemester {0}/{1}'.format(now.year, now.year+1)
+            semester = 'Wintersemester {0}/{1}'.format(now.year, now.year + 1)
         this.font_normal(8)
         this.cell(80, 5, 'Karlsruher Institut für Technologie (KIT)', 0, 0)
         this.cell(48, 5, semester, 0, 0, 'R')
@@ -282,7 +283,7 @@ def print_course(course_id):
 @login_required
 def print_language(language_id):
     language = models.Language.query.get_or_404(language_id)
-    pdflist = CourseGenerator()
+    pdflist = CourseGenerator('L')
     for course in language.courses:
         list_course(pdflist, course)
 
@@ -346,3 +347,74 @@ def print_bill(applicant_id, course_id):
     bill.cell(bill.breite, 6, str3, 0, 1, 'C')
 
     return bill.gen_response('Quittung {0}'.format(attendance.applicant.last_name))
+
+
+class ParticipationCertGenerator(SPZPDF):
+    def header(this):
+        this.width = 40
+        this.height = 10
+        now = datetime.now()
+        if now.month < 3:
+            this.semester = 'Wintersemester {0}/{1}'.format(now.year - 1, now.year)
+            this.weeks = 14
+        elif now.month < 9:
+            this.semester = 'Sommersemester {0}'.format(now.year)
+            this.weeks = 13
+        else:
+            this.semester = 'Wintersemester {0}/{1}'.format(now.year, now.year + 1)
+            this.weeks = 14
+        this.set_font('Helvetica', '', size=36)
+        path = os.path.join(os.getcwd(), 'spz/', 'static/img/kit-logo.png')
+        this.image(path, x=15, y=16, w=40)
+        this.text(x=160, y=30, txt='SpZ')
+        this.set_font(size=10, style='B')
+        this.text(x=160, y=37, txt='Sprachenzentrum')
+
+    def gen_final_data(self):
+        """Get final byte string data for PDF."""
+        return self.output(dest='S')
+
+@login_required
+def generate_participation_cert(full_name, tag, course, ects, ger, date):
+
+    participation_cert = ParticipationCertGenerator('P')
+    participation_cert.add_page()
+    participation_cert.set_font('Helvetica', '', size=16)
+    participation_cert.set_font(style="B" "U")
+    participation_cert.text(x=45, y=55, txt="Teilnahmeschein")
+    participation_cert.set_font(style="U", size=15)
+    participation_cert.text(x=90, y=55, txt=" (keine ECTS-Berechtigung)")
+    participation_cert.set_font(style='', size=13)
+    participation_cert.set_y(65)
+    participation_cert.set_x(15)
+    participation_cert.cell(participation_cert.width, participation_cert.height, 'Frau/Herr', 0, 0)
+    participation_cert.cell(200, participation_cert.height, full_name, 0, 1)
+    participation_cert.set_x(15)
+    participation_cert.cell(participation_cert.width, participation_cert.height, 'Matr.-Nr.', 0, 0)
+    participation_cert.cell(200, participation_cert.height, str(tag), 0, 1)
+    participation_cert.set_x(15)
+    participation_cert.cell(participation_cert.width, 12, 'hat im', 0, 0)
+    participation_cert.cell(200, participation_cert.height, participation_cert.semester, 0, 1)
+    participation_cert.set_x(15)
+    participation_cert.cell(participation_cert.width, participation_cert.height, 'am Sprachkurs', 0, 0)
+    participation_cert.cell(200, participation_cert.height, course, 0, 1)
+    participation_cert.set_x(55)
+    participation_cert.cell(2, participation_cert.height, '( ', 0, 0)
+    participation_cert.set_font(style='B')
+    participation_cert.cell(7, participation_cert.height, str(participation_cert.weeks), 0, 0)
+    participation_cert.set_font(style='')
+    participation_cert.cell(25, participation_cert.height, 'Wochen zu', 0, 0)
+    participation_cert.set_font(style='B')
+    participation_cert.cell(3, participation_cert.height, str(ects), 0, 0)
+    participation_cert.set_font(style='')
+    participation_cert.cell(150, participation_cert.height, ' SWS) regelm\u00e4\u00DFig teilgenommen.', 0, 1)
+    participation_cert.set_x(15)
+    participation_cert.cell(150, participation_cert.height, 'Dieser Kurs entspricht dem Niveau ' + ger
+                            + ' des GER (Gem.Europ.Referenzrahmen)', 0, 1)
+    participation_cert.set_x(15)
+    participation_cert.cell(75, 30, 'Karlsruhe, den ' + str(date), 0, 0)
+    participation_cert.cell(200, 30, '___________________________', 0, 2)
+    participation_cert.set_font(size=10)
+    participation_cert.cell(w=62, h=-20, txt='Unterschrift', align='C')
+
+    return participation_cert.gen_final_data()
