@@ -1231,6 +1231,21 @@ def login():
     return dict(form=form)
 
 
+@templated('internal/administration/teacher_overview_base.html')
+def administration_teacher():
+    # list of tuple (lang, aggregated number of courses, aggregated number of seats)
+    '''lang_misc = db.session.query(models.Language, func.count(models.Language.courses), func.sum(models.Course.limit)) \
+        .join(models.Course, models.Language.courses) \
+        .group_by(models.Language) \
+        .order_by(models.Language.name) \
+        .from_self() '''
+
+    languages = db.session.query(models.Language)
+
+
+    return dict(language=languages)
+
+
 def logout():
     logout_user()
     flash(_('Tschau!'), 'success')

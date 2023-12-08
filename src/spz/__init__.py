@@ -191,6 +191,9 @@ routes = [
     ('/internal/login', views.login, ['GET', 'POST']),
     ('/internal/logout', views.logout, ['GET', 'POST']),
     ('/internal/auth/reset_password/<string:reset_token>', views.reset_password, ['GET', 'POST']),
+
+    ('/internal/administration/teacher', views.administration_teacher, ['GET', 'POST'])
+
 ]
 
 for rule, view_func, methods in routes:
