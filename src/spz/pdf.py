@@ -381,7 +381,6 @@ def generate_participation_cert(full_name, tag, course, ects, ger, date):
     participation_cert.add_page()
     participation_cert.set_font('Helvetica', '', size=16)
     participation_cert.set_font(style="B" "U")
-    # self.pdf.set_font(style="U")
     participation_cert.text(x=45, y=55, txt="Teilnahmeschein")
     participation_cert.set_font(style="U", size=15)
     participation_cert.text(x=90, y=55, txt=" (keine ECTS-Berechtigung)")
@@ -418,10 +417,4 @@ def generate_participation_cert(full_name, tag, course, ects, ger, date):
     participation_cert.set_font(size=10)
     participation_cert.cell(w=62, h=-20, txt='Unterschrift', align='C')
 
-    # participation_cert.output("Teilnahmeschein_Muster.pdf")
-
-    #participation_cert.pdf = fpdf.FPDF(orientation='P', unit='mm', format='A4')
-
     return participation_cert.gen_final_data()
-
-    #"T_{0}_{1}".format(course, full_name)
