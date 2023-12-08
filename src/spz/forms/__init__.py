@@ -849,6 +849,7 @@ class ExportCourseForm(FlaskForm):
         ]
 
 
+
 class AddTeacherForm(FlaskForm):
     """Represents the form to add teachers to database.
 
@@ -1015,10 +1016,12 @@ class EditTeacherForm(FlaskForm):
         return self.send_mail.data
 
 
+
 class CourseForm(FlaskForm):
     """ A form to select different participants in that specific course
     """
     identifier = StringField()
+
 
 
 class GradeSubform(Form):
