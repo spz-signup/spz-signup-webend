@@ -790,7 +790,7 @@ def course(id):
 
     # we have two forms on this page, to differ between them a hidden identifier tag is used
 
-    if form.identifier.data == 'form-select' and form.validate_on_submit() and current_user.superuser:
+    if form.identifier.data == 'form-select' and form.validate_on_submit() and current_user.is_authenticated:
         if len(request.form.getlist('applicants')) == 0:
             flash('Mindestens ein/e Kursteilnehmer/in muss zum PDF-Erstellen ausgewählt sein.')
         else:
