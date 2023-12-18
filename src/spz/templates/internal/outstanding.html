@@ -23,7 +23,7 @@ Offene Beträge
                 <td><a href="{{ url_for('applicant', id=attendance.applicant.id)}}">{{ attendance.applicant.first_name }}</a></td>
                 <td><a href="{{ url_for('applicant', id=attendance.applicant.id)}}">{{ attendance.applicant.last_name }}</a></td>
                 <td>{{ attendance.applicant.mail }}</td>
-                <td>{{ attendance.amountpaid ~ '/' ~ attendance.course.price }}</td>
+                <td>{{ attendance.amountpaid ~ '/' ~ attendance.discounted_price }}</td>
                 <td><a href="{{ url_for('status', applicant_id=attendance.applicant.id, course_id=attendance.course.id) }}">
                         {{ 'A' ~ attendance.applicant.id ~ 'C' ~ attendance.course.id }}
                     </a>
