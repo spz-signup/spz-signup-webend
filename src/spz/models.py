@@ -148,7 +148,7 @@ class Attendance(db.Model):
 
     @hybrid_property
     def unpaid(self):
-        return (1 - self.discount / self.MAX_DISCOUNT) * self.price - self.amountpaid
+        return self.discounted_price - self.amountpaid
 
     @hybrid_property
     def is_unpaid(self):
@@ -157,6 +157,10 @@ class Attendance(db.Model):
     @hybrid_property
     def price(self):
         return self.course.price
+
+    @hybrid_property
+    def discounted_price(self):
+        return (1 - self.discount / self.MAX_DISCOUNT) * self.price
 
     @price.expression
     def price(cls):
