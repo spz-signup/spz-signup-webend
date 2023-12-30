@@ -30,6 +30,9 @@ from flask_babel import gettext as _
 
 from spz.oidc import oidc_callback, oidc_url, oidc_get_resources
 
+from spz.pdf_zip import PdfZipWriter, html_response
+from spz.pdf import generate_participation_cert
+
 
 def check_precondition_with_auth(cond, msg, auth=False):
     """Check precondition and flash message if not satisfied.
@@ -782,9 +785,40 @@ def language(id):
 @templated('internal/course.html')
 def course(id):
     course = models.Course.query.get_or_404(id)
-    form = forms.DeleteCourseForm()
+    form = forms.CourseForm()
+    form_delete = forms.DeleteCourseForm()
 
-    if form.validate_on_submit() and current_user.superuser:
+    # we have two forms on this page, to differ between them a hidden identifier tag is used
+
+    if form.identifier.data == 'form-select' and form.validate_on_submit() and current_user.superuser:
+        if len(request.form.getlist('applicants')) == 0:
+            flash('Mindestens ein/e Kursteilnehmer/in muss zum PDF-Erstellen ausgewählt sein.')
+        else:
+            # the checkbox value tag 'applicants' holds the mail of selected students
+            # value tag is used for identification of applicant in db
+            requested = request.form.getlist('applicants')
+            applicants = []
+            for entry in requested:
+                for applicant in course.course_list:
+                    if entry == applicant.mail:
+                        applicants.append(applicant)
+            # TODO flash warning, if it is tried to create certificate for student(s) on waiting list
+            zip_file = PdfZipWriter()
+            for a in applicants:
+                pdf = generate_participation_cert(
+                    full_name=a.full_name,
+                    tag=a.tag,
+                    course=course.full_name,
+                    ects=course.ects_points,
+                    ger=course.ger,
+                    date=app.config['EXAM_DATE']
+                )
+                # write created pdf-cert to zip file
+                zip_file.write_to_zip(pdf, "T_{0}_{1}".format(course.full_name, a.full_name))
+
+            return html_response(zip_file, "Teilnahmescheine_{}".format(course.full_name))
+
+    if form.identifier.data == 'form-delete' and form_delete.validate_on_submit() and current_user.superuser:
         try:
             deleted = 0
             name = course.full_name
@@ -797,7 +831,7 @@ def course(id):
                     # TODO: handle active attendances automatically or make deleting them easier
                     flash(_('Der Kurs kann nicht gelöscht werden, weil aktive Teilnahmen bestehen.'), 'error')
                     db.session.rollback()
-                    return dict(course=course)
+                return dict(course=course)
 
             db.session.delete(course)
             db.session.commit()
@@ -814,8 +848,7 @@ def course(id):
                 _('Der Kurs konnte nicht gelöscht werden: %(error)s', error=e),
                 'error'
             )
-
-    return dict(course=course)
+    return dict(course=course, form=form, form_delete=form_delete)
 
 
 @login_required
@@ -1220,3 +1253,4 @@ def logout():
     logout_user()
     flash(_('Tschau!'), 'success')
     return redirect(url_for('login'))
+
