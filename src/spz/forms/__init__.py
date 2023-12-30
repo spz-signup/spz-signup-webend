@@ -35,7 +35,8 @@ __all__ = [
     'UniqueForm',
     'TagForm',
     'SignoffForm',
-    'ExportCourseForm'
+    'ExportCourseForm',
+    'CourseForm'
 ]
 
 
