@@ -819,7 +819,8 @@ def course(id):
 
             return html_response(zip_file, "Teilnahmescheine_{}".format(course.full_name))
 
-    if form.identifier.data == 'form-delete' and form_delete.validate_on_submit() and current_user.is_superuser:
+
+    if form.identifier.data == 'form-delete' and form_delete.validate_on_submit() and current_user.superuser:
         try:
             deleted = 0
             name = course.full_name
@@ -1286,3 +1287,4 @@ def reset_password(reset_token):
     form.reset_token.data = reset_token
 
     return dict(form=form)
+
