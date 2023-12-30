@@ -191,7 +191,8 @@ routes = [
     ('/internal/login', views.login, ['GET', 'POST']),
     ('/internal/logout', views.logout, ['GET', 'POST']),
 
-    ('/internal/administration/teacher', views.administration_teacher, ['GET', 'POST'])
+    ('/internal/administration/teacher', views.administration_teacher, ['GET', 'POST']),
+    ('/internal/administration/teacher/<int:id>', views.administration_teacher_lang, ['GET', 'POST'])
 
 ]
 
