@@ -1251,7 +1251,18 @@ def administration_teacher():
 def administration_teacher_lang(id):
     lang = models.Language.query.get_or_404(id)
 
+
     return dict(language=lang)
+
+@templated('internal/administration/add_teacher.html')
+def add_teacher(id):
+    lang = models.Language.query.get_or_404(id)
+    form = forms.CourseForm()
+
+    if form.validate_on_submit():
+        flash(_('Des isch eins form'), 'negative')
+
+    return dict(language=lang, form=form)
 
 def logout():
     logout_user()

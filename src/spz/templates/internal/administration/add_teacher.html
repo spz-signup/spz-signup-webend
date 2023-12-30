@@ -1,0 +1,24 @@
+{% extends 'internal/internal.html' %}
+{% from 'formhelpers.html' import csrf_field, render_submit, attendance_status %}
+
+{% block caption %}
+    Dozent hinzufügen zu: <a href="{{ url_for('language', id=language.id) }}">{{ language.name }}</a>
+{% endblock caption %}
+
+
+{% block internal_body %}
+    <div class="row">
+        <a>Hier könnte Ihre Werbung stehen</a>
+    </div>
+    <div>
+        <form method="post">
+            {{ csrf_field() }}
+            {{ form.identifier(hidden=True, value='teacher_administration') }}
+            <button class="ui basic button">
+                <i class="icon user"></i>
+                Hinzufügen
+            </button>
+        </form>
+    </div>
+
+{% endblock internal_body %}

@@ -2,23 +2,29 @@
 {% from 'formhelpers.html' import csrf_field, render_submit, attendance_status %}
 
 {% block caption %}
-Dozentenverwaltung Sprache: <a href="{{ url_for('language', id=language.id) }}">{{ language.name }}</a>
+    Dozentenverwaltung Sprache: <a href="{{ url_for('language', id=language.id) }}">{{ language.name }}</a>
 {% endblock caption %}
 
 
 {% block internal_body %}
-<div class="row">
-    <div class="ui message">
-        <div class="header">Infos</div>
-        <dl>
-            <dt>Sprache &gt; exaktes Kurs-Level</dt>
-            <dd>{{ language.name }}</dd>
-            <dt>Kursgröße (maximal)</dt>
-            <dd>Teilnehmer</dd>
-            <dt>Kosten (für nicht-gratis Teilnehmer)</dt>
-            <dd>Testsache</dd>
-        </dl>
+    <div class="row">
+        <div class="ui message">
+            <div class="header">Infos</div>
+            <dl>
+                <dt>Sprache &gt; exaktes Kurs-Level</dt>
+                <dd>{{ language.name }}</dd>
+                <dt>Kursgröße (maximal)</dt>
+                <dd>Teilnehmer</dd>
+                <dt>Kosten (für nicht-gratis Teilnehmer)</dt>
+                <dd>Testsache</dd>
+            </dl>
+        </div>
     </div>
-</div>
+    <div>
+        <button class="ui basic button">
+            <i class="icon user"></i>
+            <a href="{{ url_for('add_teacher', id=language.id) }}"> Dozent hinzufügen</a>
+        </button>
+    </div>
 
 {% endblock internal_body %}

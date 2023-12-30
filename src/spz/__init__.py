@@ -193,7 +193,8 @@ routes = [
     ('/internal/auth/reset_password/<string:reset_token>', views.reset_password, ['GET', 'POST']),
 
     ('/internal/administration/teacher', views.administration_teacher, ['GET', 'POST']),
-    ('/internal/administration/teacher/<int:id>', views.administration_teacher_lang, ['GET', 'POST'])
+    ('/internal/administration/teacher/<int:id>', views.administration_teacher_lang, ['GET', 'POST']),
+    ('/internal/administration/teacher/<int:id>/add', views.add_teacher, ['GET', 'POST'])
 
 
 ]
