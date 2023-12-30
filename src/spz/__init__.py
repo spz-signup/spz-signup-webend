@@ -195,6 +195,7 @@ routes = [
     ('/internal/administration/teacher', views.administration_teacher, ['GET', 'POST']),
     ('/internal/administration/teacher/<int:id>', views.administration_teacher_lang, ['GET', 'POST'])
 
+
 ]
 
 for rule, view_func, methods in routes:

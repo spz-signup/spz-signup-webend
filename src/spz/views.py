@@ -1246,11 +1246,13 @@ def administration_teacher():
 
     return dict(language=languages)
 
+
 @templated('internal/administration/teacher_overview_lang.html')
 def administration_teacher_lang(id):
     lang = models.Language.query.get_or_404(id)
 
     return dict(language=lang)
+
 def logout():
     logout_user()
     flash(_('Tschau!'), 'success')
