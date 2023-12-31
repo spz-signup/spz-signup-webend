@@ -2,7 +2,7 @@
 {% from 'formhelpers.html' import csrf_field, render_submit, attendance_status %}
 
 {% block caption %}
-    Dozentenverwaltung Sprache: <a href="{{ url_for('language', id=language.id) }}">{{ language.name }}</a>
+    Lehrbeauftragte der Sprache: <a href="{{ url_for('language', id=language.id) }}">{{ language.name }}</a>
 {% endblock caption %}
 
 
@@ -23,7 +23,7 @@
     <div>
         <button class="ui basic button">
             <i class="icon user"></i>
-            <a href="{{ url_for('add_teacher', id=language.id) }}"> Dozent hinzufügen</a>
+            <a href="{{ url_for('add_teacher', id=language.id) }}"> Lehrbeauftragte hinzufügen</a>
         </button>
     </div>
 
