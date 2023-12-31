@@ -250,7 +250,6 @@ class Applicant(db.Model):
             self.attendances.remove(attendance)
         return len(remove) > 0
 
-
     def best_rating(self):
         """Results best rating, prioritize sticky entries."""
         results_priority = [
@@ -272,6 +271,7 @@ class Applicant(db.Model):
         return 0
 
     """ Discount (factor) for the next course beeing entered """
+
     def current_discount(self):
         attends = len([attendance for attendance in self.attendances if not attendance.waiting])
         if self.is_student and attends == 0:
@@ -386,8 +386,9 @@ class Course(db.Model):
     ))
 
     def __init__(
-        self, language, level, alternative, limit, price, level_english=None, ger=None, rating_highest=100, rating_lowest=0, collision=[],
-    ects_points=2):
+        self, language, level, alternative, limit, price, level_english=None, ger=None, rating_highest=100,
+        rating_lowest=0, collision=[],
+        ects_points=2):
         self.language = language
         self.level = level
         self.alternative = alternative
@@ -418,6 +419,7 @@ class Course(db.Model):
        :param is_unpaid: Whether the course fee is still (partially) unpaid
        :param is_free: Whether the course is fully discounted
     """
+
     def filter_attendances(self, waiting=None, is_unpaid=None, is_free=None):
         result = []
         for att in self.attendances:
@@ -492,6 +494,7 @@ class Course(db.Model):
             return '{0} {1}'.format(self.language.name_english, self.level_english)
 
     """ active attendants without debt """
+
     @property
     def course_list(self):
         list = [attendance.applicant for attendance in self.filter_attendances(waiting=False)]
@@ -556,6 +559,7 @@ class Language(db.Model):
         self.signup_end = signup_end
         self.signup_auto_end = signup_auto_end
         self.name_english = name_english
+
     def __repr__(self):
         return '<Language %r>' % self.name
 
@@ -830,6 +834,11 @@ admin_table = db.Table(
     db.Column('language_id', db.Integer, db.ForeignKey('language.id')),
 )
 
+# helper table for Teacher Table <-- Language
+"""teachers = db.Table(
+    'teachers',
+    db.Column('language_id', db.Integer, db.ForeignKey('language.id'))
+)"""
 
 class User(db.Model):
     """User for internal UI
@@ -938,6 +947,30 @@ class User(db.Model):
         )).first()
 
 
+class Teacher(db.Model):
+    """Teacher for internal UI
+
+       Teacher have access to their own courses they teach.
+       They can do the following:
+        - enter a grade for their students
+        - enter attendance information
+
+    """
+
+    __tablename__ = 'teacher'
+
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True)
+    active = db.Column(db.Boolean, default=True)
+    pwsalted = db.Column(db.LargeBinary(32), nullable=True)
+    #languages = db.relationship('Language', secondary='teachers', backref='teacher')
+
+
+    def __init__(self, email, active):
+        self.email = email
+        self.active = active
+        #self.languages = languages
+
 @total_ordering
 class LogEntry(db.Model):
     """Log entry representing some DB changes
@@ -1027,6 +1060,7 @@ class ExportFormat(db.Model):
             ExportFormat.language_id.in_(language_ids)
         )).all()
 
+
 class OAuthToken(db.Model):
     """Token used to store data while oidc flow with kit server
 
@@ -1048,4 +1082,3 @@ class OAuthToken(db.Model):
         self.code_verifier = code_verifier
         self.request_has_been_made = False
         self.is_student = False
-
