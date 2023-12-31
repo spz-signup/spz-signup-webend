@@ -37,7 +37,8 @@ __all__ = [
     'TagForm',
     'SignoffForm',
     'ExportCourseForm',
-    'CourseForm'
+    'CourseForm',
+    'TeacherForm'
 ]
 
 
@@ -855,6 +856,50 @@ class ExportCourseForm(FlaskForm):
         self.format.choices = [
             (f.id, f.descriptive_name) for f in models.ExportFormat.list_formatters(languages=languages)
         ]
+
+
+class TeacherForm(FlaskForm):
+    """Represents the form to add teachers to database.
+
+    """
+    first_name = StringField(
+        'Vorname',
+        [validators.Length(1, 60, 'Länge muss zwischen 1 und 60 Zeichen sein')]
+    )
+    last_name = StringField(
+        'Nachname',
+        [validators.Length(1, 60, 'Länge muss zwischen 1 and 60 Zeichen sein')]
+    )
+
+    mail = StringField(
+        'E-Mail',
+        [
+            validators.Length(max=120, message='Länge muss zwischen 1 und 120 Zeichen sein'),
+            validators.EmailPlusValidator()
+        ]
+    )
+
+    confirm_mail = StringField(
+        'E-Mail bestätigen',
+        [validators.EqualTo('mail', message='E-Mailadressen müssen übereinstimmen.')]
+    )
+
+    tag = StringField(
+        'Mitarbeiterkürzel',
+        [
+            validators.Length(max=10, message='Länge darf maximal 10 Zeichen sein')
+        ]
+    )
+
+    courses = SelectMultipleField(
+        'Kurse',
+        [validators.DataRequired('Mindestens ein Kurs muss ausgewählt werden')],
+        coerce=int
+    )
+
+    def __init__(self, language_id, *args, **kwargs):
+        super(TeacherForm, self).__init__(*args, **kwargs)
+        self.courses.choices = cached.language_to_choicelist(language_id)
 
 
 class CourseForm(FlaskForm):

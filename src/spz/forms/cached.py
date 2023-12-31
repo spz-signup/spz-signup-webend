@@ -40,6 +40,7 @@ def origins_to_choicelist():
         in models.Origin.query.order_by(models.Origin.id.asc())
     ]
 
+
 @cache.cached(key_prefix='internal_origins')
 def internal_origins_to_choicelist():
     return [
@@ -47,6 +48,7 @@ def internal_origins_to_choicelist():
         for x
         in models.Origin.query.filter(models.Origin.is_internal == True).order_by(models.Origin.id.asc())
     ]
+
 
 @cache.cached(key_prefix='external_origins')
 def external_origins_to_choicelist():
@@ -56,12 +58,22 @@ def external_origins_to_choicelist():
         in models.Origin.query.filter(models.Origin.is_internal == False).order_by(models.Origin.id.asc())
     ]
 
+
 @cache.cached(key_prefix='languages')
 def languages_to_choicelist():
     return [
-        (x.id, '{0}'.format(x.name))
+        (x.id, '{0}'.format(x.full_name))
         for x
         in models.Language.query.order_by(models.Language.name.asc())
+    ]
+
+
+@cache.cached(key_prefix='language')
+def language_to_choicelist(lang_id):  # shows only courses from selected language
+    return [
+        (x.id, '{0}'.format(x.full_name))
+        for x
+        in models.Course.query.filter(models.Course.language_id == lang_id).order_by(models.Course.id.asc())
     ]
 
 
