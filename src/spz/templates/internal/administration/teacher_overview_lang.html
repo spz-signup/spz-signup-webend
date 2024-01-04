@@ -21,10 +21,49 @@
         </div>
     </div>
     <div>
-        <button class="ui basic button">
-            <i class="icon user"></i>
-            <a href="{{ url_for('add_teacher', id=language.id) }}"> Lehrbeauftragte hinzufügen</a>
-        </button>
+        <a href="{{ url_for('add_teacher', id=language.id) }}">
+            <button class="ui basic button">
+                <i class="icon user"></i>
+                Lehrbeauftragte hinzufügen
+            </button>
+        </a>
+    </div>
+    <div class="row">
+        <table class="ui selectable sortable compact small striped table">
+            <thead>
+            <tr>
+                <th>Lehrbeauftragte*r</th>
+                <th>Kurse</th>
+                <th>Option 1</th>
+                <th>Option 2</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for t in teacher %}
+                <tr>
+                    <td><a
+                        href="{{ url_for('teacher', id=t.id) }}"><strong>{{ t.full_name }}</strong></a>
+
+                    </td>
+                    <td>
+                        {% for course in t.courses %}
+                            <a href="{{ url_for('course', id=course.id) }}">
+                                <button
+                                    class="ui button"> {{ course.full_name }}
+                                </button>
+                            </a>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        0
+                    </td>
+                    <td>
+                        0
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
     </div>
 
 {% endblock internal_body %}
