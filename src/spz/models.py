@@ -849,11 +849,16 @@ class Role(db.Model):
         self.course = course
         self.role = role
 
-# helper table for Teacher Table <-- Language
-"""teachers = db.Table(
-    'teachers',
-    db.Column('language_id', db.Integer, db.ForeignKey('language.id'))
-)"""
+# helper table for Teacher Table <-- Language Many2Many relationship
+teachers_lang_table = db.Table(
+    'teachers_help',
+    db.Model.metadata,
+    db.Column('teacher_id', db.Integer, db.ForeignKey('teacher.id')),
+    db.Column('language_id', db.Integer, db.ForeignKey('language.id')),
+    db.Column('course_id', db.Integer, db.ForeignKey('course.id'))
+)
+
+
 
 class User(db.Model):
     """User for internal UI
@@ -1007,15 +1012,30 @@ class Teacher(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True)
+
+    first_name = db.Column(db.String(60), nullable=False)
+    last_name = db.Column(db.String(60), nullable=False)
+
     active = db.Column(db.Boolean, default=True)
     pwsalted = db.Column(db.LargeBinary(32), nullable=True)
-    #languages = db.relationship('Language', secondary='teachers', backref='teacher')
+    languages = db.relationship('Language', secondary='teachers_help')
+    courses = db.relationship('Course', secondary='teachers_help')
 
+    tag = db.Column(db.String(30), unique=False, nullable=True)  # XXX
 
-    def __init__(self, email, active):
+    def __init__(self, email, first_name, last_name, active, languages, courses, tag=None):
         self.email = email
+        self.first_name = first_name
+        self.last_name = last_name
         self.active = active
-        #self.languages = languages
+        self.languages = languages
+        self.courses = courses
+        self.tag = tag
+
+    @property
+    def full_name(self):
+        return '{} {}'.format(self.first_name, self.last_name)
+
 
 @total_ordering
 class LogEntry(db.Model):

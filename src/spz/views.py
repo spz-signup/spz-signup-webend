@@ -1240,7 +1240,7 @@ def administration_teacher():
         .group_by(models.Language) \
         .order_by(models.Language.name) \
         .from_self() '''
-
+    # TODO: show statistics, code above can be helpful
     languages = db.session.query(models.Language)
 
     return dict(language=languages)
@@ -1249,19 +1249,47 @@ def administration_teacher():
 @templated('internal/administration/teacher_overview_lang.html')
 def administration_teacher_lang(id):
     lang = models.Language.query.get_or_404(id)
-
-    return dict(language=lang)
+    teacher = models.Teacher.query.join(models.Teacher.languages).filter(models.Language.id == lang.id)
+    return dict(language=lang, teacher=teacher)
 
 
 @templated('internal/administration/add_teacher.html')
 def add_teacher(id):
     lang = models.Language.query.get_or_404(id)
-    form = forms.TeacherForm(id)
+    form = forms.AddTeacherForm(id)
 
     if form.validate_on_submit():
-        flash(_('Des isch eins form'), 'negative')
+        teacher = form.get_teacher()
+        languages = [lang]
+        if teacher is None:
+            teacher = models.Teacher(email=form.get_mail(),
+                                     first_name=form.get_first_name(),
+                                     last_name=form.get_last_name(),
+                                     active=True,
+                                     languages=languages,
+                                     courses=form.get_courses(),
+                                     )
+
+            try:
+                db.session.add(teacher)
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                flash(_('Es gab einen Fehler beim Hinzufügen des Lehrbeauftragten: %(error)s', error=e), 'negative')
+                return dict(form=form)
+
+        return render_template('internal/administration/teacher_overview_lang.html', language=lang)
 
     return dict(language=lang, form=form)
+
+
+@templated('internal/administration/edit_teacher.html')
+def teacher(id):
+    teacher_db = models.Teacher.query.get_or_404(id)
+    form = forms.TeacherForm()
+
+    form.populate(teacher_db)
+    return dict(teacher=teacher_db, form=form)
 
 
 def logout():

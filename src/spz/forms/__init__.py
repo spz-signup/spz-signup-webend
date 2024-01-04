@@ -38,7 +38,7 @@ __all__ = [
     'SignoffForm',
     'ExportCourseForm',
     'CourseForm',
-    'TeacherForm'
+    'AddTeacherForm'
 ]
 
 
@@ -858,7 +858,7 @@ class ExportCourseForm(FlaskForm):
         ]
 
 
-class TeacherForm(FlaskForm):
+class AddTeacherForm(FlaskForm):
     """Represents the form to add teachers to database.
 
     """
@@ -898,8 +898,130 @@ class TeacherForm(FlaskForm):
     )
 
     def __init__(self, language_id, *args, **kwargs):
-        super(TeacherForm, self).__init__(*args, **kwargs)
+        super(AddTeacherForm, self).__init__(*args, **kwargs)
         self.courses.choices = cached.language_to_choicelist(language_id)
+
+    def get_first_name(self):
+        return self.first_name.data
+
+    def get_last_name(self):
+        return self.last_name.data
+
+    def get_mail(self):
+        return self.mail.data
+
+    def get_tag(self):
+        return self.tag.data
+
+    def get_courses(self):
+        return [models.Course.query.get(id) for id in self.courses.data]
+
+    def get_teacher(self):
+        existing = models.Teacher.query.filter(
+            func.lower(models.Teacher.email) == func.lower(self.get_mail())
+        ).first()
+        if existing:
+            return existing
+        else:
+            return None
+
+
+class TeacherForm(FlaskForm):
+    """Represents the form for editing a teacher and his/her courses and languages.
+
+    """
+    first_name = StringField(
+        'Vorname',
+        [validators.Length(1, 60, 'Länge muss zwischen 1 und 60 Zeichen sein')]
+    )
+    last_name = StringField(
+        'Nachname',
+        [validators.Length(1, 60, 'Länge muss zwischen 1 and 60 sein')]
+    )
+    mail = StringField(
+        'E-Mail',
+        [
+            validators.Length(max=120, message='Länge muss zwischen 1 und 120 Zeichen sein'),
+            validators.EmailPlusValidator()
+        ]
+    )
+    tag = StringField(
+        'Mitarbeiterkürzel',
+        [
+            validators.Optional(),
+            validators.Length(max=30, message='Länge darf maximal 30 Zeichen sein')
+        ]
+    )
+
+    add_to_course = SelectField(
+        'Kurs hinzufügen',
+        [validators.Optional()],
+        coerce=int,
+        choices=[]
+    )
+    remove_from_course = SelectField(
+        'Kurs löschen',
+        [validators.Optional()],
+        coerce=int,
+        choices=[]
+    )
+    add_to_language = SelectField(
+        'Sprache hinzufügen',
+        [validators.Optional()],
+        coerce=int,
+        choices=[]
+    )
+    remove_from_language = SelectField(
+        'Sprache löschen',
+        [validators.Optional()],
+        coerce=int,
+        choices=[]
+    )
+
+    send_mail = BooleanField(
+        'Mail verschicken'
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(TeacherForm, self).__init__(*args, **kwargs)
+        self.teacher = None
+
+        self.add_to_course.choices = cached.all_courses_to_choicelist()
+        self.remove_from_course.choices = cached.all_courses_to_choicelist()
+
+        self.add_to_language.choices = cached.all_languages_to_choicelist()
+        self.remove_from_language.choices = cached.all_languages_to_choicelist()
+
+    def populate(self, teacher):
+        self.teacher = teacher
+        self.first_name.data = self.teacher.first_name
+        self.last_name.data = self.teacher.last_name
+        self.mail.data = self.teacher.email
+        self.tag.data = self.teacher.tag
+
+    def get_teacher(self):
+        return self.teacher
+
+    def get_courses(self):
+        return self.teacher.courses if self.teacher else None
+
+    def get_languages(self):
+        return self.teacher.languages if self.teacher else None
+
+    def get_add_to_course(self):
+        return models.Course.query.get(self.add_to_course.data) if self.add_to_course.data else None
+
+    def get_remove_from_course(self):
+        return models.Course.query.get(self.remove_from_course.data) if self.remove_from_course.data else None
+
+    def get_add_to_language(self):
+        return models.Language.query.get(self.add_to_language) if self.add_to_language.data else None
+
+    def get_remove_from_language(self):
+        return models.Language.query.get(self.add_to_language.data) if self.add_to_language else None
+
+    def get_send_mail(self):
+        return self.send_mail.data
 
 
 class CourseForm(FlaskForm):
