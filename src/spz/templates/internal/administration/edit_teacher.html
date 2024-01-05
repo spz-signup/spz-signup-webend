@@ -7,6 +7,7 @@
 
 
 {% block internal_body %}
+    <a href="{{ url_for('teacher', id=teacher.id) }}">zur Lehrbeauftragtenansicht von {{ teacher.full_name }}</a>
     <div class="row">
         <form class="ui form" method="post">
             {{ csrf_field() }}
