@@ -195,7 +195,7 @@ routes = [
     ('/internal/administration/teacher', views.administration_teacher, ['GET', 'POST']),
     ('/internal/administration/teacher/<int:id>', views.administration_teacher_lang, ['GET', 'POST']),
     ('/internal/administration/teacher/<int:id>/add', views.add_teacher, ['GET', 'POST']),
-    ('/internal/administration/teacher/edit/<int:id>', views.teacher, ['GET', 'POST'])
+    ('/internal/administration/teacher/edit/<int:id>', views.edit_teacher, ['GET', 'POST'])
 
 
 ]

@@ -129,6 +129,8 @@ def all_courses_to_choicelist():
         for course in courses
     ]
 
+
+"""
 @cache.cached(key_prefix='all_languages')
 def all_languages_to_choicelist():
     languages = models.Language.query \
@@ -138,3 +140,4 @@ def all_languages_to_choicelist():
         (language.id, '{0}'.format(language.name))
         for language in languages
     ]
+"""

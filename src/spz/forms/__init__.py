@@ -38,7 +38,8 @@ __all__ = [
     'SignoffForm',
     'ExportCourseForm',
     'CourseForm',
-    'AddTeacherForm'
+    'AddTeacherForm',
+    'EditTeacherForm'
 ]
 
 
@@ -564,7 +565,7 @@ class NotificationForm(FlaskForm):
 
     @staticmethod
     def _sender_choices():
-        addresses = [current_user.email] + app.config['REPLY_TO']
+        addresses = [current_user.mail] + app.config['REPLY_TO']
         # Start index by 1 instead of 0, for the form submitting to be consistent
         return [(idx, mail) for (idx, mail) in enumerate(addresses, 1)]
 
@@ -918,7 +919,7 @@ class AddTeacherForm(FlaskForm):
 
     def get_teacher(self):
         existing = models.Teacher.query.filter(
-            func.lower(models.Teacher.email) == func.lower(self.get_mail())
+            func.lower(models.Teacher.mail) == func.lower(self.get_mail())
         ).first()
         if existing:
             return existing
@@ -926,7 +927,7 @@ class AddTeacherForm(FlaskForm):
             return None
 
 
-class TeacherForm(FlaskForm):
+class EditTeacherForm(FlaskForm):
     """Represents the form for editing a teacher and his/her courses and languages.
 
     """
@@ -965,6 +966,7 @@ class TeacherForm(FlaskForm):
         coerce=int,
         choices=[]
     )
+    """
     add_to_language = SelectField(
         'Sprache hinzufügen',
         [validators.Optional()],
@@ -977,26 +979,27 @@ class TeacherForm(FlaskForm):
         coerce=int,
         choices=[]
     )
-
+    """
     send_mail = BooleanField(
         'Mail verschicken'
     )
 
     def __init__(self, *args, **kwargs):
-        super(TeacherForm, self).__init__(*args, **kwargs)
+        super(EditTeacherForm, self).__init__(*args, **kwargs)
         self.teacher = None
 
         self.add_to_course.choices = cached.all_courses_to_choicelist()
         self.remove_from_course.choices = cached.all_courses_to_choicelist()
-
+        """
         self.add_to_language.choices = cached.all_languages_to_choicelist()
         self.remove_from_language.choices = cached.all_languages_to_choicelist()
+        """
 
     def populate(self, teacher):
         self.teacher = teacher
         self.first_name.data = self.teacher.first_name
         self.last_name.data = self.teacher.last_name
-        self.mail.data = self.teacher.email
+        self.mail.data = self.teacher.mail
         self.tag.data = self.teacher.tag
 
     def get_teacher(self):
@@ -1006,7 +1009,16 @@ class TeacherForm(FlaskForm):
         return self.teacher.courses if self.teacher else None
 
     def get_languages(self):
-        return self.teacher.languages if self.teacher else None
+        language_ids = []
+        languages = []
+        if self.teacher is not None:
+            for course in self.teacher.courses:
+                if course.language_id not in language_ids:
+                    language_ids.append(course.language_id)
+                    db_lang = models.Language.query.get_or_404(course.language_id)
+                    languages.append(db_lang)
+
+        return languages if languages else None
 
     def get_add_to_course(self):
         return models.Course.query.get(self.add_to_course.data) if self.add_to_course.data else None
@@ -1014,11 +1026,13 @@ class TeacherForm(FlaskForm):
     def get_remove_from_course(self):
         return models.Course.query.get(self.remove_from_course.data) if self.remove_from_course.data else None
 
+    """
     def get_add_to_language(self):
         return models.Language.query.get(self.add_to_language) if self.add_to_language.data else None
 
     def get_remove_from_language(self):
         return models.Language.query.get(self.add_to_language.data) if self.add_to_language else None
+    """
 
     def get_send_mail(self):
         return self.send_mail.data

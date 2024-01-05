@@ -854,7 +854,6 @@ teachers_lang_table = db.Table(
     'teachers_help',
     db.Model.metadata,
     db.Column('teacher_id', db.Integer, db.ForeignKey('teacher.id')),
-    db.Column('language_id', db.Integer, db.ForeignKey('language.id')),
     db.Column('course_id', db.Integer, db.ForeignKey('course.id'))
 )
 
@@ -1011,30 +1010,41 @@ class Teacher(db.Model):
     __tablename__ = 'teacher'
 
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True)
+    mail = db.Column(db.String(120), unique=True)
 
     first_name = db.Column(db.String(60), nullable=False)
     last_name = db.Column(db.String(60), nullable=False)
 
     active = db.Column(db.Boolean, default=True)
     pwsalted = db.Column(db.LargeBinary(32), nullable=True)
-    languages = db.relationship('Language', secondary='teachers_help')
+    #languages = db.relationship('Language', secondary='teachers_help')
     courses = db.relationship('Course', secondary='teachers_help')
 
-    tag = db.Column(db.String(30), unique=False, nullable=True)  # XXX
+    tag = db.Column(db.String(30), unique=False, nullable=True)
 
-    def __init__(self, email, first_name, last_name, active, languages, courses, tag=None):
-        self.email = email
+    def __init__(self, email, first_name, last_name, active, courses, tag=None):
+        self.mail = email
         self.first_name = first_name
         self.last_name = last_name
         self.active = active
-        self.languages = languages
         self.courses = courses
         self.tag = tag
 
     @property
     def full_name(self):
         return '{} {}'.format(self.first_name, self.last_name)
+
+    def remove_course(self, course_to_remove):
+        remove = [course for course in self.courses if course == course_to_remove]
+        for course in remove:
+            self.courses.remove(course)
+        return len(remove) > 0
+
+    def in_course(self, course):
+        return course in self.courses
+
+    def add_course(self, course):
+        self.courses.append(course)
 
 
 @total_ordering
