@@ -28,7 +28,6 @@ from jinja2 import Markup
 from spz import assets
 from spz.config import Development, Production, Testing
 
-
 class CustomFlask(Flask):
     """Internal customizations to the Flask class.
 
@@ -132,6 +131,7 @@ ckeditor = CKEditor(app)
 
 # Register all views here
 from spz import views, errorhandlers, pdf  # NOQA
+from spz.administration import admin_views
 
 routes = [
     ('/', views.index, ['GET', 'POST']),
@@ -192,10 +192,11 @@ routes = [
     ('/internal/logout', views.logout, ['GET', 'POST']),
     ('/internal/auth/reset_password/<string:reset_token>', views.reset_password, ['GET', 'POST']),
 
-    ('/internal/administration/teacher', views.administration_teacher, ['GET', 'POST']),
-    ('/internal/administration/teacher/<int:id>', views.administration_teacher_lang, ['GET', 'POST']),
-    ('/internal/administration/teacher/<int:id>/add', views.add_teacher, ['GET', 'POST']),
-    ('/internal/administration/teacher/edit/<int:id>', views.edit_teacher, ['GET', 'POST'])
+    ('/internal/administration/teacher', admin_views.administration_teacher, ['GET', 'POST']),
+    ('/internal/administration/teacher/<int:id>', admin_views.administration_teacher_lang, ['GET', 'POST']),
+    ('/internal/administration/teacher/<int:id>/add', admin_views.add_teacher, ['GET', 'POST']),
+    ('/internal/administration/teacher/edit/<int:id>', admin_views.edit_teacher, ['GET', 'POST']),
+    ('/internal/teacher/<int:id>', admin_views.teacher, ['GET', 'POST'])
 
 
 ]

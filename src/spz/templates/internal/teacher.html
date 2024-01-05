@@ -1,0 +1,39 @@
+{% extends 'internal/internal.html' %}
+{% from 'formhelpers.html' import csrf_field, render_submit, attendance_status, render_boolean %}
+
+{% block caption %}
+    Lehrbeauftragte*r: <a href="{{ url_for('teacher', id=teacher.id) }}">{{ teacher.full_name }}</a>
+{% endblock caption %}
+
+
+{% block internal_body %}
+    <h2>Meine Kurse</h2>
+    <div class="row">
+        <table class="ui selectable sortable compact small striped table">
+            <thead>
+            <tr>
+                <th>Kurs</th>
+                <th>Teilnehmer</th>
+                <th>Note</th>
+                <th>Anwesenheit</th>
+                <th>Export</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for course in teacher.courses %}
+                <tr>
+                    <td><a
+                        href="{{ url_for('course', id=course.id) }}">{{ course.full_name }}</a>
+                    </td>
+                    <td>
+                        0
+                    </td>
+                    <td>Under construction</td>
+                    <td>Under construction</td>
+                    <td>Anwesenheitsliste Notenliste</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock internal_body %}
