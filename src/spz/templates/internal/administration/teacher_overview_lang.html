@@ -24,7 +24,7 @@
         <a href="{{ url_for('add_teacher', id=language.id) }}">
             <button class="ui basic button">
                 <i class="icon user"></i>
-                Lehrbeauftragte hinzufügen
+                Lehrbeauftragte*n neu erstellen
             </button>
         </a>
     </div>
@@ -42,16 +42,18 @@
             {% for t in teacher %}
                 <tr>
                     <td><a
-                        href="{{ url_for('teacher', id=t.id) }}"><strong>{{ t.full_name }}</strong></a>
+                        href="{{ url_for('edit_teacher', id=t.id) }}"><strong>{{ t.full_name }}</strong></a>
 
                     </td>
                     <td>
                         {% for course in t.courses %}
-                            <a href="{{ url_for('course', id=course.id) }}">
-                                <button
-                                    class="ui button"> {{ course.full_name }}
-                                </button>
-                            </a>
+                            {% if course.language_id == language.id %}
+                                <a href="{{ url_for('course', id=course.id) }}">
+                                    <button
+                                        class="ui button"> {{ course.full_name }}
+                                    </button>
+                                </a>
+                            {% endif %}
                         {% endfor %}
                     </td>
                     <td>

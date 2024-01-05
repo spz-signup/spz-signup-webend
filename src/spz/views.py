@@ -33,6 +33,8 @@ from spz.oidc import oidc_callback, oidc_url, oidc_get_resources
 from spz.pdf_zip import PdfZipWriter, html_response
 from spz.pdf import generate_participation_cert
 
+from spz.administration import TeacherManagement
+
 
 def check_precondition_with_auth(cond, msg, auth=False):
     """Check precondition and flash message if not satisfied.
@@ -1247,7 +1249,7 @@ def administration_teacher():
 @templated('internal/administration/teacher_overview_lang.html')
 def administration_teacher_lang(id):
     lang = models.Language.query.get_or_404(id)
-    teacher = models.Teacher.query.join(models.Teacher.languages).filter(models.Language.id == lang.id)
+    teacher = models.Teacher.query.join(models.Teacher.courses).filter(models.Course.language_id == lang.id)
     return dict(language=lang, teacher=teacher)
 
 
@@ -1258,13 +1260,23 @@ def add_teacher(id):
 
     if form.validate_on_submit():
         teacher = form.get_teacher()
-        languages = [lang]
+
+        # check, if course is already assigned to a teacher
+        courses = form.get_courses()
+        try:
+            for course in courses:
+                # if course is not available, error is thrown
+                TeacherManagement.check_availability(course)
+        except Exception as e:
+            flash(_('Der Kurs ist schon vergeben. Es kann nur eine*n Lehrbeauftragte*n je Kurs geben: %(error)s',
+                    error=e), 'negative')
+            return dict(language=lang, form=form)
+
         if teacher is None:
             teacher = models.Teacher(email=form.get_mail(),
                                      first_name=form.get_first_name(),
                                      last_name=form.get_last_name(),
                                      active=True,
-                                     languages=languages,
                                      courses=form.get_courses(),
                                      )
 
@@ -1282,12 +1294,63 @@ def add_teacher(id):
 
 
 @templated('internal/administration/edit_teacher.html')
-def teacher(id):
-    teacher_db = models.Teacher.query.get_or_404(id)
-    form = forms.TeacherForm()
+def edit_teacher(id):
+    teacher = models.Teacher.query.get_or_404(id)
+    form = forms.EditTeacherForm()
 
-    form.populate(teacher_db)
-    return dict(teacher=teacher_db, form=form)
+    if form.validate_on_submit():
+
+        try:
+            teacher.first_name = form.first_name.data
+            teacher.last_name = form.last_name.data
+            teacher.mail = form.mail.data
+            teacher.tag = form.tag.data
+
+            db.session.commit()
+            flash(_('Der/die Lehrbeauftragte wurde aktualisiert'), 'success')
+
+            add_to_course = form.get_add_to_course()
+            remove_from_course = form.get_remove_from_course()
+
+            notify = form.get_send_mail()
+
+            if remove_from_course:
+                try:
+                    success = TeacherManagement.remove_course(teacher, remove_from_course, notify)
+                    flash(
+                        _('Der/die Lehrbeauftragte wurde vom Kurs "(%(name)s)" entfernt',
+                          name=remove_from_course.full_name),
+                        'success')
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    flash(_('Der/die Lehrbeauftragte konnte nicht aus dem Kurs entfernt werden: %(error)s', error=e),
+                          'negative')
+
+            if add_to_course:
+                try:
+                    TeacherManagement.add_course(teacher, add_to_course, notify)
+                    flash(
+                        _('Der/die Lehrbeauftragte wurde zum Kurs {} hinzugefügt.'.format(add_to_course.full_name)),
+                        'success'
+                    )
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    flash(
+                        _('Der/die Lehrbeauftragte konnte nicht für den Kurs eingetragen werden: %(error)s',
+                          error=e),
+                        'negative')
+
+            return redirect(url_for('edit_teacher', id=teacher.id))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(_('Der Bewerber konnte nicht aktualisiert werden: %(error)s', error=e), 'negative')
+            return dict(form=form)
+
+    form.populate(teacher)
+    return dict(teacher=teacher, form=form)
 
 
 def logout():
