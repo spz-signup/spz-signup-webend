@@ -155,3 +155,19 @@ def teacher(id):
     teacher_db = models.Teacher.query.get_or_404(id)
 
     return dict(teacher=teacher_db)
+
+
+@templated('internal/administration/grade.html')
+def grade(id, course_id):
+    teacher_db = models.Teacher.query.get_or_404(id)
+    course = models.Course.query.get_or_404(course_id)
+
+    return dict(teacher=teacher_db, course=course)
+
+
+@templated('internal/administration/attendances.html')
+def attendances(id, course_id):
+    teacher_db = models.Teacher.query.get_or_404(id)
+    course = models.Course.query.get_or_404(course_id)
+
+    return dict(teacher=teacher_db, course=course)
