@@ -14,9 +14,11 @@
             <tr>
                 <th>Kurs</th>
                 <th>Teilnehmer</th>
-                <th>Note</th>
-                <th>Anwesenheit</th>
-                <th>Export</th>
+                <th>Note eintragen</th>
+                <th>Anwesenheit eintragen</th>
+                <th class="collapsing">Kurs-L.</th>
+                <th class="collapsing">Anw.-L.</th>
+                <th class="collapsing">Daten</th>
             </tr>
             </thead>
             <tbody>
@@ -26,11 +28,23 @@
                         href="{{ url_for('course', id=course.id) }}">{{ course.full_name }}</a>
                     </td>
                     <td>
-                        0
+                        {{ course.count_attendances() }} / {{ course.limit }}
                     </td>
-                    <td>Under construction</td>
-                    <td>Under construction</td>
-                    <td>Anwesenheitsliste Notenliste</td>
+                    <td class="collapsing"><a href="{{ url_for('grade', id=teacher.id, course_id=course.id) }}">
+                        <button type="button" class="ui button">Eintrag Note</button>
+                    </a></td>
+                    <td class="collapsing"><a href="{{ url_for('attendances', id=teacher.id, course_id=course.id) }}">
+                        <button type="button" class="ui button">Anwesenheiten</button>
+                    </a></td>
+                    <td class="collapsing"><a href="{{ url_for('print_course', course_id=course.id) }}">
+                        <button type="button" class="ui button">PDF</button>
+                    </a></td>
+                    <td class="collapsing"><a href="{{ url_for('print_course_presence', course_id=course.id) }}">
+                        <button type="button" class="ui button">PDF</button>
+                    </a></td>
+                    <td class="collapsing"><a href="{{ url_for('export', type='course', id=course.id) }}">
+                        <button type="button" class="ui button">Export</button>
+                    </a></td>
                 </tr>
             {% endfor %}
             </tbody>
