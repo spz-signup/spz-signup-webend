@@ -28,6 +28,7 @@ from jinja2 import Markup
 from spz import assets
 from spz.config import Development, Production, Testing
 
+
 class CustomFlask(Flask):
     """Internal customizations to the Flask class.
 
@@ -128,7 +129,6 @@ babel = Babel(app)
 # Rich Text Editor setup
 ckeditor = CKEditor(app)
 
-
 # Register all views here
 from spz import views, errorhandlers, pdf  # NOQA
 from spz.administration import admin_views
@@ -196,9 +196,9 @@ routes = [
     ('/internal/administration/teacher/<int:id>/add', admin_views.add_teacher, ['GET', 'POST']),
     ('/internal/administration/teacher/edit/<int:id>', admin_views.edit_teacher, ['GET', 'POST']),
     ('/internal/teacher/<int:id>', admin_views.teacher, ['GET', 'POST']),
-    ('/internal/teacher/<int:id>/grade/<int:course_id>', admin_views.grade, ['GET', 'POST']),
+    ('/internal/teacher/<int:id>/grades/<int:course_id>', admin_views.grade, ['GET', 'POST']),
+    ('/internal/teacher/<int:id>/grades/<int:course_id>/edit', admin_views.edit_grade, ['GET', 'POST']),
     ('/internal/teacher/<int:id>/attendance/<int:course_id>', admin_views.attendances, ['GET', 'POST'])
-
 
 ]
 

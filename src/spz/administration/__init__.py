@@ -58,12 +58,6 @@ class TeacherManagement:
     def check_availability(course):
         teachers = models.Teacher.query.order_by(models.Teacher.id).all()
         for teacher in teachers:
-            string = ""
-            for c in teacher.courses:
-                string += c.full_name
-                string += ', '
-            flash(teacher.full_name + " | " + string)
-        for teacher in teachers:
             print(teacher.full_name + " " + course.full_name + " | " + str(teacher.in_course(course)))
             if teacher.in_course(course):
                 raise ValueError('{0} ist schon vergeben an {1}.'.format(course.full_name, teacher.full_name))

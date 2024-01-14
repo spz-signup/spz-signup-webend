@@ -205,6 +205,8 @@ class Applicant(db.Model):
     discounted = db.Column(db.Boolean)
     is_student = db.Column(db.Boolean)
 
+    grade = db.Column(db.Integer)  # TODO store grade encrypted
+
     # See {add,remove}_course_attendance member functions below
     attendances = db.relationship("Attendance", backref="applicant", cascade='all, delete-orphan', lazy="joined")
 
@@ -843,7 +845,6 @@ teachers_lang_table = db.Table(
 )
 
 
-
 class User(db.Model):
     """User for internal UI
 
@@ -971,7 +972,7 @@ class Teacher(db.Model):
 
     active = db.Column(db.Boolean, default=True)
     pwsalted = db.Column(db.LargeBinary(32), nullable=True)
-    #languages = db.relationship('Language', secondary='teachers_help')
+    # languages = db.relationship('Language', secondary='teachers_help')
     courses = db.relationship('Course', secondary='teachers_help')
 
     tag = db.Column(db.String(30), unique=False, nullable=True)

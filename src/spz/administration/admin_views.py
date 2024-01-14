@@ -165,6 +165,19 @@ def grade(id, course_id):
     return dict(teacher=teacher_db, course=course)
 
 
+@templated('internal/administration/edit_grade.html')
+def edit_grade(id, course_id):
+    teacher_db = models.Teacher.query.get_or_404(id)
+    course = models.Course.query.get_or_404(course_id)
+
+    form = forms.GradeForm()
+
+    if form.validate_on_submit():
+        grade = form.grade.data
+
+    return dict(teacher=teacher_db, course=course, form=form)
+
+
 @templated('internal/administration/attendances.html')
 def attendances(id, course_id):
     teacher_db = models.Teacher.query.get_or_404(id)

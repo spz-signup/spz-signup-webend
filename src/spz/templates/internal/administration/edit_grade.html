@@ -1,0 +1,80 @@
+{% extends 'internal/internal.html' %}
+{% from 'formhelpers.html' import csrf_field, render_submit, attendance_status, render_boolean, render_input %}
+
+{% block caption %}
+    Kurs: <a href="{{ url_for('language', id=course.language.id) }}">{{ course.language.name }}</a> {{ course.level }}
+    {{ course.alternative }}
+{% endblock caption %}
+
+
+{% block internal_body %}
+    <div>
+        <a href=" {{ url_for('grade', id=teacher.id, course_id=course.id) }} ">
+            <button type="button" class="ui button">Zurück zur Notenübersicht</button>
+        </a>
+    </div>
+    <div class="row">
+        <div class="ui message">
+            <div class="header">Infos</div>
+            <dl>
+                <dt>Sprache &gt; exaktes Kurs-Level{% if course.alternative %} &gt;
+                    Alternative/Variante{% endif %}</dt>
+                <dd>{{ course.language.name }} &gt;
+                    {{ course.level }}{% if course.alternative %} &gt; {{ course.alternative }}{% endif %}</dd>
+                <dt>Kursgröße (maximal)</dt>
+                <dd>{{ course.limit }} Teilnehmer</dd>
+                <dt>Kosten (für nicht-gratis Teilnehmer)</dt>
+                <dd>{{ course.price }} €</dd>
+                {% if course.rating_lowest != 0 or course.rating_highest != 100 %}
+                    <dt>Benötigtes Testergebnis (inklusive Grenzen)</dt>
+                    <dd>{{ course.rating_lowest }}% &mdash; {{ course.rating_highest }}%</dd>
+                {% endif %}
+                <dt>Warteliste</dt>
+                <dd>{% if course.has_waiting_list %}Ja{% else %}Nein{% endif %}</dd>
+            </dl>
+        </div>
+    </div>
+    <div class="ui section divider"></div>
+    <div class="row">
+        <h2>Note Eintragen</h2>
+    </div>
+    <form>
+        <div class="row">
+            <table class="ui selectable sortable compact small striped table">
+                <thead>
+                <tr>
+                    <th>Vorname</th>
+                    <th>Nachname</th>
+                    <th>E-Mail</th>
+                    <th>Identifikation</th>
+                    <th>Status</th>
+                    <th>Note</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for attendance in course.attendances %}
+                    <tr>
+                        <td><a
+                            href="{{ url_for('applicant', id=attendance.applicant.id) }}">{{ attendance.applicant.first_name }}</a>
+                        </td>
+                        <td><a
+                            href="{{ url_for('applicant', id=attendance.applicant.id) }}">{{ attendance.applicant.last_name }}</a>
+                        </td>
+                        <td><a href="mailto:{{ attendance.applicant.mail }}">{{ attendance.applicant.mail }}</a></td>
+                        <td>{{ attendance.applicant.tag }}</td>
+                        <td>
+                            <a href="{{ url_for('status', applicant_id=attendance.applicant.id, course_id=attendance.course.id) }}">
+                                {{ attendance_status(attendance) }}
+                            </a>
+                        </td>
+                        <td>
+                            {{ render_input(field=form.grade,width=12) }}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </form>
+
+{% endblock internal_body %}
