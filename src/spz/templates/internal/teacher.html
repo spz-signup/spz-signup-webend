@@ -31,7 +31,7 @@
                         {{ course.count_attendances() }} / {{ course.limit }}
                     </td>
                     <td class="collapsing"><a href="{{ url_for('grade', id=teacher.id, course_id=course.id) }}">
-                        <button type="button" class="ui button">Eintrag Note</button>
+                        <button type="button" class="ui button">Notenübersicht</button>
                     </a></td>
                     <td class="collapsing"><a href="{{ url_for('attendances', id=teacher.id, course_id=course.id) }}">
                         <button type="button" class="ui button">Anwesenheiten</button>

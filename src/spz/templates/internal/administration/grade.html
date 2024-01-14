@@ -1,5 +1,5 @@
 {% extends 'internal/internal.html' %}
-{% from 'formhelpers.html' import csrf_field, render_submit, attendance_status, render_boolean %}
+{% from 'formhelpers.html' import csrf_field, render_submit, attendance_status, render_boolean, render_input %}
 
 {% block caption %}
     Kurs: <a href="{{ url_for('language', id=course.language.id) }}">{{ course.language.name }}</a> {{ course.level }}
@@ -9,7 +9,9 @@
 
 {% block internal_body %}
     <div>
-        <a href=" {{ url_for('teacher', id=teacher.id) }} "><button type="button" class="ui button">Zurück zu meinen Kursen</button></a>
+        <a href=" {{ url_for('teacher', id=teacher.id) }} ">
+            <button type="button" class="ui button">Zurück zu meinen Kursen</button>
+        </a>
     </div>
     <div class="row">
         <div class="ui message">
@@ -33,8 +35,15 @@
         </div>
     </div>
     <div class="ui section divider"></div>
-    <div class="row">
-        <h2>Note Eintragen</h2>
+    <div class="three column row">
+        <div class="left floated column">
+            <h2>Notenübersicht</h2>
+        </div>
+        <div class="right floated column">
+            <a href=" {{ url_for('edit_grade', id=teacher.id, course_id=course.id) }} ">
+                <button type="button" class="ui button"><i class="edit icon"></i>Noten ändern</button>
+            </a>
+        </div>
     </div>
     <div class="row">
         <table class="ui selectable sortable compact small striped table">
@@ -65,7 +74,11 @@
                         </a>
                     </td>
                     <td>
-                        we need a number field here
+                        {% if attendance.applicant.grade %}
+                            <b>{{ attendance.applicant.grade }}</b>
+                        {% else %}
+                            -
+                        {% endif %}
                     </td>
                 </tr>
             {% endfor %}

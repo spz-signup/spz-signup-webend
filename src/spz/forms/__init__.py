@@ -39,7 +39,8 @@ __all__ = [
     'ExportCourseForm',
     'CourseForm',
     'AddTeacherForm',
-    'EditTeacherForm'
+    'EditTeacherForm',
+    'GradeForm'
 ]
 
 
@@ -966,20 +967,7 @@ class EditTeacherForm(FlaskForm):
         coerce=int,
         choices=[]
     )
-    """
-    add_to_language = SelectField(
-        'Sprache hinzufügen',
-        [validators.Optional()],
-        coerce=int,
-        choices=[]
-    )
-    remove_from_language = SelectField(
-        'Sprache löschen',
-        [validators.Optional()],
-        coerce=int,
-        choices=[]
-    )
-    """
+
     send_mail = BooleanField(
         'Mail verschicken'
     )
@@ -1042,3 +1030,10 @@ class CourseForm(FlaskForm):
     """ A form to select different participants in that specific course
     """
     identifier = StringField()
+
+
+class GradeForm(FlaskForm):
+    grade = IntegerField(
+        'Note',
+        [validators.Length(max=3, message='Länge darf maximal 3 Zeichen sein')]
+    )
