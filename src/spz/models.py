@@ -826,13 +826,23 @@ class Approval(db.Model):
             ).all()
 
 
-# helper table for User<--[admin]-->Language N:M relationship
-admin_table = db.Table(
-    'admin',
-    db.Model.metadata,
-    db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
-    db.Column('language_id', db.Integer, db.ForeignKey('language.id')),
-)
+class Role(db.Model):
+    SUPERUSER = 'SUPERUSER'
+    LANGUAGE_ADMIN = 'LANGUAGE_ADMIN'
+
+    __tablename__ = 'role'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=True)
+    role = db.Column('role', db.String)
+
+    course = db.relationship('Course')
+
+    def __init__(self, role, user=None, course=None):
+        self.user = user
+        self.course = course
+        self.role = role
 
 
 class User(db.Model):
@@ -843,7 +853,6 @@ class User(db.Model):
        :param active: Describes if user is able to login.
        :param superuser: Users with that property have unlimited access.
        :param pwsalted: Salted password data.
-       :param languages: For non-superusers that are the languages they have access to.
     """
 
     __tablename__ = 'user'
@@ -851,17 +860,15 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True)
     active = db.Column(db.Boolean, default=True)
-    superuser = db.Column(db.Boolean, default=False)
     pwsalted = db.Column(db.LargeBinary(32), nullable=True)
-    languages = db.relationship('Language', secondary='admin', backref='admins')
+    roles = db.relationship('Role')
 
-    def __init__(self, email, active, superuser, languages):
+    def __init__(self, email, active, roles):
         """Create new user without password."""
         self.email = email
         self.active = active
-        self.superuser = superuser
         self.pwsalted = None
-        self.languages = languages
+        self.roles = roles
 
     def reset_password(self):
         """Reset password to random one and return it."""
