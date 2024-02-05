@@ -897,6 +897,10 @@ class User(db.Model):
         return any(role.role == Role.SUPERUSER for role in self.roles)
 
     @property
+    def admin_courses(self):
+        return (role.course for role in [r for r in self.roles if r.role == Role.COURSE_ADMIN])
+
+    @property
     def is_active(self):
         """Report if user is active."""
         return self.active
@@ -970,19 +974,19 @@ class LogEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     timestamp = db.Column(db.DateTime(), nullable=False)
     msg = db.Column(db.String(140), nullable=False)
-    language = db.relationship("Language")  # no backref
-    language_id = db.Column(db.Integer, db.ForeignKey('language.id'))
+    course = db.relationship("Course")  # no backref
+    course_id = db.Column(db.Integer, db.ForeignKey('course.id'))
 
-    def __init__(self, timestamp, msg, language=None):
+    def __init__(self, timestamp, msg, course=None):
         self.timestamp = timestamp
         self.msg = msg
-        self.language = language
+        self.course = course
 
     def __repr__(self):
         msg = self.msg
         if len(msg) > 10:
             msg = msg[:10] + '...'
-        return '<LogEntry {} "{}" {}>'.format(self.timestamp, msg, self.language)
+        return '<LogEntry {} "{}" {}>'.format(self.timestamp, msg, self.course)
 
     def __lt__(self, other):
         return self.timestamp < other.timestamp
@@ -993,9 +997,9 @@ class LogEntry(db.Model):
         entries = LogEntry.query.order_by(LogEntry.timestamp.desc()).all()
 
         if not user.is_superuser and limit is not None:
-            entries = [x for x in entries if x.language is None or x.language in user.languages][:limit]
+            entries = [x for x in entries if x.course is None or x.course in user.admin_courses][:limit]
         elif not user.is_superuser:
-            entries = [x for x in entries if x.language is None or x.language in user.languages]
+            entries = [x for x in entries if x.course is None or x.course in user.admin_courses]
         elif limit is not None:
             entries = entries[:limit]
 
