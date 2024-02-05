@@ -818,7 +818,7 @@ def course(id):
 
             return html_response(zip_file, "Teilnahmescheine_{}".format(course.full_name))
 
-    if form.identifier.data == 'form-delete' and form_delete.validate_on_submit() and current_user.superuser:
+    if form.identifier.data == 'form-delete' and form_delete.validate_on_submit() and current_user.is_superuser:
         try:
             deleted = 0
             name = course.full_name
@@ -1136,7 +1136,7 @@ def preterm():
 
     token = None
 
-    if form.validate_on_submit() and current_user.superuser:
+    if form.validate_on_submit() and current_user.is_superuser:
         token = form.get_token()
 
         try:

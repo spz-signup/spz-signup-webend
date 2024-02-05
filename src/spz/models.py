@@ -887,7 +887,11 @@ class User(db.Model):
 
     def can_edit_course(self, course):
         """Check if user can edit/admin a specific course."""
-        return self.superuser or (course.language in self.languages)
+        return self.is_superuser or (course.language in self.languages)
+
+    @property
+    def is_superuser(self):
+        return any(role.role == Role.SUPERUSER for role in self.roles)
 
     @property
     def is_active(self):
@@ -985,9 +989,9 @@ class LogEntry(db.Model):
         """Returns all log entries relevant for the given user."""
         entries = LogEntry.query.order_by(LogEntry.timestamp.desc()).all()
 
-        if not user.superuser and limit is not None:
+        if not user.is_superuser and limit is not None:
             entries = [x for x in entries if x.language is None or x.language in user.languages][:limit]
-        elif not user.superuser:
+        elif not user.is_superuser:
             entries = [x for x in entries if x.language is None or x.language in user.languages]
         elif limit is not None:
             entries = entries[:limit]

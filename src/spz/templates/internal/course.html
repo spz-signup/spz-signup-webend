@@ -82,7 +82,7 @@
             <button type="submit" value="submit-pdf" class="fluid ui positive button" name="submit-button">PDF Generieren</button>
         </div>
     </form>
-    {% if current_user.superuser %}
+    {% if current_user.is_superuser %}
         <div class="row">
             <form id="delete-course-form" class="ui form" method="post">
                 {{ csrf_field() }}
