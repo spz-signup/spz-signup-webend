@@ -119,7 +119,7 @@ def insert_users(json_file):
                 lang = Language.query.filter(Language.name == lang_name).first()
                 if lang:
                     for course in lang.courses:
-                        roles.append(Role(course=course, role=Role.LANGUAGE_ADMIN))
+                        roles.append(Role(course=course, role=Role.COURSE_ADMIN))
                 else:
                     print("  WARNING: language {} does not exist (user={})".format(lang_name, user["email"]))
             if user.pop('superuser'):

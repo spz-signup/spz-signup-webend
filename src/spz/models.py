@@ -828,7 +828,7 @@ class Approval(db.Model):
 
 class Role(db.Model):
     SUPERUSER = 'SUPERUSER'
-    LANGUAGE_ADMIN = 'LANGUAGE_ADMIN'
+    COURSE_ADMIN = 'COURSE_ADMIN'
 
     __tablename__ = 'role'
 
