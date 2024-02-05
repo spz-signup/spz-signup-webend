@@ -887,7 +887,10 @@ class User(db.Model):
 
     def can_edit_course(self, course):
         """Check if user can edit/admin a specific course."""
-        return self.is_superuser or (course.language in self.languages)
+        return self.is_superuser or self.is_course_admin(course)
+
+    def is_course_admin(self, course):
+        return any(role.role == Role.COURSE_ADMIN and role.course == course for role in self.roles)
 
     @property
     def is_superuser(self):
