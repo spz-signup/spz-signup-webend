@@ -744,7 +744,7 @@ def notifications():
 @login_required
 @templated('internal/export.html')
 def export(type, id):
-    form = forms.ExportCourseForm(languages=current_user.languages)
+    form = forms.ExportCourseForm(languages=models.Language.query.all())
 
     if form.validate_on_submit():
         return export_course_list(
