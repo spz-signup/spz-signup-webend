@@ -858,6 +858,9 @@ class User(db.Model):
     __tablename__ = 'user'
 
     id = db.Column(db.Integer, primary_key=True)
+    first_name = db.Column(db.String(120), nullable=True)
+    last_name = db.Column(db.String(120), nullable=True)
+    tag = db.Column(db.String(30), unique=False, nullable=True)
     email = db.Column(db.String(120), unique=True)
     active = db.Column(db.Boolean, default=True)
     pwsalted = db.Column(db.LargeBinary(32), nullable=True)
