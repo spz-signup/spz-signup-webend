@@ -826,13 +826,23 @@ class Approval(db.Model):
             ).all()
 
 
-# helper table for User<--[admin]-->Language N:M relationship
-admin_table = db.Table(
-    'admin',
-    db.Model.metadata,
-    db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
-    db.Column('language_id', db.Integer, db.ForeignKey('language.id')),
-)
+class Role(db.Model):
+    SUPERUSER = 'SUPERUSER'
+    COURSE_ADMIN = 'COURSE_ADMIN'
+
+    __tablename__ = 'role'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=True)
+    role = db.Column('role', db.String)
+
+    course = db.relationship('Course')
+
+    def __init__(self, role, user=None, course=None):
+        self.user = user
+        self.course = course
+        self.role = role
 
 
 class User(db.Model):
@@ -843,25 +853,25 @@ class User(db.Model):
        :param active: Describes if user is able to login.
        :param superuser: Users with that property have unlimited access.
        :param pwsalted: Salted password data.
-       :param languages: For non-superusers that are the languages they have access to.
     """
 
     __tablename__ = 'user'
 
     id = db.Column(db.Integer, primary_key=True)
+    first_name = db.Column(db.String(120), nullable=True)
+    last_name = db.Column(db.String(120), nullable=True)
+    tag = db.Column(db.String(30), unique=False, nullable=True)
     email = db.Column(db.String(120), unique=True)
     active = db.Column(db.Boolean, default=True)
-    superuser = db.Column(db.Boolean, default=False)
     pwsalted = db.Column(db.LargeBinary(32), nullable=True)
-    languages = db.relationship('Language', secondary='admin', backref='admins')
+    roles = db.relationship('Role')
 
-    def __init__(self, email, active, superuser, languages):
+    def __init__(self, email, active, roles):
         """Create new user without password."""
         self.email = email
         self.active = active
-        self.superuser = superuser
         self.pwsalted = None
-        self.languages = languages
+        self.roles = roles
 
     def reset_password(self):
         """Reset password to random one and return it."""
@@ -880,7 +890,18 @@ class User(db.Model):
 
     def can_edit_course(self, course):
         """Check if user can edit/admin a specific course."""
-        return self.superuser or (course.language in self.languages)
+        return self.is_superuser or self.is_course_admin(course)
+
+    def is_course_admin(self, course):
+        return any(role.role == Role.COURSE_ADMIN and role.course == course for role in self.roles)
+
+    @property
+    def is_superuser(self):
+        return any(role.role == Role.SUPERUSER for role in self.roles)
+
+    @property
+    def admin_courses(self):
+        return (role.course for role in [r for r in self.roles if r.role == Role.COURSE_ADMIN])
 
     @property
     def is_active(self):
@@ -956,19 +977,19 @@ class LogEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     timestamp = db.Column(db.DateTime(), nullable=False)
     msg = db.Column(db.String(140), nullable=False)
-    language = db.relationship("Language")  # no backref
-    language_id = db.Column(db.Integer, db.ForeignKey('language.id'))
+    course = db.relationship("Course")  # no backref
+    course_id = db.Column(db.Integer, db.ForeignKey('course.id'))
 
-    def __init__(self, timestamp, msg, language=None):
+    def __init__(self, timestamp, msg, course=None):
         self.timestamp = timestamp
         self.msg = msg
-        self.language = language
+        self.course = course
 
     def __repr__(self):
         msg = self.msg
         if len(msg) > 10:
             msg = msg[:10] + '...'
-        return '<LogEntry {} "{}" {}>'.format(self.timestamp, msg, self.language)
+        return '<LogEntry {} "{}" {}>'.format(self.timestamp, msg, self.course)
 
     def __lt__(self, other):
         return self.timestamp < other.timestamp
@@ -978,10 +999,10 @@ class LogEntry(db.Model):
         """Returns all log entries relevant for the given user."""
         entries = LogEntry.query.order_by(LogEntry.timestamp.desc()).all()
 
-        if not user.superuser and limit is not None:
-            entries = [x for x in entries if x.language is None or x.language in user.languages][:limit]
-        elif not user.superuser:
-            entries = [x for x in entries if x.language is None or x.language in user.languages]
+        if not user.is_superuser and limit is not None:
+            entries = [x for x in entries if x.course is None or x.course in user.admin_courses][:limit]
+        elif not user.is_superuser:
+            entries = [x for x in entries if x.course is None or x.course in user.admin_courses]
         elif limit is not None:
             entries = entries[:limit]
 

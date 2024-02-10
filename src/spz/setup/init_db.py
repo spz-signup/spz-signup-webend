@@ -114,16 +114,19 @@ def insert_users(json_file):
 
         print("create user accounts:")
         for user in res["users"]:
-            ref_langs = []
+            roles = []
             for lang_name in user.pop('languages'):
                 lang = Language.query.filter(Language.name == lang_name).first()
                 if lang:
-                    ref_langs.append(lang)
+                    for course in lang.courses:
+                        roles.append(Role(course=course, role=Role.COURSE_ADMIN))
                 else:
                     print("  WARNING: language {} does not exist (user={})".format(lang_name, user["email"]))
+            if user.pop('superuser'):
+                roles.append(Role(role=Role.SUPERUSER))
             u = User(
-                languages=ref_langs,
-                **user
+                **user,
+                roles=roles
             )
             pw = u.reset_password()
             print('  {} : {}'.format(u.email, pw))

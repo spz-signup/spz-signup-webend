@@ -744,7 +744,7 @@ def notifications():
 @login_required
 @templated('internal/export.html')
 def export(type, id):
-    form = forms.ExportCourseForm(languages=current_user.languages)
+    form = forms.ExportCourseForm(languages=models.Language.query.all())
 
     if form.validate_on_submit():
         return export_course_list(
@@ -818,7 +818,7 @@ def course(id):
 
             return html_response(zip_file, "Teilnahmescheine_{}".format(course.full_name))
 
-    if form.identifier.data == 'form-delete' and form_delete.validate_on_submit() and current_user.superuser:
+    if form.identifier.data == 'form-delete' and form_delete.validate_on_submit() and current_user.is_superuser:
         try:
             deleted = 0
             name = course.full_name
@@ -1136,7 +1136,7 @@ def preterm():
 
     token = None
 
-    if form.validate_on_submit() and current_user.superuser:
+    if form.validate_on_submit() and current_user.is_superuser:
         token = form.get_token()
 
         try:
