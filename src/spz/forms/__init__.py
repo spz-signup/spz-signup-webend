@@ -9,11 +9,11 @@ import itertools
 
 from datetime import datetime
 from sqlalchemy import func, and_, or_, not_
-from flask_wtf import FlaskForm
+from flask_wtf import FlaskForm, Form
 from flask_login import current_user
 from markupsafe import Markup
 from wtforms import widgets, StringField, SelectField, SelectMultipleField, IntegerField, Label
-from wtforms import TextAreaField, BooleanField, DecimalField, MultipleFileField
+from wtforms import TextAreaField, BooleanField, DecimalField, MultipleFileField, FieldList, FormField, HiddenField
 from flask_ckeditor import CKEditorField
 
 from spz import app, models, token
@@ -1032,8 +1032,14 @@ class CourseForm(FlaskForm):
     identifier = StringField()
 
 
+class GradeSubform(Form):
+    grade = IntegerField("Note")
+    identifier = HiddenField("student_id")
+
+    def set_id(self, custom_id):
+        self.identifier.data = custom_id
+
+
 class GradeForm(FlaskForm):
-    grade = IntegerField(
-        'Note',
-        [validators.Length(max=3, message='Länge darf maximal 3 Zeichen sein')]
-    )
+    grades = FieldList(FormField(GradeSubform))
+

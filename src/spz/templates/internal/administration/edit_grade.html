@@ -1,5 +1,5 @@
 {% extends 'internal/internal.html' %}
-{% from 'formhelpers.html' import csrf_field, render_submit, attendance_status, render_boolean, render_input %}
+{% from 'formhelpers.html' import csrf_field, render_submit, attendance_status, render_boolean, render_input, render_raw_input %}
 
 {% block caption %}
     Kurs: <a href="{{ url_for('language', id=course.language.id) }}">{{ course.language.name }}</a> {{ course.level }}
@@ -36,9 +36,10 @@
     </div>
     <div class="ui section divider"></div>
     <div class="row">
-        <h2>Note Eintragen</h2>
+        <h2>Noten Eintragen</h2>
     </div>
-    <form>
+    <form method="post">
+        {{ csrf_field() }}
         <div class="row">
             <table class="ui selectable sortable compact small striped table">
                 <thead>
@@ -68,12 +69,25 @@
                             </a>
                         </td>
                         <td>
-                            {{ render_input(field=form.grade,width=12) }}
+                            {%  set grade_subform = form.grades.append_entry() %}
+                            <div class="ui labeled input">
+                                <div class="ui label" for="{{ form.grades.id }}">
+                                    {{ grade_subform.grade.label }}
+                                    {{ grade_subform.identifier.data }}
+                                </div>
+                                {{ render_raw_input(grade_subform.grade) }}
+                                {{ grade_subform.set_id(attendance.applicant.id) }}
+                                {{ grade_subform.identifier.data }}
+                            </div>
                         </td>
                     </tr>
                 {% endfor %}
                 </tbody>
             </table>
+        </div>
+        <div class="ui section divider"></div>
+        <div class="row">
+            <button type="submit" class="ui positive button confirm">Noten Speichern</button>
         </div>
     </form>
 

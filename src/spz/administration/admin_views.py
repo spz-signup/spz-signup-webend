@@ -9,6 +9,7 @@ import socket
 import re
 import csv
 import json
+from collections import namedtuple
 from datetime import datetime
 
 from redis import ConnectionError
@@ -173,7 +174,10 @@ def edit_grade(id, course_id):
     form = forms.GradeForm()
 
     if form.validate_on_submit():
-        grade = form.grade.data
+        for entry in form.grades.data:
+            flash("Note: " + str(entry))
+
+        # return redirect(url_for('grade', id=id, course_id=course_id))
 
     return dict(teacher=teacher_db, course=course, form=form)
 
