@@ -78,11 +78,13 @@
                 </tbody>
             </table>
         </div>
-        <div class="ui section divider">
+        <div class="ui section divider"></div>
+        <div class="row">
+
             <button type="submit" value="submit-pdf" class="fluid ui positive button" name="submit-button">PDF Generieren</button>
         </div>
     </form>
-    {% if current_user.is_superuser %}
+    {% if current_user.superuser %}
         <div class="row">
             <form id="delete-course-form" class="ui form" method="post">
                 {{ csrf_field() }}

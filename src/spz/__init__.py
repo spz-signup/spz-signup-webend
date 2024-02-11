@@ -129,9 +129,9 @@ babel = Babel(app)
 # Rich Text Editor setup
 ckeditor = CKEditor(app)
 
-
 # Register all views here
 from spz import views, errorhandlers, pdf  # NOQA
+from spz.administration import admin_views
 
 routes = [
     ('/', views.index, ['GET', 'POST']),
@@ -190,6 +190,14 @@ routes = [
 
     ('/internal/login', views.login, ['GET', 'POST']),
     ('/internal/logout', views.logout, ['GET', 'POST']),
+    ('/internal/administration/teacher', admin_views.administration_teacher, ['GET', 'POST']),
+    ('/internal/administration/teacher/<int:id>', admin_views.administration_teacher_lang, ['GET', 'POST']),
+    ('/internal/administration/teacher/<int:id>/add', admin_views.add_teacher, ['GET', 'POST']),
+    ('/internal/administration/teacher/edit/<int:id>', admin_views.edit_teacher, ['GET', 'POST']),
+    ('/internal/teacher/<int:id>', admin_views.teacher, ['GET', 'POST']),
+    ('/internal/teacher/<int:id>/grades/<int:course_id>', admin_views.grade, ['GET', 'POST']),
+    ('/internal/teacher/<int:id>/grades/<int:course_id>/edit', admin_views.edit_grade, ['GET', 'POST']),
+    ('/internal/teacher/<int:id>/attendance/<int:course_id>', admin_views.attendances, ['GET', 'POST'])
 
 ]
 

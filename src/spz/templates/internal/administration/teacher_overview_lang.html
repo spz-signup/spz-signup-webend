@@ -1,0 +1,71 @@
+{% extends 'internal/internal.html' %}
+{% from 'formhelpers.html' import csrf_field, render_submit, attendance_status %}
+
+{% block caption %}
+    Lehrbeauftragte der Sprache: <a href="{{ url_for('language', id=language.id) }}">{{ language.name }}</a>
+{% endblock caption %}
+
+
+{% block internal_body %}
+    <div class="row">
+        <div class="ui message">
+            <div class="header">Infos</div>
+            <dl>
+                <dt>Sprache &gt; exaktes Kurs-Level</dt>
+                <dd>{{ language.name }}</dd>
+                <dt>Kursgröße (maximal)</dt>
+                <dd>Teilnehmer</dd>
+                <dt>Kosten (für nicht-gratis Teilnehmer)</dt>
+                <dd>Testsache</dd>
+            </dl>
+        </div>
+    </div>
+    <div>
+        <a href="{{ url_for('add_teacher', id=language.id) }}">
+            <button class="ui basic button">
+                <i class="icon user"></i>
+                Lehrbeauftragte*n neu erstellen
+            </button>
+        </a>
+    </div>
+    <div class="row">
+        <table class="ui selectable sortable compact small striped table">
+            <thead>
+            <tr>
+                <th>Lehrbeauftragte*r</th>
+                <th>Kurse</th>
+                <th>Option 1</th>
+                <th>Option 2</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for t in teacher %}
+                <tr>
+                    <td><a
+                        href="{{ url_for('edit_teacher', id=t.id) }}"><strong>{{ t.full_name }}</strong></a>
+
+                    </td>
+                    <td>
+                        {% for course in t.courses %}
+                            {% if course.language_id == language.id %}
+                                <a href="{{ url_for('course', id=course.id) }}">
+                                    <button
+                                        class="ui button"> {{ course.full_name }}
+                                    </button>
+                                </a>
+                            {% endif %}
+                        {% endfor %}
+                    </td>
+                    <td>
+                        0
+                    </td>
+                    <td>
+                        0
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+{% endblock internal_body %}
