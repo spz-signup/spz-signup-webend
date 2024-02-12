@@ -46,7 +46,7 @@
 
                     </td>
                     <td>
-                        {% for course in t.courses %}
+                        {% for course in t.admin_courses %}
                             {% if course.language_id == language.id %}
                                 <a href="{{ url_for('course', id=course.id) }}">
                                     <button

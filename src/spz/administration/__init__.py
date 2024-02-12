@@ -12,13 +12,13 @@ from spz.mail import generate_status_mail
 
 from flask_babel import gettext as _
 
-from spz.models import Teacher
+#from spz.models import Teacher
 
 
 class TeacherManagement:
     @staticmethod
     def remove_course(teacher, course, notify):
-        success = teacher.remove_course(course)
+        success = teacher.roles.remove(course)
         if not success:
             raise ValueError(_('Folgender Kurs "{}" war kein Kurs des/der Lehrbeauftragten.'
                                ' Wurde der richtige Kurs ausgewählt?'.format(course.full_name)))
@@ -37,11 +37,12 @@ class TeacherManagement:
 
     @staticmethod
     def add_course(teacher, course, notify):
-        if teacher.in_course(course):
+        course_ids = db.session.query(models.Role.course_id).filter(models.Role.course_id.isnot(None)).distinct().all()
+        if course.id in course_ids:
             raise ValueError(
                 _('Der/die Lehrbeauftragte hat diesen Kurs schon zugewiesen. Doppelzuweisung nicht möglich!'))
         TeacherManagement.check_availability(course)
-        teacher.add_course(course)
+        teacher.roles.append(course)
 
         # ToDO: update Mailform for teachers
         """
@@ -56,8 +57,8 @@ class TeacherManagement:
 
     @staticmethod
     def check_availability(course):
-        teachers = models.Teacher.query.order_by(models.Teacher.id).all()
+        teachers = models.User.query.order_by(models.User.id).all()
+        course_ids = db.session.query(models.Role.course_id).filter(models.Role.course_id.isnot(None)).distinct().all()
         for teacher in teachers:
-            print(teacher.full_name + " " + course.full_name + " | " + str(teacher.in_course(course)))
-            if teacher.in_course(course):
+            if course.id in course_ids:
                 raise ValueError('{0} ist schon vergeben an {1}.'.format(course.full_name, teacher.full_name))

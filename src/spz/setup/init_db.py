@@ -10,7 +10,7 @@ from flask import json
 from jsonschema import validate, ValidationError, SchemaError
 
 from spz import app, db
-from spz.models import Degree, Graduation, Origin, Language, Course, User, ExportFormat, Teacher
+from spz.models import Degree, Graduation, Origin, Language, Course, User, ExportFormat
 # Make sure that create_all works for all models (even ones that might be added in the future)
 from spz.models import *  # noqa
 

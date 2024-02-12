@@ -47,7 +47,13 @@ def administration_teacher():
 @templated('internal/administration/teacher_overview_lang.html')
 def administration_teacher_lang(id):
     lang = models.Language.query.get_or_404(id)
-    teacher = models.Teacher.query.join(models.Teacher.courses).filter(models.Course.language_id == lang.id)
+
+    teacher = models.User.query \
+        .join(models.Role, models.User.roles) \
+        .join(models.Course, models.Role.course_id == models.Course.id) \
+        .filter(models.Course.language_id == id) \
+        .distinct().all()
+
     return dict(language=lang, teacher=teacher)
 
 
@@ -71,12 +77,17 @@ def add_teacher(id):
             return dict(language=lang, form=form)
 
         if teacher is None:
-            teacher = models.Teacher(email=form.get_mail(),
-                                     first_name=form.get_first_name(),
-                                     last_name=form.get_last_name(),
-                                     active=True,
-                                     courses=form.get_courses(),
-                                     )
+            roles = []
+            teacher_courses = form.get_courses()
+            for course in teacher_courses:
+                roles.append(models.Role(course=course, role=models.Role.COURSE_ADMIN))
+            teacher = models.User(email=form.get_mail(),
+                                  first_name=form.get_first_name(),
+                                  last_name=form.get_last_name(),
+                                  tag=form.get_tag(),
+                                  active=True,
+                                  roles=roles
+                                  )
 
             try:
                 db.session.add(teacher)
@@ -93,7 +104,7 @@ def add_teacher(id):
 
 @templated('internal/administration/edit_teacher.html')
 def edit_teacher(id):
-    teacher = models.Teacher.query.get_or_404(id)
+    teacher = models.User.query.get_or_404(id)
     form = forms.EditTeacherForm()
 
     if form.validate_on_submit():

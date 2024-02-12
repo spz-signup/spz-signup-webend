@@ -852,13 +852,14 @@ class Role(db.Model):
         self.role = role
 
 # helper table for Teacher Table <-- Language Many2Many relationship
+"""
 teachers_lang_table = db.Table(
     'teachers_help',
     db.Model.metadata,
     db.Column('teacher_id', db.Integer, db.ForeignKey('teacher.id')),
     db.Column('course_id', db.Integer, db.ForeignKey('course.id'))
 )
-
+"""
 
 class User(db.Model):
     """User for internal UI
@@ -881,12 +882,15 @@ class User(db.Model):
     pwsalted = db.Column(db.LargeBinary(32), nullable=True)
     roles = db.relationship('Role')
 
-    def __init__(self, email, active, roles):
+    def __init__(self, first_name, last_name, email, active, roles, tag=None):
         """Create new user without password."""
+        self.first_name = first_name
+        self.last_name = last_name
         self.email = email
         self.active = active
         self.pwsalted = None
         self.roles = roles
+        self.tag = tag
 
     def reset_password(self):
         """Reset password to random one and return it."""
@@ -997,16 +1001,20 @@ class User(db.Model):
             User.pwsalted == salted
         )).first()
 
+    @property
+    def full_name(self):
+        return '{} {}'.format(self.first_name, self.last_name)
 
+"""
 class Teacher(db.Model):
-    """Teacher for internal UI
+    Teacher for internal UI
 
        Teacher have access to their own courses they teach.
        They can do the following:
         - enter a grade for their students
         - enter attendance information
 
-    """
+
 
     __tablename__ = 'teacher'
 
@@ -1046,7 +1054,7 @@ class Teacher(db.Model):
 
     def add_course(self, course):
         self.courses.append(course)
-
+"""
 
 @total_ordering
 class LogEntry(db.Model):
