@@ -22,7 +22,7 @@
             </tr>
             </thead>
             <tbody>
-            {% for course in teacher.courses %}
+            {% for course in teacher.admin_courses %}
                 <tr>
                     <td><a
                         href="{{ url_for('course', id=course.id) }}">{{ course.full_name }}</a>

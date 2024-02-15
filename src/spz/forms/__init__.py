@@ -994,7 +994,8 @@ class EditTeacherForm(FlaskForm):
         return self.teacher
 
     def get_courses(self):
-        return self.teacher.admin_courses if self.teacher else None
+        sorted_courses = sorted(self.teacher.admin_courses, key=lambda x: x.full_name)
+        return sorted_courses
 
     def get_languages(self):
         language_ids = []

@@ -12,14 +12,18 @@ from spz.mail import generate_status_mail
 
 from flask_babel import gettext as _
 
-#from spz.models import Teacher
-
 
 class TeacherManagement:
     @staticmethod
-    def remove_course(teacher, course, notify):
-        success = teacher.roles.remove(course)
-        if not success:
+    def remove_course(teacher, course, user_id, notify):
+        role_to_remove = models.Role.query. \
+            join(models.User.roles). \
+            filter(models.Role.user_id == user_id). \
+            filter(models.Role.course_id == course.id). \
+            first()
+        if role_to_remove:
+            teacher.roles.remove(role_to_remove)
+        else:
             raise ValueError(_('Folgender Kurs "{}" war kein Kurs des/der Lehrbeauftragten.'
                                ' Wurde der richtige Kurs ausgewählt?'.format(course.full_name)))
 
@@ -33,7 +37,7 @@ class TeacherManagement:
             except (AssertionError, socket.error, ConnectionError) as e:
                 flash(_('Bestätigungsmail konnte nicht versendet werden: %(error)s', error=e), 'negative')
         """
-        return success
+        return course
 
     @staticmethod
     def add_course(teacher, course, notify):
@@ -42,7 +46,7 @@ class TeacherManagement:
             raise ValueError(
                 _('Der/die Lehrbeauftragte hat diesen Kurs schon zugewiesen. Doppelzuweisung nicht möglich!'))
         TeacherManagement.check_availability(course)
-        teacher.roles.append(course)
+        teacher.roles.append(models.Role(course=course, role=models.Role.COURSE_ADMIN))
 
         # ToDO: update Mailform for teachers
         """

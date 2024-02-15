@@ -125,7 +125,7 @@ def edit_teacher(id):
 
             if remove_from_course:
                 try:
-                    success = TeacherManagement.remove_course(teacher, remove_from_course, notify)
+                    success = TeacherManagement.remove_course(teacher, remove_from_course, teacher.id, notify)
                     flash(
                         _('Der/die Lehrbeauftragte wurde vom Kurs "(%(name)s)" entfernt',
                           name=remove_from_course.full_name),
@@ -164,14 +164,14 @@ def edit_teacher(id):
 
 @templated('internal/teacher.html')
 def teacher(id):
-    teacher_db = models.Teacher.query.get_or_404(id)
+    teacher_db = models.User.query.get_or_404(id)
 
     return dict(teacher=teacher_db)
 
 
 @templated('internal/administration/grade.html')
 def grade(id, course_id):
-    teacher_db = models.Teacher.query.get_or_404(id)
+    teacher_db = models.User.query.get_or_404(id)
     course = models.Course.query.get_or_404(course_id)
 
     return dict(teacher=teacher_db, course=course)
@@ -179,7 +179,7 @@ def grade(id, course_id):
 
 @templated('internal/administration/edit_grade.html')
 def edit_grade(id, course_id):
-    teacher_db = models.Teacher.query.get_or_404(id)
+    teacher_db = models.User.query.get_or_404(id)
     course = models.Course.query.get_or_404(course_id)
 
     form = forms.GradeForm()
@@ -195,7 +195,7 @@ def edit_grade(id, course_id):
 
 @templated('internal/administration/attendances.html')
 def attendances(id, course_id):
-    teacher_db = models.Teacher.query.get_or_404(id)
+    teacher_db = models.User.query.get_or_404(id)
     course = models.Course.query.get_or_404(course_id)
 
     return dict(teacher=teacher_db, course=course)
