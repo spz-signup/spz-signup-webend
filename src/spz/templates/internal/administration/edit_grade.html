@@ -69,16 +69,17 @@
                             </a>
                         </td>
                         <td>
-                            {%  set grade_subform = form.grades.append_entry() %}
-                            <div class="ui labeled input">
-                                <div class="ui label" for="{{ form.grades.id }}">
-                                    {{ grade_subform.grade.label }}
-                                    {{ grade_subform.identifier.data }}
-                                </div>
-                                {{ render_raw_input(grade_subform.grade) }}
-                                {{ grade_subform.set_id(attendance.applicant.id) }}
-                                {{ grade_subform.identifier.data }}
-                            </div>
+                            {% for grade_subform in form.grades %}
+                                {% if grade_subform.identifier.data == attendance.applicant.id %}
+                                    <div class="ui labeled input">
+                                        <div class="ui label" for="{{ form.grades.id }}">
+                                            {{ grade_subform.grade.label }}
+                                        </div>
+                                        {{ render_raw_input(grade_subform.grade) }}
+                                        {{ grade_subform.identifier }}
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
                         </td>
                     </tr>
                 {% endfor %}

@@ -181,14 +181,23 @@ def grade(id, course_id):
 def edit_grade(id, course_id):
     teacher_db = models.User.query.get_or_404(id)
     course = models.Course.query.get_or_404(course_id)
-
     form = forms.GradeForm()
+
+    # prepare student ids for the form
+    form_data = [{'identifier': a.applicant.id, 'grade': a.applicant.grade} for a in course.attendances]
 
     if form.validate_on_submit():
         for entry in form.grades.data:
             flash("Note: " + str(entry))
 
-        # return redirect(url_for('grade', id=id, course_id=course_id))
+        return redirect(url_for('grade', id=id, course_id=course_id))
+
+    # populate the form with the student ids, so the grade field gets mapped via the identifier form field to the
+    # corresponding student, if there is a grade already in the database it is shown for further editing
+    for entry in form_data:
+        grade_form = forms.GradeSubform()
+        grade_form.process(data=entry)
+        form.grades.append_entry(grade_form.data)
 
     return dict(teacher=teacher_db, course=course, form=form)
 

@@ -928,7 +928,8 @@ class User(db.Model):
 
     @property
     def admin_courses(self):
-        return (role.course for role in [r for r in self.roles if r.role == Role.COURSE_ADMIN])
+        admin_courses = (role.course for role in [r for r in self.roles if r.role == Role.COURSE_ADMIN])
+        return sorted(admin_courses, key=lambda x: x.full_name)
 
     @property
     def teacher_courses(self):

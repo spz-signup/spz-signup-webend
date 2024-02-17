@@ -1037,9 +1037,6 @@ class GradeSubform(Form):
     grade = IntegerField("Note")
     identifier = HiddenField("student_id")
 
-    def set_id(self, custom_id):
-        self.identifier.data = custom_id
-
 
 class GradeForm(FlaskForm):
     grades = FieldList(FormField(GradeSubform))
