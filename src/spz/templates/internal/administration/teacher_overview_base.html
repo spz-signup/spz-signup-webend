@@ -18,18 +18,20 @@
             </tr>
             </thead>
             <tbody>
+            {% set sums = {'courses': 0, 'teachers': 0, 'per_language': 0} %}
             {% for l in language %}
                 <tr>
-                    <td><a href="{{ url_for('administration_teacher_lang', id=l.id) }}"><strong>{{ l.name }}</strong></a>
+                    <td><a
+                        href="{{ url_for('administration_teacher_lang', id=l.id) }}"><strong>{{ l.name }}</strong></a>
                     </td>
                     <td>
-                        0
+                        {{ l.course_count }}
                     </td>
                     <td>
-                        0
+                        {{ l.teacher_count }}
                     </td>
                     <td>
-                        0
+                        {{ "%.2f"|format(l.teacher_rate_per_course*100) }} %
                     </td>
                 </tr>
             {% endfor %}

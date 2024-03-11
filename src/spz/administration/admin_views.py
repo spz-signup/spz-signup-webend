@@ -20,6 +20,7 @@ from flask import request, redirect, render_template, url_for, flash
 from flask_login import current_user, login_required, login_user, logout_user
 from flask_mail import Message
 
+from spz import app
 from spz import models, db
 from spz.administration import TeacherManagement
 from spz.decorators import templated
@@ -32,16 +33,29 @@ from flask_babel import gettext as _
 
 @templated('internal/administration/teacher_overview_base.html')
 def administration_teacher():
-    # list of tuple (lang, aggregated number of courses, aggregated number of seats)
-    '''lang_misc = db.session.query(models.Language, func.count(models.Language.courses), func.sum(models.Course.limit)) \
-        .join(models.Course, models.Language.courses) \
-        .group_by(models.Language) \
-        .order_by(models.Language.name) \
-        .from_self() '''
-    # TODO: show statistics, code above can be helpful
-    languages = db.session.query(models.Language)
+    # Aliasing might be necessary if Role or User is joined through different paths
+    languages_info = db.session.query(
+        models.Language.id,
+        models.Language.name,
+        db.func.count(models.Course.id).label('course_count'),
+        db.func.count(db.distinct(models.Role.user_id)).label('teacher_count')
+    ).outerjoin(
+        models.Course, models.Language.id == models.Course.language_id  # Ensure all languages are included
+    ).outerjoin(
+        models.Role, (models.Role.course_id == models.Course.id) & (models.Role.role == models.Role.COURSE_ADMIN)
+    ).group_by(
+        models.Language.id, models.Language.name
+    ).all()
 
-    return dict(language=languages)
+    languages_data = [{
+        'id': l_id,
+        'name': name,
+        'course_count': course_count if course_count else 0,
+        'teacher_count': teacher_count if teacher_count else 0,
+        'teacher_rate_per_course': teacher_count / course_count if course_count else 0,
+    } for l_id, name, course_count, teacher_count in languages_info]
+
+    return dict(language=languages_data)
 
 
 @templated('internal/administration/teacher_overview_lang.html')
@@ -207,4 +221,15 @@ def attendances(id, course_id):
     teacher_db = models.User.query.get_or_404(id)
     course = models.Course.query.get_or_404(course_id)
 
-    return dict(teacher=teacher_db, course=course)
+    weeks = app.config['WEEKS']
+    # weeks = [i for i in range(week_num)]
+    return dict(teacher=teacher_db, course=course, weeks=int(weeks))
+
+
+@templated('internal/administration/edit_attendances.html')
+def edit_attendances(id, course_id, class_id):
+    teacher_db = models.User.query.get_or_404(id)
+    course = models.Course.query.get_or_404(course_id)
+
+
+    return dict(teacher=teacher_db, course=course, class_id=class_id)

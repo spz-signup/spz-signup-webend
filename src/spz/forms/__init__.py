@@ -40,7 +40,13 @@ __all__ = [
     'CourseForm',
     'AddTeacherForm',
     'EditTeacherForm',
-    'GradeForm'
+    'CourseForm',
+    'GradeSubform',
+    'GradeForm',
+    'VacanciesForm',
+    'DeleteCourseForm',
+    'TriStateField',
+    'TriStateLabel'
 ]
 
 
@@ -1040,3 +1046,10 @@ class GradeSubform(Form):
 
 class GradeForm(FlaskForm):
     grades = FieldList(FormField(GradeSubform))
+<<<<<<< HEAD
+=======
+
+
+class AttendanceForm(FlaskForm):
+    attendance = HiddenField("attendance_id")
+>>>>>>> 282ca1c (show statistics for teacher administration, code attendance table)
