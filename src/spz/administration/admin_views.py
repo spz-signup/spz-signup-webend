@@ -96,13 +96,12 @@ def add_teacher(id):
             for course in teacher_courses:
                 roles.append(models.Role(course=course, role=models.Role.COURSE_ADMIN))
             teacher = models.User(email=form.get_mail(),
-                                  first_name=form.get_first_name(),
-                                  last_name=form.get_last_name(),
                                   tag=form.get_tag(),
                                   active=True,
                                   roles=roles
                                   )
-
+            teacher.first_name = form.get_first_name()
+            teacher.last_name = form.get_last_name()
             try:
                 db.session.add(teacher)
                 db.session.commit()
@@ -111,7 +110,7 @@ def add_teacher(id):
                 flash(_('Es gab einen Fehler beim Hinzufügen des Lehrbeauftragten: %(error)s', error=e), 'negative')
                 return dict(form=form)
 
-        return redirect(url_for('teacher_overview_lang.html', language=lang))
+        return redirect(url_for('administration_teacher_lang', id=lang.id))
 
     return dict(language=lang, form=form)
 
@@ -197,20 +196,31 @@ def grade(id, course_id):
 def edit_grade(id, course_id):
     teacher_db = models.User.query.get_or_404(id)
     course = models.Course.query.get_or_404(course_id)
-    form = forms.GradeForm()
+    # !!! course.course_list returns only active applicants (not on waiting list)
+    GradeForm = forms.create_grade_form(course.course_list)
+    form = GradeForm(request.form)
 
     exam_date = app.config['EXAM_DATE']
 
-    # prepopulate the necessary fields with corresponding applicant ids
-    if request.method == 'GET':
-        for a in course.attendances:
-            grade_subform = forms.GradeSubform()
-            grade_subform.grade.render_kw = {'id': f"applicant-{a.applicant.id}"}
-            form.grades.append_entry(grade_subform)
+    if request.method == 'POST' and form.validate():
+        try:
+            for applicant in course.course_list:
+                grade_field = getattr(form, f'grade_{applicant.id}')
+                applicant.grade = grade_field.data
 
-    if form.validate_on_submit():
-        for entry in form.grades.entries:
-            flash("Note: " + str(entry.grade.data))
+                ects_field_name = f'ects_{applicant.id}'
+                if ects_field_name in request.form:
+                    submitted_ects = int(request.form[ects_field_name])
+                    if submitted_ects != applicant.ects_points:
+                        applicant.ects_points = submitted_ects
+                        flash('ECTS' + str(applicant.ects_points) + ' für ' + str(applicant.full_name), 'success')
+
+                db.session.commit()
+
+            flash('Noten wurden erfolgreich gespeichert!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(_('Es gab einen Fehler beim Speichern der Noten: %(error)s', error=e), 'negative')
 
         return redirect(url_for('grade', id=id, course_id=course_id))
 

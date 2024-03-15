@@ -211,6 +211,9 @@ class Applicant(db.Model):
 
     # internal representation of the grade is in %
     grade = db.Column(db.Integer)  # TODO store grade encrypted
+    ects_points = db.Column(db.Integer, nullable=True, default=0)
+    # if a student only wants 'bestanden' instead of the grade value, is set to true
+    hide_grade = db.Column(db.Boolean, nullable=False, default=False)
 
     # See {add,remove}_course_attendance member functions below
     attendances = db.relationship("Attendance", backref="applicant", cascade='all, delete-orphan', lazy="joined")
@@ -245,6 +248,27 @@ class Applicant(db.Model):
     @property
     def full_name(self):
         return '{} {}'.format(self.first_name, self.last_name)
+
+    @property
+    def full_grade(self):
+        conversion_table = [
+            (98, 1),
+            (95, 1.3),
+            (90, 1.7),
+            (85, 2),
+            (79, 2.3),
+            (73, 2.7),
+            (68, 3),
+            (62, 3.3),
+            (56, 3.7),
+            (50, 4)
+        ]
+
+        for percentage, grade in conversion_table:
+            if self.grade >= percentage:
+                return grade
+
+        return "nicht bestanden"
 
     def add_course_attendance(self, *args, **kwargs):
         attendance = Attendance(*args, **kwargs)
@@ -875,8 +899,8 @@ class User(db.Model):
     __tablename__ = 'user'
 
     id = db.Column(db.Integer, primary_key=True)
-    first_name = db.Column(db.String(120), nullable=True)
-    last_name = db.Column(db.String(120), nullable=True)
+    first_name = db.Column(db.String(120), nullable=True, default=None)
+    last_name = db.Column(db.String(120), nullable=True, default=None)
     tag = db.Column(db.String(30), unique=False, nullable=True)
     email = db.Column(db.String(120), unique=True)
     active = db.Column(db.Boolean, default=True)
@@ -885,8 +909,6 @@ class User(db.Model):
 
     def __init__(self, first_name, last_name, email, active, roles, tag=None):
         """Create new user without password."""
-        self.first_name = first_name
-        self.last_name = last_name
         self.email = email
         self.active = active
         self.pwsalted = None

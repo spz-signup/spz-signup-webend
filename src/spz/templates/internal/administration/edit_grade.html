@@ -10,28 +10,13 @@
 {% block internal_body %}
     <div>
         <a href=" {{ url_for('grade', id=teacher.id, course_id=course.id) }} ">
-            <button type="button" class="ui button">Zurück zur Notenübersicht</button>
+            <button type="button" class="ui button">Zurück zur Notenübersicht (Ohne Speichern)</button>
         </a>
     </div>
     <div class="row">
         <h2>Noten Eintragen</h2>
     </div>
 
-    <div>
-        {% for entry in form.grades.entries %}
-            {% if entry.grade.errors %}
-                <div>
-                    <ul>
-                        {% for error in entry.grade.errors %}
-                            <li><span
-                                class="ui red pointing prompt label transition visible">{{ error }}</span>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endif %}
-        {% endfor %}
-    </div>
 
     <form method="post">
         {{ csrf_field() }}
@@ -48,29 +33,34 @@
                 </tr>
                 </thead>
                 <tbody>
-                {% for attendance, subform in zip(course.attendances, form.grades) %}
+                {% for applicant in course.course_list %}
                     <tr>
-                        <td>{{ attendance.applicant.tag }}</td>
-                        <td><a
-                            href="{{ url_for('applicant', id=attendance.applicant.id) }}">{{ attendance.applicant.first_name }}</a>
+                        <td>{% if applicant.tag %} {{ applicant.tag }} {% endif %}</td>
+                        <td>{{ applicant.first_name }}</td>
+                        <td>{{ applicant.last_name }}</td>
+                        <td>
+                            {% if course.ects_points == 2 %}
+                                {% if course.ects_points == 2 %}
+                                    <select name="ects_{{ applicant.id }}" class="ui dropdown">
+                                        <option value="2" {% if applicant.ects_points == 2 %}selected{% endif %}>
+                                            2 (normal)
+                                        </option>
+                                        <option value="3" {% if applicant.ects_points == 3 %}selected{% endif %}>
+                                            3 (mit Zusatzleistung)
+                                        </option>
+                                    </select>
+                                {% endif %}
+                            {% else %}
+                                {{ applicant.ects_points }}
+                            {% endif %}
                         </td>
-                        <td><a
-                            href="{{ url_for('applicant', id=attendance.applicant.id) }}">{{ attendance.applicant.last_name }}</a>
-                        </td>
-                        <td>{{ course.ects_points }}</td>
                         <td>
                             <div class="ui labeled input">
-                                <div class="ui label">
-                                    {{ subform.grade.label }}
-                                </div>
-                                {{ render_raw_input(subform.grade(id=subform.grade.render_kw.id)) }}
-                                {% if subform.grade.errors %}
-                                    <div>
-                                        {% for error in subform.grade.errors %}
-                                            <span
-                                                class="ui red pointing prompt label transition visible">{{ error }}</span>
-                                        {% endfor %}
-                                    </div>
+                                {{ form['grade_' ~ applicant.id]() }}
+                                {% if form['grade_' ~ applicant.id].errors %}
+                                    <span
+                                        class="ui red left pointing label">
+                                        {{ form['grade_' ~ applicant.id].errors[0] }}</span>
                                 {% endif %}
                             </div>
                         </td>

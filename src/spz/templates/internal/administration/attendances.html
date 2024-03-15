@@ -58,13 +58,13 @@
             </tr>
             </thead>
             <tbody>
-            {% for attendance in course.attendances %}
+            {% for applicant in course.course_list %}
                 <tr>
                     <td><a
-                        href="{{ url_for('applicant', id=attendance.applicant.id) }}">{{ attendance.applicant.first_name }}</a>
+                        href="{{ url_for('applicant', id=applicant.id) }}">{{ applicant.first_name }}</a>
                     </td>
                     <td><a
-                        href="{{ url_for('applicant', id=attendance.applicant.id) }}">{{ attendance.applicant.last_name }}</a>
+                        href="{{ url_for('applicant', id=applicant.id) }}">{{ applicant.last_name }}</a>
                     </td>
                     {% for i in range(weeks) %}
                         <td> A</td>
