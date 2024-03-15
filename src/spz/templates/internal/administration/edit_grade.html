@@ -14,72 +14,68 @@
         </a>
     </div>
     <div class="row">
-        <div class="ui message">
-            <div class="header">Infos</div>
-            <dl>
-                <dt>Sprache &gt; exaktes Kurs-Level{% if course.alternative %} &gt;
-                    Alternative/Variante{% endif %}</dt>
-                <dd>{{ course.language.name }} &gt;
-                    {{ course.level }}{% if course.alternative %} &gt; {{ course.alternative }}{% endif %}</dd>
-                <dt>Kursgröße (maximal)</dt>
-                <dd>{{ course.limit }} Teilnehmer</dd>
-                <dt>Kosten (für nicht-gratis Teilnehmer)</dt>
-                <dd>{{ course.price }} €</dd>
-                {% if course.rating_lowest != 0 or course.rating_highest != 100 %}
-                    <dt>Benötigtes Testergebnis (inklusive Grenzen)</dt>
-                    <dd>{{ course.rating_lowest }}% &mdash; {{ course.rating_highest }}%</dd>
-                {% endif %}
-                <dt>Warteliste</dt>
-                <dd>{% if course.has_waiting_list %}Ja{% else %}Nein{% endif %}</dd>
-            </dl>
-        </div>
-    </div>
-    <div class="ui section divider"></div>
-    <div class="row">
         <h2>Noten Eintragen</h2>
     </div>
+
+    <div>
+        {% for entry in form.grades.entries %}
+            {% if entry.grade.errors %}
+                <div>
+                    <ul>
+                        {% for error in entry.grade.errors %}
+                            <li><span
+                                class="ui red pointing prompt label transition visible">{{ error }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
     <form method="post">
         {{ csrf_field() }}
         <div class="row">
             <table class="ui selectable sortable compact small striped table">
                 <thead>
                 <tr>
+                    <th>Matrikelnr.</th>
                     <th>Vorname</th>
                     <th>Nachname</th>
-                    <th>E-Mail</th>
-                    <th>Identifikation</th>
-                    <th>Status</th>
-                    <th>Note</th>
+                    <th>ECTS</th>
+                    <th>Note (in %)</th>
+                    <th>Prüfungsdatum</th>
                 </tr>
                 </thead>
                 <tbody>
-                {% for attendance in course.attendances %}
+                {% for attendance, subform in zip(course.attendances, form.grades) %}
                     <tr>
+                        <td>{{ attendance.applicant.tag }}</td>
                         <td><a
                             href="{{ url_for('applicant', id=attendance.applicant.id) }}">{{ attendance.applicant.first_name }}</a>
                         </td>
                         <td><a
                             href="{{ url_for('applicant', id=attendance.applicant.id) }}">{{ attendance.applicant.last_name }}</a>
                         </td>
-                        <td><a href="mailto:{{ attendance.applicant.mail }}">{{ attendance.applicant.mail }}</a></td>
-                        <td>{{ attendance.applicant.tag }}</td>
+                        <td>{{ course.ects_points }}</td>
                         <td>
-                            <a href="{{ url_for('status', applicant_id=attendance.applicant.id, course_id=attendance.course.id) }}">
-                                {{ attendance_status(attendance) }}
-                            </a>
-                        </td>
-                        <td>
-                            {% for grade_subform in form.grades %}
-                                {% if grade_subform.identifier.data == attendance.applicant.id %}
-                                    <div class="ui labeled input">
-                                        <div class="ui label" for="{{ form.grades.id }}">
-                                            {{ grade_subform.grade.label }}
-                                        </div>
-                                        {{ render_raw_input(grade_subform.grade) }}
-                                        {{ grade_subform.identifier }}
+                            <div class="ui labeled input">
+                                <div class="ui label">
+                                    {{ subform.grade.label }}
+                                </div>
+                                {{ render_raw_input(subform.grade(id=subform.grade.render_kw.id)) }}
+                                {% if subform.grade.errors %}
+                                    <div>
+                                        {% for error in subform.grade.errors %}
+                                            <span
+                                                class="ui red pointing prompt label transition visible">{{ error }}</span>
+                                        {% endfor %}
                                     </div>
                                 {% endif %}
-                            {% endfor %}
+                            </div>
+                        </td>
+                        <td>
+                            {{ exam_date }}
                         </td>
                     </tr>
                 {% endfor %}
@@ -91,5 +87,6 @@
             <button type="submit" class="ui positive button confirm">Noten Speichern</button>
         </div>
     </form>
+
 
 {% endblock internal_body %}

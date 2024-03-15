@@ -1040,15 +1040,16 @@ class CourseForm(FlaskForm):
 
 
 class GradeSubform(Form):
-    grade = IntegerField("Note")
-    identifier = HiddenField("student_id")
+    grade = IntegerField("Note", validators=[
+        validators.DataRequired(message="Hier wurde keine Note eingetragen."),
+        validators.NumberRange(min=0, max=100, message="Note muss eine Prozentzahl zwischen 0 und 100 sein.")
+    ])
 
 
 class GradeForm(FlaskForm):
     grades = FieldList(FormField(GradeSubform))
 <<<<<<< HEAD
 =======
-
 
 class AttendanceForm(FlaskForm):
     attendance = HiddenField("attendance_id")

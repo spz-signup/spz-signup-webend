@@ -209,6 +209,7 @@ class Applicant(db.Model):
     discounted = db.Column(db.Boolean)
     is_student = db.Column(db.Boolean)
 
+    # internal representation of the grade is in %
     grade = db.Column(db.Integer)  # TODO store grade encrypted
 
     # See {add,remove}_course_attendance member functions below

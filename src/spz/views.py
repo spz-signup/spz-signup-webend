@@ -3,6 +3,8 @@
 """The application's views.
 
    Manages the mapping between routes and their activities.
+
+   Notice: administration_views contains the views for teacher administration
 """
 
 import socket

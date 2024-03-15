@@ -21,7 +21,7 @@ from flask_login import current_user, login_required, login_user, logout_user
 from flask_mail import Message
 
 from spz import app
-from spz import models, db
+from spz import models, db, log
 from spz.administration import TeacherManagement
 from spz.decorators import templated
 import spz.forms as forms
@@ -111,7 +111,7 @@ def add_teacher(id):
                 flash(_('Es gab einen Fehler beim Hinzufügen des Lehrbeauftragten: %(error)s', error=e), 'negative')
                 return dict(form=form)
 
-        return render_template('internal/administration/teacher_overview_lang.html', language=lang)
+        return redirect(url_for('teacher_overview_lang.html', language=lang))
 
     return dict(language=lang, form=form)
 
@@ -188,7 +188,9 @@ def grade(id, course_id):
     teacher_db = models.User.query.get_or_404(id)
     course = models.Course.query.get_or_404(course_id)
 
-    return dict(teacher=teacher_db, course=course)
+    exam_date = app.config['EXAM_DATE']
+
+    return dict(teacher=teacher_db, course=course, exam_date=exam_date)
 
 
 @templated('internal/administration/edit_grade.html')
@@ -197,23 +199,29 @@ def edit_grade(id, course_id):
     course = models.Course.query.get_or_404(course_id)
     form = forms.GradeForm()
 
-    # prepare student ids for the form
-    form_data = [{'identifier': a.applicant.id, 'grade': a.applicant.grade} for a in course.attendances]
+    exam_date = app.config['EXAM_DATE']
+
+    # prepopulate the necessary fields with corresponding applicant ids
+    if request.method == 'GET':
+        for a in course.attendances:
+            grade_subform = forms.GradeSubform()
+            grade_subform.grade.render_kw = {'id': f"applicant-{a.applicant.id}"}
+            form.grades.append_entry(grade_subform)
 
     if form.validate_on_submit():
-        for entry in form.grades.data:
-            flash("Note: " + str(entry))
+        for entry in form.grades.entries:
+            flash("Note: " + str(entry.grade.data))
 
         return redirect(url_for('grade', id=id, course_id=course_id))
 
-    # populate the form with the student ids, so the grade field gets mapped via the identifier form field to the
-    # corresponding student, if there is a grade already in the database it is shown for further editing
-    for entry in form_data:
-        grade_form = forms.GradeSubform()
-        grade_form.process(data=entry)
-        form.grades.append_entry(grade_form.data)
+    return dict(teacher=teacher_db, course=course, form=form, exam_date=exam_date)
 
-    return dict(teacher=teacher_db, course=course, form=form)
+
+def edit_grade_view(id, course_id):
+    teacher_db = models.User.query.get_or_404(id)
+    course = models.Course.query.get_or_404(course_id)
+
+    return dict(teacher=teacher_db, course=course)
 
 
 @templated('internal/administration/attendances.html')
@@ -230,6 +238,5 @@ def attendances(id, course_id):
 def edit_attendances(id, course_id, class_id):
     teacher_db = models.User.query.get_or_404(id)
     course = models.Course.query.get_or_404(course_id)
-
 
     return dict(teacher=teacher_db, course=course, class_id=class_id)

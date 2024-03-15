@@ -84,6 +84,7 @@ def rlrc_comment():
 # add Jinja helpers
 app.jinja_env.globals['include_raw'] = lambda filename: Markup(app.jinja_loader.get_source(app.jinja_env, filename)[0])
 app.jinja_env.globals['rlrc_comment'] = rlrc_comment
+app.jinja_env.globals.update(zip=zip)
 
 # Assets handling; keep the spz.assets module in sync with the static directory
 assets_env = Environment(app)

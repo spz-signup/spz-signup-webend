@@ -49,30 +49,25 @@
         <table class="ui selectable sortable compact small striped table">
             <thead>
             <tr>
+                <th>Matrikelnr.</th>
                 <th>Vorname</th>
                 <th>Nachname</th>
-                <th>E-Mail</th>
-                <th>Identifikation</th>
-                <th>Status</th>
+                <th>ECTS</th>
                 <th>Note</th>
+                <th>Prüfungsdatum</th>
             </tr>
             </thead>
             <tbody>
             {% for attendance in course.attendances %}
                 <tr>
+                    <td>{{ attendance.applicant.tag }}</td>
                     <td><a
                         href="{{ url_for('applicant', id=attendance.applicant.id) }}">{{ attendance.applicant.first_name }}</a>
                     </td>
                     <td><a
                         href="{{ url_for('applicant', id=attendance.applicant.id) }}">{{ attendance.applicant.last_name }}</a>
                     </td>
-                    <td><a href="mailto:{{ attendance.applicant.mail }}">{{ attendance.applicant.mail }}</a></td>
-                    <td>{{ attendance.applicant.tag }}</td>
-                    <td>
-                        <a href="{{ url_for('status', applicant_id=attendance.applicant.id, course_id=attendance.course.id) }}">
-                            {{ attendance_status(attendance) }}
-                        </a>
-                    </td>
+                    <td>{{ course.ects_points }}</td>
                     <td>
                         {% if attendance.applicant.grade %}
                             <b>{{ attendance.applicant.grade }}</b>
@@ -80,6 +75,7 @@
                             -
                         {% endif %}
                     </td>
+                    <td> {{ exam_date }}</td>
                 </tr>
             {% endfor %}
             </tbody>
