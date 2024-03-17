@@ -1,0 +1,82 @@
+{% extends 'internal/internal.html' %}
+{% from 'formhelpers.html' import csrf_field, render_submit, attendance_status, render_boolean, render_input, render_raw_input %}
+
+{% block caption %}
+    Kurs: <a href="{{ url_for('language', id=course.language.id) }}">{{ course.language.name }}</a> {{ course.level }}
+    {{ course.alternative }}
+{% endblock caption %}
+
+
+{% block internal_body %}
+    <div>
+        <a href=" {{ url_for('grade', id=teacher.id, course_id=course.id) }} ">
+            <button type="button" class="ui button">Zurück zur Notenübersicht (Ohne Speichern)</button>
+        </a>
+    </div>
+    <div class="row">
+        <h2>Noten Eintragen</h2>
+    </div>
+    <div>
+        <h3>Schritt 2:</h3>
+        <p>
+            Bitte 'bestanden' für die Studierenden auswählen, welche im Campus System 'bestanden' anstatt der Note
+            stehen haben wollen.
+        </p>
+    </div>
+
+    <form method="post">
+        {{ csrf_field() }}
+        <div class="row">
+            <table class="ui selectable sortable compact small striped table">
+                <thead>
+                <tr>
+                    <th>Matrikelnr.</th>
+                    <th>Vorname</th>
+                    <th>Nachname</th>
+                    <th>ECTS</th>
+                    <th>Note</th>
+                    <th>Prüfungsdatum</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for applicant in course.course_list %}
+                    <tr>
+                        <td>{% if applicant.tag %} {{ applicant.tag }} {% endif %}</td>
+                        <td>{{ applicant.first_name }}</td>
+                        <td>{{ applicant.last_name }}</td>
+                        <td>
+                            {{ applicant.ects_points }}
+                        </td>
+                        <td>
+                            {% if applicant.grade >= 50 %}
+                                <select name="ects_{{ applicant.id }}" class="ui dropdown">
+                                    <option value="1" {% if applicant.hide_grade == False %}selected{% endif %}>
+                                        {{ applicant.full_grade }}
+                                    </option>
+                                    <option value="0" {% if applicant.hide_grade == True %}selected{% endif %}>
+                                        bestanden
+                                    </option>
+                                </select>
+                            {% else %}
+                                {{ applicant.full_grade }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ exam_date }}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="ui section divider"></div>
+        <div class="row">
+            <a href="{{ url_for('edit_grade', id=teacher.id, course_id=course.id) }}">
+                <button type="button" class="ui neutral button">Zurück</button>
+            </a>
+            <button type="submit" class="ui positive button confirm">Speichern</button>
+        </div>
+    </form>
+
+
+{% endblock internal_body %}

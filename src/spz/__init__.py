@@ -200,6 +200,7 @@ routes = [
     ('/internal/teacher/<int:id>', admin_views.teacher, ['GET', 'POST']),
     ('/internal/teacher/<int:id>/grades/<int:course_id>', admin_views.grade, ['GET', 'POST']),
     ('/internal/teacher/<int:id>/grades/<int:course_id>/edit', admin_views.edit_grade, ['GET', 'POST']),
+    ('/internal/teacher/<int:id>/grades/<int:course_id>/edit_view', admin_views.edit_grade_view, ['GET', 'POST']),
     ('/internal/teacher/<int:id>/attendance/<int:course_id>', admin_views.attendances, ['GET', 'POST']),
     ('/internal/teacher/<int:id>/attendance/<int:course_id>/edit/<int:class_id>', admin_views.edit_attendances, ['GET', 'POST'])
 

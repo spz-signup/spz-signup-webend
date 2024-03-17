@@ -197,8 +197,9 @@ def edit_grade(id, course_id):
     teacher_db = models.User.query.get_or_404(id)
     course = models.Course.query.get_or_404(course_id)
     # !!! course.course_list returns only active applicants (not on waiting list)
-    GradeForm = forms.create_grade_form(course.course_list)
-    form = GradeForm(request.form)
+    # populate grade fields with applicant parameters
+    grade_list = forms.create_grade_form(course.course_list)
+    form = grade_list(request.form)
 
     exam_date = app.config['EXAM_DATE']
 
@@ -222,14 +223,19 @@ def edit_grade(id, course_id):
             db.session.rollback()
             flash(_('Es gab einen Fehler beim Speichern der Noten: %(error)s', error=e), 'negative')
 
-        return redirect(url_for('grade', id=id, course_id=course_id))
+        return redirect(url_for('edit_grade_view', id=id, course_id=course_id))
 
     return dict(teacher=teacher_db, course=course, form=form, exam_date=exam_date)
 
 
+@templated('internal/administration/edit_grade_view.html')
 def edit_grade_view(id, course_id):
     teacher_db = models.User.query.get_or_404(id)
     course = models.Course.query.get_or_404(course_id)
+    form = forms.GradeViewForm()
+
+    if form.validate_on_submit():
+        flash('I submitted data')
 
     return dict(teacher=teacher_db, course=course)
 

@@ -570,7 +570,7 @@ class NotificationForm(FlaskForm):
 
     @staticmethod
     def _sender_choices():
-        addresses = [current_user.mail] + app.config['REPLY_TO']
+        addresses = [current_user.email] + app.config['REPLY_TO']
         # Start index by 1 instead of 0, for the form submitting to be consistent
         return [(idx, mail) for (idx, mail) in enumerate(addresses, 1)]
 
@@ -1052,6 +1052,10 @@ def create_grade_form(applicants):
                              default=applicant.grade))
 
     return GradeForm
+
+
+class GradeViewForm(FlaskForm):
+    pass
 
 
 class AttendanceForm(FlaskForm):
