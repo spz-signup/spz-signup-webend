@@ -2,7 +2,7 @@
 {% from 'formhelpers.html' import csrf_field, render_submit, attendance_status, render_boolean, render_input, render_raw_input %}
 
 {% block caption %}
-    Kurs: <a href="{{ url_for('language', id=course.language.id) }}">{{ course.language.name }}</a> {{ course.level }}
+    Kurs: {{ course.language.name }} {{ course.level }}
     {{ course.alternative }}
 {% endblock caption %}
 
@@ -16,12 +16,18 @@
     <div class="row">
         <h2>Noten Eintragen</h2>
     </div>
-
-
+    <div>
+        <h3>Schritt 1:</h3>
+        <p>
+            Bitte die Noten der Studierenden als <strong>Prozentzahl</strong> (Zahl zwischen 0 bis 100) eintragen und
+            die ECTS-Punkte für die Studierenden auswählen, falls erforderlich.
+        </p>
+    </div>
+    <div class="ui section divider"></div>
     <form method="post">
         {{ csrf_field() }}
         <div class="row">
-            <table class="ui selectable sortable compact small striped table">
+            <table class="ui selectable sortable compact small table">
                 <thead>
                 <tr>
                     <th>Matrikelnr.</th>
@@ -40,16 +46,14 @@
                         <td>{{ applicant.last_name }}</td>
                         <td>
                             {% if course.ects_points == 2 %}
-                                {% if course.ects_points == 2 %}
-                                    <select name="ects_{{ applicant.id }}" class="ui dropdown">
-                                        <option value="2" {% if applicant.ects_points == 2 %}selected{% endif %}>
-                                            2 (normal)
-                                        </option>
-                                        <option value="3" {% if applicant.ects_points == 3 %}selected{% endif %}>
-                                            3 (mit Zusatzleistung)
-                                        </option>
-                                    </select>
-                                {% endif %}
+                                <select name="ects_{{ applicant.id }}" class="ui dropdown">
+                                    <option value="2" {% if applicant.ects_points == 2 %}selected{% endif %}>
+                                        2 (normal)
+                                    </option>
+                                    <option value="3" {% if applicant.ects_points == 3 %}selected{% endif %}>
+                                        3 (mit Zusatzleistung)
+                                    </option>
+                                </select>
                             {% else %}
                                 {{ applicant.ects_points }}
                             {% endif %}
@@ -74,7 +78,10 @@
         </div>
         <div class="ui section divider"></div>
         <div class="row">
-            <button type="submit" class="ui positive button confirm">Noten Speichern</button>
+            <a href="{{ url_for('grade', id=teacher.id, course_id=course.id) }}">
+                <button type="button" class="ui button">Zurück</button>
+            </a>
+            <button type="submit" class="ui primary button confirm">Speichern und Weiter</button>
         </div>
     </form>
 

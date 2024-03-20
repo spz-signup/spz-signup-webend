@@ -205,20 +205,26 @@ def edit_grade(id, course_id):
 
     if request.method == 'POST' and form.validate():
         try:
+            changes = False
             for applicant in course.course_list:
-                grade_field = getattr(form, f'grade_{applicant.id}')
+                grade_field = getattr(form, f'grade_{applicant.id}', None)
                 applicant.grade = grade_field.data
+                if grade_field and grade_field.data != applicant.grade:
+                    applicant.grade = grade_field.data
+                    changes = True
 
                 ects_field_name = f'ects_{applicant.id}'
                 if ects_field_name in request.form:
                     submitted_ects = int(request.form[ects_field_name])
                     if submitted_ects != applicant.ects_points:
                         applicant.ects_points = submitted_ects
-                        flash('ECTS' + str(applicant.ects_points) + ' für ' + str(applicant.full_name), 'success')
+                        changes = True
 
+            if changes:
                 db.session.commit()
-
-            flash('Noten wurden erfolgreich gespeichert!', 'success')
+                flash('Noten wurden erfolgreich gespeichert!', 'success')
+            else:
+                flash('Es gab keine Änderungen zu speichern.', 'info')
         except Exception as e:
             db.session.rollback()
             flash(_('Es gab einen Fehler beim Speichern der Noten: %(error)s', error=e), 'negative')
@@ -232,12 +238,32 @@ def edit_grade(id, course_id):
 def edit_grade_view(id, course_id):
     teacher_db = models.User.query.get_or_404(id)
     course = models.Course.query.get_or_404(course_id)
-    form = forms.GradeViewForm()
+    exam_date = app.config['EXAM_DATE']
 
-    if form.validate_on_submit():
-        flash('I submitted data')
+    if request.method == 'POST':
+        try:
+            changes = False
+            for applicant in course.course_list:
+                view_field_name = f'view_{applicant.id}'
+                submitted_view = request.form.get(view_field_name)
+                if submitted_view is not None:
+                    hide_view = (int(submitted_view) == 0)
+                    if hide_view != applicant.hide_grade:
+                        applicant.hide_grade = hide_view
+                        changes = True
+            if changes:
+                db.session.commit()
+                flash('Als bestanden eingetragene Noten wurden erfolgreich gespeichert!', 'success')
+            else:
+                flash('Es gab keine Änderungen zu speichern.', 'info')
+        except Exception as e:
+            db.session.rollback()
+            flash(_('Es ist ein Fehler beim Abspeichern der Bestanden-Attribute aufgetreten: %(error)s', error=e),
+                  'negative')
 
-    return dict(teacher=teacher_db, course=course)
+        return redirect(url_for('grade', id=id, course_id=course_id))
+
+    return dict(teacher=teacher_db, course=course, exam_date=exam_date)
 
 
 @templated('internal/administration/attendances.html')

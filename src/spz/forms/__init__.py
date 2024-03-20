@@ -1054,9 +1054,5 @@ def create_grade_form(applicants):
     return GradeForm
 
 
-class GradeViewForm(FlaskForm):
-    pass
-
-
 class AttendanceForm(FlaskForm):
     attendance = HiddenField("attendance_id")
