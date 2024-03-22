@@ -208,7 +208,6 @@ def edit_grade(id, course_id):
             changes = False
             for applicant in course.course_list:
                 grade_field = getattr(form, f'grade_{applicant.id}', None)
-                applicant.grade = grade_field.data
                 if grade_field and grade_field.data != applicant.grade:
                     applicant.grade = grade_field.data
                     changes = True
