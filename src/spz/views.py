@@ -32,6 +32,7 @@ from spz.oidc import oidc_callback, oidc_url, oidc_get_resources
 
 from spz.pdf_zip import PdfZipWriter, html_response
 from spz.pdf import generate_participation_cert
+from spz.auth.password_reset import validate_reset_token_and_get_user_id
 
 
 def check_precondition_with_auth(cond, msg, auth=False):
@@ -1235,3 +1236,34 @@ def logout():
     flash(_('Tschau!'), 'success')
     return redirect(url_for('login'))
 
+
+@templated('internal/auth/reset_password.html')
+def reset_password(reset_token):
+    form = forms.PasswordResetForm()
+
+    if form.validate_on_submit():
+        userId = validate_reset_token_and_get_user_id(reset_token)
+
+        if userId is False:
+            flash(_('Das Passwort konnte nicht festgelegt werden. Bitte konraktieren Sie das Sprachenzentrum.'), 'negative')
+
+            return dict(form=form)
+
+        user = models.User.query.filter(models.User.id == userId).first()
+
+        if not user:
+            flash(_('Das Passwort konnte nicht festgelegt werden. Bitte konraktieren Sie das Sprachenzentrum.'), 'negative')
+
+            return dict(form=form)
+
+        user.update_password(form.password.data)
+        db.session.add(user)
+        db.session.commit()
+
+        flash(_('Das Passwort wurde festgelegt. Sie können sich nun anmelden.'), 'success')
+
+        return redirect(url_for('login'))
+
+    form.reset_token.data = reset_token
+
+    return dict(form=form)

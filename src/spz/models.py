@@ -881,8 +881,13 @@ class User(db.Model):
             rng.choice(string.ascii_letters + string.digits)
             for _ in range(0, 16)
         )
-        self.pwsalted = hash_secret_strong(pw)
+        self.update_password(pw)
         return pw
+
+    def update_password(self, password):
+        self.pwsalted = hash_secret_strong(password)
+
+        return self
 
     def get_id(self):
         """Return user ID"""
