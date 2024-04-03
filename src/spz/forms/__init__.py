@@ -24,6 +24,7 @@ __all__ = [
     'ApplicantForm',
     'LanguageForm',
     'LoginForm',
+    'PasswordResetForm',
     'NotificationForm',
     'PaymentForm',
     'PretermForm',
@@ -798,6 +799,16 @@ class LoginForm(FlaskForm):
 
     user = StringField('User', [validators.DataRequired('User muss angegeben werden')])
     password = StringField('Passwort', [validators.DataRequired('Passwort muss angegeben werden')])
+
+
+class PasswordResetForm(FlaskForm):
+    """Represents the password reset form
+    """
+
+    reset_token = StringField('Reset Token', [validators.DataRequired('Reset Token muss angegeben werden')])
+    password = StringField('Passwort', [validators.DataRequired('Passwort muss angegeben werden'),
+                                        validators.Length(min=8,
+                                                          message='Das Passwort muss mindestens %(min)d Zeichen haben.')])
 
 
 class TagForm(FlaskForm):
