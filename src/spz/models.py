@@ -829,6 +829,7 @@ class Approval(db.Model):
 class Role(db.Model):
     SUPERUSER = 'SUPERUSER'
     COURSE_ADMIN = 'COURSE_ADMIN'
+    COURSE_TEACHER = 'COURSE_TEACHER'
 
     __tablename__ = 'role'
 
@@ -900,6 +901,9 @@ class User(db.Model):
     def is_course_admin(self, course):
         return any(role.role == Role.COURSE_ADMIN and role.course == course for role in self.roles)
 
+    def is_course_teacher(self, course):
+        return any(role.role == Role.COURSE_TEACHER and role.course == course for role in self.roles)
+
     @property
     def is_superuser(self):
         return any(role.role == Role.SUPERUSER for role in self.roles)
@@ -907,6 +911,18 @@ class User(db.Model):
     @property
     def admin_courses(self):
         return (role.course for role in [r for r in self.roles if r.role == Role.COURSE_ADMIN])
+
+    @property
+    def teacher_courses(self):
+        return (role.course for role in [r for r in self.roles if r.role == Role.COURSE_TEACHER])
+
+    @property
+    def is_teacher(self):
+        return all([r.role == Role.COURSE_TEACHER for r in self.roles])
+
+    @property
+    def is_admin_or_superuser(self):
+        return any([r.role == Role.COURSE_ADMIN or r.role == Role.SUPERUSER for r in self.roles])
 
     @property
     def is_active(self):
