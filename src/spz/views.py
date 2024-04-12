@@ -797,6 +797,16 @@ def course(id):
     form = forms.CourseForm()
     form_delete = forms.DeleteCourseForm()
 
+    # check if a teacher has been assigned to the course
+    teacher = (
+        models.User.query
+        .join(models.Role, models.User.roles)
+        .filter(models.Role.course_id == course.id)
+        .filter(models.Role.role == 'COURSE_TEACHER')
+        .distinct()
+        .all()
+    )
+
     # we have two forms on this page, to differ between them a hidden identifier tag is used
 
     if form.identifier.data == 'form-select' and form.validate_on_submit() and current_user.is_authenticated:
@@ -857,7 +867,7 @@ def course(id):
                 _('Der Kurs konnte nicht gelöscht werden: %(error)s', error=e),
                 'error'
             )
-    return dict(course=course, form=form, form_delete=form_delete)
+    return dict(course=course, form=form, form_delete=form_delete, teacher=teacher)
 
 
 @login_required
@@ -1253,14 +1263,16 @@ def reset_password(reset_token):
         userId = validate_reset_token_and_get_user_id(reset_token)
 
         if userId is False:
-            flash(_('Das Passwort konnte nicht festgelegt werden. Bitte konraktieren Sie das Sprachenzentrum.'), 'negative')
+            flash(_('Das Passwort konnte nicht festgelegt werden. Bitte konraktieren Sie das Sprachenzentrum.'),
+                  'negative')
 
             return dict(form=form)
 
         user = models.User.query.filter(models.User.id == userId).first()
 
         if not user:
-            flash(_('Das Passwort konnte nicht festgelegt werden. Bitte konraktieren Sie das Sprachenzentrum.'), 'negative')
+            flash(_('Das Passwort konnte nicht festgelegt werden. Bitte konraktieren Sie das Sprachenzentrum.'),
+                  'negative')
 
             return dict(form=form)
 
@@ -1275,4 +1287,3 @@ def reset_password(reset_token):
     form.reset_token.data = reset_token
 
     return dict(form=form)
-

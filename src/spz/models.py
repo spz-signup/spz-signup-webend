@@ -907,7 +907,7 @@ class User(db.Model):
     pwsalted = db.Column(db.LargeBinary(32), nullable=True)
     roles = db.relationship('Role')
 
-    def __init__(self, first_name, last_name, email, active, roles, tag=None):
+    def __init__(self, email, active, roles, tag=None):
         """Create new user without password."""
         self.email = email
         self.active = active

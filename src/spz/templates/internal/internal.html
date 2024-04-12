@@ -15,10 +15,11 @@
     <a class="item" href="{{ url_for('outstanding') }}"><i class="warning sign icon"></i> Offene Beträge</a>
     <a class="item" href="{{ url_for('statistics') }}"><i class="pie chart icon"></i> Statistiken</a>
     <a class="item" href="{{ url_for('duplicates') }}"><i class="random icon"></i> Doppelgänger</a>
-    {% if current_user.is_superuser %}
     <a class="item" href="{{ url_for('administration_teacher') }}"><i class="users icon"></i> Dozentenverwaltung</a>
+    {% if current_user.is_superuser %}
     <a class="item" href="{{ url_for('preterm') }}"><i class="star icon"></i> Prioritär&shy;anmeldungen</a>
     <a class="item" href="{{ url_for('unique') }}"><i class="trash icon"></i> Wartelisten Bereinigen</a>
+    {% endif %}
     {% endif %}
 </div>
 {% endblock navbar %}

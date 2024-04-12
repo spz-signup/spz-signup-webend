@@ -34,6 +34,8 @@ from flask_babel import gettext as _
 @templated('internal/administration/teacher_overview_base.html')
 def administration_teacher():
     # Aliasing might be necessary if Role or User is joined through different paths
+    # An outer join retrieves records that have matching values in one of the tables, and also those records from the
+    # primary table that have no matches in the joined table.
     languages_info = db.session.query(
         models.Language.id,
         models.Language.name,
@@ -42,7 +44,7 @@ def administration_teacher():
     ).outerjoin(
         models.Course, models.Language.id == models.Course.language_id  # Ensure all languages are included
     ).outerjoin(
-        models.Role, (models.Role.course_id == models.Course.id) & (models.Role.role == models.Role.COURSE_ADMIN)
+        models.Role, (models.Role.course_id == models.Course.id) & (models.Role.role == models.Role.COURSE_TEACHER)
     ).group_by(
         models.Language.id, models.Language.name
     ).all()
@@ -66,6 +68,7 @@ def administration_teacher_lang(id):
         .join(models.Role, models.User.roles) \
         .join(models.Course, models.Role.course_id == models.Course.id) \
         .filter(models.Course.language_id == id) \
+        .filter(models.Role.role == 'COURSE_TEACHER') \
         .distinct().all()
 
     return dict(language=lang, teacher=teacher)
@@ -94,7 +97,7 @@ def add_teacher(id):
             roles = []
             teacher_courses = form.get_courses()
             for course in teacher_courses:
-                roles.append(models.Role(course=course, role=models.Role.COURSE_ADMIN))
+                roles.append(models.Role(course=course, role=models.Role.COURSE_TEACHER))
             teacher = models.User(email=form.get_mail(),
                                   tag=form.get_tag(),
                                   active=True,
