@@ -509,6 +509,8 @@ def signoff():
 @login_required
 @templated('internal/overview.html')
 def internal():
+    if current_user.is_teacher:
+        return redirect(url_for('teacher', id=current_user.id))
     logs = models.LogEntry.get_visible_log(current_user, 200)
     return dict(logs=logs)
 
@@ -806,6 +808,10 @@ def course(id):
         .distinct()
         .all()
     )
+    if len(teacher) > 1:
+        flash(
+            _('Achtung: Der Kurs hat mehr als nur einen Dozenten zugewiesen. Das ist ungültig',),
+            'error')
 
     # we have two forms on this page, to differ between them a hidden identifier tag is used
 

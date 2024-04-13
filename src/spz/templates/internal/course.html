@@ -29,6 +29,14 @@
                     {% endif %}
                     <dt>Warteliste</dt>
                     <dd>{% if course.has_waiting_list %}Ja{% else %}Nein{% endif %}</dd>
+                    <dt>Dozent/in</dt>
+                    <dd>{% if teacher %}
+                        {% for t in teacher %}
+                            <a href="{{ url_for('edit_teacher', id=t.id) }}">{{ t.full_name+"\n" }}</a>
+                        {% endfor %}
+                        {% else %}
+                            -
+                    {% endif %}</dd>
                 </dl>
             </div>
         </div>

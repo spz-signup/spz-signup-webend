@@ -4,18 +4,7 @@
 
    Manages the mapping between routes and their activities for the administrators.
 """
-
 import socket
-import re
-import csv
-import json
-from collections import namedtuple
-from datetime import datetime
-
-from redis import ConnectionError
-
-from sqlalchemy import and_, func, not_
-
 from flask import request, redirect, render_template, url_for, flash
 from flask_login import current_user, login_required, login_user, logout_user
 from flask_mail import Message
@@ -24,9 +13,8 @@ from spz import app
 from spz import models, db, log
 from spz.administration import TeacherManagement
 from spz.decorators import templated
+from spz.auth.password_reset import send_password_reset_to_user
 import spz.forms as forms
-from spz.util.Filetype import mime_from_filepointer
-from spz.mail import generate_status_mail
 
 from flask_babel import gettext as _
 
@@ -113,6 +101,13 @@ def add_teacher(id):
                 flash(_('Es gab einen Fehler beim Hinzufügen des Lehrbeauftragten: %(error)s', error=e), 'negative')
                 return dict(form=form)
 
+            # send password reset mail, if writing to database was successfully
+            try:
+                # ToDo: remove -> test worked
+                send_password_reset_to_user(teacher)
+            except (AssertionError, socket.error, ConnectionError) as e:
+                flash(_('Eine Mail zum Passwort Reset konnte nicht verschickt werden: %(error)s', error=e), 'negative')
+
         return redirect(url_for('administration_teacher_lang', id=lang.id))
 
     return dict(language=lang, form=form)
@@ -137,11 +132,11 @@ def edit_teacher(id):
             add_to_course = form.get_add_to_course()
             remove_from_course = form.get_remove_from_course()
 
-            notify = form.get_send_mail()
+            reset_password = form.get_send_mail()
 
             if remove_from_course:
                 try:
-                    success = TeacherManagement.remove_course(teacher, remove_from_course, teacher.id, notify)
+                    success = TeacherManagement.remove_course(teacher, remove_from_course, teacher.id, reset_password)
                     flash(
                         _('Der/die Lehrbeauftragte wurde vom Kurs "(%(name)s)" entfernt',
                           name=remove_from_course.full_name),
@@ -154,7 +149,7 @@ def edit_teacher(id):
 
             if add_to_course:
                 try:
-                    TeacherManagement.add_course(teacher, add_to_course, notify)
+                    TeacherManagement.add_course(teacher, add_to_course, reset_password)
                     flash(
                         _('Der/die Lehrbeauftragte wurde zum Kurs {} hinzugefügt.'.format(add_to_course.full_name)),
                         'success'
@@ -166,6 +161,17 @@ def edit_teacher(id):
                         _('Der/die Lehrbeauftragte konnte nicht für den Kurs eingetragen werden: %(error)s',
                           error=e),
                         'negative')
+
+            # ToDo: check functionality
+            if reset_password:
+                try:
+                    send_password_reset_to_user(teacher)
+                    flash(
+                        _('Eine Mail zum Passwort Zurücksetzen wurde an {} geschickt.'.format(teacher.full_name)),
+                        'success')
+                except (AssertionError, socket.error, ConnectionError) as e:
+                    flash(_('Eine Mail zum Passwort Reset konnte nicht verschickt werden: %(error)s', error=e),
+                          'negative')
 
             return redirect(url_for('edit_teacher', id=teacher.id))
 

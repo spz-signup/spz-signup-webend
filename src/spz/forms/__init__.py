@@ -973,7 +973,7 @@ class EditTeacherForm(FlaskForm):
     )
 
     send_mail = BooleanField(
-        'Mail verschicken'
+        'Passwort zurücksetzen und Mail verschicken'
     )
 
     def __init__(self, *args, **kwargs):
@@ -982,10 +982,7 @@ class EditTeacherForm(FlaskForm):
 
         self.add_to_course.choices = cached.all_courses_to_choicelist()
         self.remove_from_course.choices = cached.all_courses_to_choicelist()
-        """
-        self.add_to_language.choices = cached.all_languages_to_choicelist()
-        self.remove_from_language.choices = cached.all_languages_to_choicelist()
-        """
+
 
     def populate(self, teacher):
         self.teacher = teacher
@@ -998,14 +995,14 @@ class EditTeacherForm(FlaskForm):
         return self.teacher
 
     def get_courses(self):
-        sorted_courses = sorted(self.teacher.admin_courses, key=lambda x: x.full_name)
+        sorted_courses = sorted(self.teacher.teacher_courses, key=lambda x: x.full_name)
         return sorted_courses
 
     def get_languages(self):
         language_ids = []
         languages = []
         if self.teacher is not None:
-            for course in self.teacher.admin_courses:
+            for course in self.teacher.teacher_courses:
                 if course.language_id not in language_ids:
                     language_ids.append(course.language_id)
                     db_lang = models.Language.query.get_or_404(course.language_id)
@@ -1018,14 +1015,6 @@ class EditTeacherForm(FlaskForm):
 
     def get_remove_from_course(self):
         return models.Course.query.get(self.remove_from_course.data) if self.remove_from_course.data else None
-
-    """
-    def get_add_to_language(self):
-        return models.Language.query.get(self.add_to_language) if self.add_to_language.data else None
-
-    def get_remove_from_language(self):
-        return models.Language.query.get(self.add_to_language.data) if self.add_to_language else None
-    """
 
     def get_send_mail(self):
         return self.send_mail.data

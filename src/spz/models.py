@@ -876,6 +876,7 @@ class Role(db.Model):
         self.course = course
         self.role = role
 
+
 # helper table for Teacher Table <-- Language Many2Many relationship
 """
 teachers_lang_table = db.Table(
@@ -885,6 +886,7 @@ teachers_lang_table = db.Table(
     db.Column('course_id', db.Integer, db.ForeignKey('course.id'))
 )
 """
+
 
 class User(db.Model):
     """User for internal UI
@@ -1029,56 +1031,6 @@ class User(db.Model):
     def full_name(self):
         return '{} {}'.format(self.first_name, self.last_name)
 
-"""
-class Teacher(db.Model):
-    Teacher for internal UI
-
-       Teacher have access to their own courses they teach.
-       They can do the following:
-        - enter a grade for their students
-        - enter attendance information
-
-
-
-    __tablename__ = 'teacher'
-
-    id = db.Column(db.Integer, primary_key=True)
-    mail = db.Column(db.String(120), unique=True)
-
-    first_name = db.Column(db.String(60), nullable=False)
-    last_name = db.Column(db.String(60), nullable=False)
-
-    active = db.Column(db.Boolean, default=True)
-    pwsalted = db.Column(db.LargeBinary(32), nullable=True)
-    # languages = db.relationship('Language', secondary='teachers_help')
-    courses = db.relationship('Course', secondary='teachers_help')
-
-    tag = db.Column(db.String(30), unique=False, nullable=True)
-
-    def __init__(self, email, first_name, last_name, active, courses, tag=None):
-        self.mail = email
-        self.first_name = first_name
-        self.last_name = last_name
-        self.active = active
-        self.courses = courses
-        self.tag = tag
-
-    @property
-    def full_name(self):
-        return '{} {}'.format(self.first_name, self.last_name)
-
-    def remove_course(self, course_to_remove):
-        remove = [course for course in self.courses if course == course_to_remove]
-        for course in remove:
-            self.courses.remove(course)
-        return len(remove) > 0
-
-    def in_course(self, course):
-        return course in self.courses
-
-    def add_course(self, course):
-        self.courses.append(course)
-"""
 
 @total_ordering
 class LogEntry(db.Model):
