@@ -59,7 +59,18 @@ def administration_teacher_lang(id):
         .filter(models.Role.role == 'COURSE_TEACHER') \
         .distinct().all()
 
-    return dict(language=lang, teacher=teacher)
+    # courses with assigned teachers
+    assigned_courses = db.session.query(models.Role.course_id) \
+        .filter(models.Role.role == models.Role.COURSE_TEACHER) \
+        .subquery()
+
+    unassigned_courses = db.session.query(models.Course) \
+        .join(models.Language) \
+        .filter(models.Language.id == id) \
+        .filter(~models.Course.id.in_(assigned_courses))
+    #~Course.id.in_(assigned_courses)
+
+    return dict(language=lang, teacher=teacher, unassigned_courses=unassigned_courses)
 
 
 @templated('internal/administration/add_teacher.html')

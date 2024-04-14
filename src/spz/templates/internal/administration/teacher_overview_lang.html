@@ -7,6 +7,7 @@
 
 
 {% block internal_body %}
+    <!---
     <div class="row">
         <div class="ui message">
             <div class="header">Infos</div>
@@ -20,6 +21,7 @@
             </dl>
         </div>
     </div>
+    --->
     <div>
         <a href="{{ url_for('add_teacher', id=language.id) }}">
             <button class="ui basic button">
@@ -34,8 +36,6 @@
             <tr>
                 <th>Lehrbeauftragte*r</th>
                 <th>Kurse</th>
-                <th>Option 1</th>
-                <th>Option 2</th>
             </tr>
             </thead>
             <tbody>
@@ -56,16 +56,33 @@
                             {% endif %}
                         {% endfor %}
                     </td>
-                    <td>
-                        0
-                    </td>
-                    <td>
-                        0
-                    </td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
+    </div>
+    <div class="ui section divider"></div>
+    <div class="row">
+        <div class="row">
+            <table>
+                <thead>
+                <tr>
+                    <th><h3>Kurse ohne Dozent</h3></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <th>
+                        {% for unassigned in unassigned_courses %}
+                            <a href="{{ url_for('course', id=unassigned.id) }}">
+                                <div class="ui button"> {{ unassigned.full_name }} </div>
+                            </a>
+                        {% endfor %}
+                    </th>
+                </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
 {% endblock internal_body %}
