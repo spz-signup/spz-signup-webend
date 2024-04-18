@@ -114,7 +114,6 @@ def add_teacher(id):
 
             # send password reset mail, if writing to database was successfully
             try:
-                # ToDo: remove -> test worked
                 send_password_reset_to_user(teacher)
             except (AssertionError, socket.error, ConnectionError) as e:
                 flash(_('Eine Mail zum Passwort Reset konnte nicht verschickt werden: %(error)s', error=e), 'negative')
@@ -147,7 +146,7 @@ def edit_teacher(id):
 
             if remove_from_course:
                 try:
-                    success = TeacherManagement.remove_course(teacher, remove_from_course, teacher.id, reset_password)
+                    success = TeacherManagement.remove_course(teacher, remove_from_course, teacher.id)
                     flash(
                         _('Der/die Lehrbeauftragte wurde vom Kurs "(%(name)s)" entfernt',
                           name=remove_from_course.full_name),
@@ -160,7 +159,7 @@ def edit_teacher(id):
 
             if add_to_course:
                 try:
-                    TeacherManagement.add_course(teacher, add_to_course, reset_password)
+                    TeacherManagement.add_course(teacher, add_to_course)
                     flash(
                         _('Der/die Lehrbeauftragte wurde zum Kurs {} hinzugefügt.'.format(add_to_course.full_name)),
                         'success'
@@ -173,7 +172,6 @@ def edit_teacher(id):
                           error=e),
                         'negative')
 
-            # ToDo: check functionality
             if reset_password:
                 try:
                     send_password_reset_to_user(teacher)

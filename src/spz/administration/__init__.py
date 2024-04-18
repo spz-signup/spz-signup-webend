@@ -13,9 +13,16 @@ from spz.mail import generate_status_mail
 from flask_babel import gettext as _
 
 
+def get_course_ids():
+    course_ids_tuple = db.session.query(models.Role.course_id).filter(
+        models.Role.course_id.isnot(None)).distinct().all()
+    # transform query tuples into right integer format
+    return [course_id[0] for course_id in course_ids_tuple]
+
+
 class TeacherManagement:
     @staticmethod
-    def remove_course(teacher, course, user_id, notify):
+    def remove_course(teacher, course, user_id):
         role_to_remove = models.Role.query. \
             join(models.User.roles). \
             filter(models.Role.user_id == user_id). \
@@ -27,42 +34,23 @@ class TeacherManagement:
             raise ValueError(_('Folgender Kurs "{}" war kein Kurs des/der Lehrbeauftragten.'
                                ' Wurde der richtige Kurs ausgewählt?'.format(course.full_name)))
 
-        # ToDO: update Mailform for teachers
-        """
-        if notify and success:
-            try:
-                # TODO: send mail for teachers -> own template needed
-                tasks.send_slow.delay(generate_status_mail(applicant, course))
-                flash(_('Bestätigungsmail wurde versendet'), 'success')
-            except (AssertionError, socket.error, ConnectionError) as e:
-                flash(_('Bestätigungsmail konnte nicht versendet werden: %(error)s', error=e), 'negative')
-        """
         return course
 
     @staticmethod
-    def add_course(teacher, course, notify):
-        course_ids = db.session.query(models.Role.course_id).filter(models.Role.course_id.isnot(None)).distinct().all()
-        if course.id in course_ids:
+    def add_course(teacher, course):
+        own_courses_id = [course.id for course in teacher.teacher_courses]
+        if course.id in own_courses_id:
             raise ValueError(
                 _('Der/die Lehrbeauftragte hat diesen Kurs schon zugewiesen. Doppelzuweisung nicht möglich!'))
         TeacherManagement.check_availability(course)
-        teacher.roles.append(models.Role(course=course, role=models.Role.COURSE_ADMIN))
-
-        # ToDO: update Mailform for teachers
-        """
-        if notify:
-            try:
-                tasks.send_slow.delay(generate_status_mail(applicant, course, restock=True))
-                flash(_('Bestätigungsmail wurde versendet'), 'success')
-            except (AssertionError, socket.error, ConnectionError) as e:
-                flash(_('Bestätigungsmail konnte nicht versendet werden: %(error)s', error=e), 'negative')
-
-        """
+        teacher.roles.append(models.Role(course=course, role=models.Role.COURSE_TEACHER))
 
     @staticmethod
     def check_availability(course):
-        teachers = models.User.query.order_by(models.User.id).all()
-        course_ids = db.session.query(models.Role.course_id).filter(models.Role.course_id.isnot(None)).distinct().all()
+        teachers = db.session.query(models.User) \
+            .join(models.Role, models.User.roles) \
+            .filter(models.Role.role == models.Role.COURSE_TEACHER).all()
+        course_ids = get_course_ids()
         for teacher in teachers:
             if course.id in course_ids:
                 raise ValueError('{0} ist schon vergeben an {1}.'.format(course.full_name, teacher.full_name))
