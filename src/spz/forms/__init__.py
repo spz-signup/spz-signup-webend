@@ -905,7 +905,10 @@ class AddTeacherForm(FlaskForm):
 
     def __init__(self, language_id, *args, **kwargs):
         super(AddTeacherForm, self).__init__(*args, **kwargs)
-        self.courses.choices = cached.language_to_choicelist(language_id)
+        self.courses.choices = cached.language_to_choicelist(language_id, True)
+
+    def update_courses(self, language_id):
+        self.courses.choices = cached.language_to_choicelist(language_id, True)
 
     def get_first_name(self):
         return self.first_name.data

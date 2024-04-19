@@ -7,7 +7,7 @@ This module contains methods for:
 """
 
 from flask import flash
-from spz import models, db, tasks
+from spz import models, db
 from spz.mail import generate_status_mail
 
 from flask_babel import gettext as _
@@ -54,3 +54,15 @@ class TeacherManagement:
         for teacher in teachers:
             if course.id in course_ids:
                 raise ValueError('{0} ist schon vergeben an {1}.'.format(course.full_name, teacher.full_name))
+
+    @staticmethod
+    def unassigned_courses(language_id):
+        # courses with assigned teachers only
+        unassigned_courses = db.session.query(models.Course) \
+            .outerjoin(models.Role,
+                       (models.Role.course_id == models.Course.id) & (models.Role.role == models.Role.COURSE_TEACHER)) \
+            .join(models.Language) \
+            .filter(models.Language.id == language_id) \
+            .filter(models.Role.id == None)
+
+        return unassigned_courses

@@ -69,12 +69,26 @@ def languages_to_choicelist():
 
 
 @cache.cached(key_prefix='language')
-def language_to_choicelist(lang_id):  # shows only courses from selected language
-    return [
-        (x.id, '{0}'.format(x.full_name))
-        for x
-        in models.Course.query.filter(models.Course.language_id == lang_id).order_by(models.Course.id.asc())
-    ]
+def language_to_choicelist(lang_id, has_teacher=False):  # shows only courses from selected language
+    if not has_teacher:
+        return [
+            (x.id, '{0}'.format(x.full_name))
+            for x
+            in models.Course.query.filter(models.Course.language_id == lang_id).order_by(models.Course.id.asc())
+        ]
+    else:
+        unassigned_courses = [
+            (course.id, '{0}'.format(course.full_name))
+            for course
+            in db.session.query(models.Course)
+            .outerjoin(models.Role,
+                       (models.Role.course_id == models.Course.id) & (models.Role.role == models.Role.COURSE_TEACHER))
+            .filter(models.Course.language_id == lang_id)
+            .filter(models.Role.id == None)
+            .order_by(models.Course.id.asc())
+        ]
+
+        return unassigned_courses
 
 
 @cache.cached(key_prefix='gers')

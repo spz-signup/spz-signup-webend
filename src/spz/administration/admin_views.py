@@ -60,15 +60,7 @@ def administration_teacher_lang(id):
         .distinct().all()
 
     # courses with assigned teachers
-    assigned_courses = db.session.query(models.Role.course_id) \
-        .filter(models.Role.role == models.Role.COURSE_TEACHER) \
-        .subquery()
-
-    unassigned_courses = db.session.query(models.Course) \
-        .join(models.Language) \
-        .filter(models.Language.id == id) \
-        .filter(~models.Course.id.in_(assigned_courses))
-    #~Course.id.in_(assigned_courses)
+    unassigned_courses = TeacherManagement.unassigned_courses(id)
 
     return dict(language=lang, teacher=teacher, unassigned_courses=unassigned_courses)
 
@@ -120,6 +112,8 @@ def add_teacher(id):
 
         return redirect(url_for('administration_teacher_lang', id=lang.id))
 
+    # update choices, when changing to another language
+    form.update_courses(id)
     return dict(language=lang, form=form)
 
 
