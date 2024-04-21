@@ -27,6 +27,7 @@ import spz.forms as forms
 from spz.util.Filetype import mime_from_filepointer
 from spz.mail import generate_status_mail
 from spz.export import export_course_list
+from spz.administration import TeacherManagement
 
 from flask_babel import gettext as _
 
@@ -518,6 +519,8 @@ def internal():
 @login_required
 @templated('internal/registrations.html')
 def registrations():
+    if current_user.is_teacher:
+        return redirect(url_for('teacher', id=current_user.id))
     form = forms.TagForm()
     return dict(form=form)
 
@@ -586,6 +589,8 @@ def registrations_verify():
 @login_required
 @templated('internal/approvals.html')
 def approvals():
+    if current_user.is_teacher:
+        return redirect(url_for('teacher', id=current_user.id))
     form = forms.TagForm()
     return dict(form=form)
 
@@ -700,6 +705,8 @@ def approvals_check():
 @login_required
 @templated('internal/notifications.html')
 def notifications():
+    if current_user.is_teacher:
+        return redirect(url_for('teacher', id=current_user.id))
     form = forms.NotificationForm()
 
     if form.validate_on_submit():
@@ -770,12 +777,18 @@ def export(type, id):
             language = models.Language.query.get(id)
             form.courses.data = [course.id for course in language.courses]
 
-    return dict(form=form)
+    # update course multi-select based on assigned courses to user
+    # if teacher, then only own courses in multi-select selectable
+    # if superuser or course admin, then all courses can be downloaded
+    form.update_course_list(current_user)
+    return dict(form=form, user=current_user)
 
 
 @login_required
 @templated('internal/lists.html')
 def lists():
+    if current_user.is_teacher:
+        return redirect(url_for('teacher', id=current_user.id))
     # list of tuple (lang, aggregated number of courses, aggregated number of seats)
     lang_misc = db.session.query(models.Language, func.count(models.Language.courses), func.sum(models.Course.limit)) \
         .join(models.Course, models.Language.courses) \
@@ -789,12 +802,16 @@ def lists():
 @login_required
 @templated('internal/language.html')
 def language(id):
+    if current_user.is_teacher:
+        return redirect(url_for('teacher', id=current_user.id))
     return dict(language=models.Language.query.get_or_404(id))
 
 
 @login_required
 @templated('internal/course.html')
 def course(id):
+    if current_user.is_teacher:
+        return redirect(url_for('teacher', id=current_user.id))
     course = models.Course.query.get_or_404(id)
     form = forms.CourseForm()
     form_delete = forms.DeleteCourseForm()
@@ -943,6 +960,8 @@ def applicant(id):
 @login_required
 @templated('internal/applicants/search_applicant.html')
 def search_applicant():
+    if current_user.is_teacher:
+        return redirect(url_for('teacher', id=current_user.id))
     form = forms.SearchForm()
 
     applicants = []
@@ -1032,6 +1051,8 @@ def applicant_attendances(id):
 @login_required
 @templated('internal/payments.html')
 def payments():
+    if current_user.is_teacher:
+        return redirect(url_for('teacher', id=current_user.id))
     form = forms.PaymentForm()
 
     if form.validate_on_submit():
@@ -1062,6 +1083,8 @@ def payments():
 @login_required
 @templated('internal/outstanding.html')
 def outstanding():
+    if current_user.is_teacher:
+        return redirect(url_for('teacher', id=current_user.id))
     outstanding = db.session.query(models.Attendance) \
         .join(models.Course, models.Applicant) \
         .filter(not_(models.Attendance.waiting),
@@ -1108,6 +1131,8 @@ def status(applicant_id, course_id):
 @login_required
 @templated('internal/statistics.html')
 def statistics():
+    if current_user.is_teacher:
+        return redirect(url_for('teacher', id=current_user.id))
     return None
 
 
@@ -1157,6 +1182,8 @@ def task_queue():
 @login_required
 @templated('internal/preterm.html')
 def preterm():
+    if current_user.is_teacher:
+        return redirect(url_for('teacher', id=current_user.id))
     form = forms.PretermForm()
 
     token = None
@@ -1192,6 +1219,8 @@ def preterm():
 @login_required
 @templated('internal/duplicates.html')
 def duplicates():
+    if current_user.is_teacher:
+        return redirect(url_for('teacher', id=current_user.id))
     taglist = db.session.query(models.Applicant.tag) \
         .filter(models.Applicant.tag is not None, models.Applicant.tag != '') \
         .group_by(models.Applicant.tag) \
@@ -1249,6 +1278,8 @@ def login():
         user = models.User.get_by_login(form.user.data, form.password.data)
         if user:
             login_user(user, remember=True)
+            if current_user.is_teacher:
+                return redirect(url_for('teacher', id=current_user.id))
             return redirect(url_for('internal'))
         flash(_('Du kommst hier net rein!'), 'negative')
 

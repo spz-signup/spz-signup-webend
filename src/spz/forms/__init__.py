@@ -863,6 +863,18 @@ class ExportCourseForm(FlaskForm):
             (f.id, f.descriptive_name) for f in models.ExportFormat.list_formatters(languages=languages)
         ]
 
+    def update_course_list(self, user):
+        # fetch courses depending on user
+        if user.is_admin_or_superuser:
+            new_choices = cached.all_courses_to_choicelist()
+            if self.courses.choices != new_choices:
+                self.courses.choices = new_choices
+        else:
+            courses = getattr(user, 'teacher_courses', [])
+            new_choices = [(course.id, course.full_name) for course in courses]
+            if self.courses.choices != new_choices:
+                self.courses.choices = new_choices
+
 
 class AddTeacherForm(FlaskForm):
     """Represents the form to add teachers to database.
@@ -985,7 +997,6 @@ class EditTeacherForm(FlaskForm):
 
         self.add_to_course.choices = cached.all_courses_to_choicelist()
         self.remove_from_course.choices = cached.all_courses_to_choicelist()
-
 
     def populate(self, teacher):
         self.teacher = teacher

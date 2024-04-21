@@ -21,6 +21,8 @@ from flask_babel import gettext as _
 
 @templated('internal/administration/teacher_overview_base.html')
 def administration_teacher():
+    if current_user.is_teacher:
+        return redirect(url_for('teacher', id=current_user.id))
     # Aliasing might be necessary if Role or User is joined through different paths
     # An outer join retrieves records that have matching values in one of the tables, and also those records from the
     # primary table that have no matches in the joined table.
@@ -112,7 +114,7 @@ def add_teacher(id):
 
         return redirect(url_for('administration_teacher_lang', id=lang.id))
 
-    # update choices, when changing to another language
+    # update course choices depending on the visited language page
     form.update_courses(id)
     return dict(language=lang, form=form)
 
