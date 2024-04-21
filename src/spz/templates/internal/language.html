@@ -35,6 +35,7 @@ Sprache: {{ language.name }}
                 <th class="collapsing">Kurs-L.</th>
                 <th class="collapsing">Anw.-L.</th>
                 <th class="collapsing">Daten</th>
+                <th class="collapsing">Note</th>
             </tr>
         </thead>
         <tbody>
@@ -51,6 +52,8 @@ Sprache: {{ language.name }}
                 <td class="collapsing"><a href="{{ url_for('print_course', course_id=course.id) }}"><button type="button" class="ui button">PDF</button></a></td>
                 <td class="collapsing"><a href="{{ url_for('print_course_presence', course_id=course.id) }}"><button type="button" class="ui button">PDF</button></a></td>
                 <td class="collapsing"><a href="{{ url_for('export', type='course', id=course.id) }}"><button type="button" class="ui button">Export</button></a></td>
+                <td class="collapsing"><a href=" {{ url_for('edit_grade', course_id=course.id) }} ">
+                    <button type="button" class="ui button"><i class="edit icon"></i></button></a>
                 </td>
             </tr>
             {% if sums.update({
@@ -72,6 +75,7 @@ Sprache: {{ language.name }}
                 <th>{{ sums['active'] }}</th>
                 <th>{{ sums['waiting'] }}</th>
                 <th>{{ sums['paying'] }}</th>
+                <th></th>
                 <th></th>
                 <th></th>
                 <th></th>

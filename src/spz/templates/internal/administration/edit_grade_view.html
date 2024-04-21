@@ -66,7 +66,7 @@
         </div>
         <div class="ui section divider"></div>
         <div class="row">
-            <a href="{{ url_for('edit_grade', id=teacher.id, course_id=course.id) }}">
+            <a href="{{ url_for('edit_grade', course_id=course.id) }}">
                 <button type="button" class="ui button">Zurück</button>
             </a>
             <button type="submit" class="ui primary button confirm">Speichern</button>

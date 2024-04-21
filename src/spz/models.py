@@ -210,7 +210,7 @@ class Applicant(db.Model):
     is_student = db.Column(db.Boolean)
 
     # internal representation of the grade is in %
-    grade = db.Column(db.Integer)  # TODO store grade encrypted
+    grade = db.Column(db.Integer, nullable=True)  # TODO store grade encrypted
     ects_points = db.Column(db.Integer, nullable=True, default=0)
     # if a student only wants 'bestanden' instead of the grade value, is set to true
     hide_grade = db.Column(db.Boolean, nullable=False, default=False)
@@ -251,6 +251,8 @@ class Applicant(db.Model):
 
     @property
     def full_grade(self):
+        if self.grade is None:
+            return "-"
         conversion_table = [
             (98, 1),
             (95, 1.3),

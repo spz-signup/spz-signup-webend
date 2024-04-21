@@ -197,18 +197,16 @@ def teacher(id):
 
 
 @templated('internal/administration/grade.html')
-def grade(id, course_id):
-    teacher_db = models.User.query.get_or_404(id)
+def grade(course_id):
     course = models.Course.query.get_or_404(course_id)
 
     exam_date = app.config['EXAM_DATE']
 
-    return dict(teacher=teacher_db, course=course, exam_date=exam_date)
+    return dict(course=course, exam_date=exam_date)
 
 
 @templated('internal/administration/edit_grade.html')
-def edit_grade(id, course_id):
-    teacher_db = models.User.query.get_or_404(id)
+def edit_grade(course_id):
     course = models.Course.query.get_or_404(course_id)
     # !!! course.course_list returns only active applicants (not on waiting list)
     # populate grade fields with applicant parameters
@@ -244,12 +242,11 @@ def edit_grade(id, course_id):
 
         return redirect(url_for('edit_grade_view', id=id, course_id=course_id))
 
-    return dict(teacher=teacher_db, course=course, form=form, exam_date=exam_date)
+    return dict(course=course, form=form, exam_date=exam_date)
 
 
 @templated('internal/administration/edit_grade_view.html')
-def edit_grade_view(id, course_id):
-    teacher_db = models.User.query.get_or_404(id)
+def edit_grade_view(course_id):
     course = models.Course.query.get_or_404(course_id)
     exam_date = app.config['EXAM_DATE']
 
@@ -276,7 +273,7 @@ def edit_grade_view(id, course_id):
 
         return redirect(url_for('grade', id=id, course_id=course_id))
 
-    return dict(teacher=teacher_db, course=course, exam_date=exam_date)
+    return dict(course=course, exam_date=exam_date)
 
 
 @templated('internal/administration/attendances.html')

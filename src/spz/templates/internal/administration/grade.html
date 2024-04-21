@@ -9,7 +9,7 @@
 
 {% block internal_body %}
     <div>
-        <a href=" {{ url_for('teacher', id=teacher.id) }} ">
+        <a href=" {{ url_for('teacher', id=current_user.id) }} ">
             <button type="button" class="ui button">Zurück zu meinen Kursen</button>
         </a>
     </div>
@@ -19,7 +19,7 @@
             <h2>Notenübersicht</h2>
         </div>
         <div class="right floated column">
-            <a href=" {{ url_for('edit_grade', id=teacher.id, course_id=course.id) }} ">
+            <a href=" {{ url_for('edit_grade', course_id=course.id) }} ">
                 <button type="button" class="ui button"><i class="edit icon"></i>Noten ändern</button>
             </a>
         </div>
@@ -44,7 +44,7 @@
                     <td>{{ applicant.last_name }}</td>
                     <td>{{ applicant.ects_points }}</td>
                     <td>
-                        {% if applicant.grade %}
+                        {% if applicant.grade is not none %}
                             {% if applicant.hide_grade %}
                                 <b>bestanden</b>
                             {% else %}
