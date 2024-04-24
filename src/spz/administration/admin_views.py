@@ -208,6 +208,8 @@ def grade(course_id):
 @templated('internal/administration/edit_grade.html')
 def edit_grade(course_id):
     course = models.Course.query.get_or_404(course_id)
+    if not current_user.is_admin_or_superuser and not current_user.is_course_teacher(course):
+        return redirect(url_for('internal'))
     # !!! course.course_list returns only active applicants (not on waiting list)
     # populate grade fields with applicant parameters
     grade_list = forms.create_grade_form(course.course_list)
@@ -240,7 +242,7 @@ def edit_grade(course_id):
             db.session.rollback()
             flash(_('Es gab einen Fehler beim Speichern der Noten: %(error)s', error=e), 'negative')
 
-        return redirect(url_for('edit_grade_view', id=id, course_id=course_id))
+        return redirect(url_for('edit_grade_view', course_id=course_id))
 
     return dict(course=course, form=form, exam_date=exam_date)
 
@@ -271,7 +273,10 @@ def edit_grade_view(course_id):
             flash(_('Es ist ein Fehler beim Abspeichern der Bestanden-Attribute aufgetreten: %(error)s', error=e),
                   'negative')
 
-        return redirect(url_for('grade', id=id, course_id=course_id))
+        if current_user.is_admin_or_superuser:
+            return redirect(url_for('language', id=course.language_id))
+        else:
+            return redirect(url_for('grade', id=id, course_id=course_id))
 
     return dict(course=course, exam_date=exam_date)
 
@@ -292,3 +297,17 @@ def edit_attendances(id, course_id, class_id):
     course = models.Course.query.get_or_404(course_id)
 
     return dict(teacher=teacher_db, course=course, class_id=class_id)
+
+
+@templated('internal/administration/teacher_void.html')
+def teacher_void():
+    if current_user.is_teacher:
+        return redirect(url_for('teacher', id=current_user.id))
+
+    all_users = models.User.query.all()
+
+    # Filter out users who do not have COURSE_TEACHER, COURSE_ADMIN or SUPERUSER role
+    users_without_roles = [user for user in all_users if
+                           not any(role.role in ['COURSE_TEACHER', 'COURSE_ADMIN', 'SUPERUSER'] for role in user.roles)]
+
+    return dict(users=users_without_roles)

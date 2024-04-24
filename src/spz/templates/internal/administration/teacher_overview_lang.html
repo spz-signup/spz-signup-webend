@@ -22,13 +22,24 @@
         </div>
     </div>
     --->
-    <div>
-        <a href="{{ url_for('add_teacher', id=language.id) }}">
-            <button class="ui basic button">
-                <i class="icon user"></i>
-                Lehrbeauftragte*n neu erstellen
-            </button>
-        </a>
+
+    <div class="three column row">
+        <div class="left floated column">
+            <a href="{{ url_for('add_teacher', id=language.id) }}">
+                <button class="ui basic button">
+                    <i class="icon user"></i>
+                    <strong>Lehrbeauftragte*n neu erstellen</strong>
+                </button>
+            </a>
+        </div>
+        <div class="center floated column">
+            <a href="{{ url_for('teacher_void') }}">
+                <button class="ui basic button">
+                    <i class="hide icon"></i>
+                    Lehrbeauftragte ohne Kurse
+                </button>
+            </a>
+        </div>
     </div>
     <div class="row">
         <table class="ui selectable sortable compact small striped table">

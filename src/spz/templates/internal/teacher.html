@@ -28,7 +28,7 @@
                         href="{{ url_for('course', id=course.id) }}">{{ course.full_name }}</a>
                     </td>
                     <td class="collapsing">
-                        {{ course.count_attendances() }} / {{ course.limit }}
+                        {{ course.count_attendances(waiting=False) }} / {{ course.limit }}
                     </td>
                     <td class="collapsing"><a href="{{ url_for('grade', course_id=course.id) }}">
                         <button type="button" class="ui button">Notenübersicht</button>
