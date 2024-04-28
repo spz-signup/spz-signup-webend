@@ -511,7 +511,7 @@ def signoff():
 @templated('internal/overview.html')
 def internal():
     if current_user.is_teacher:
-        return redirect(url_for('teacher', id=current_user.id))
+        return redirect(url_for('teacher'))
     logs = models.LogEntry.get_visible_log(current_user, 200)
     return dict(logs=logs)
 
@@ -520,7 +520,7 @@ def internal():
 @templated('internal/registrations.html')
 def registrations():
     if current_user.is_teacher:
-        return redirect(url_for('teacher', id=current_user.id))
+        return redirect(url_for('teacher'))
     form = forms.TagForm()
     return dict(form=form)
 
@@ -590,7 +590,7 @@ def registrations_verify():
 @templated('internal/approvals.html')
 def approvals():
     if current_user.is_teacher:
-        return redirect(url_for('teacher', id=current_user.id))
+        return redirect(url_for('teacher'))
     form = forms.TagForm()
     return dict(form=form)
 
@@ -706,7 +706,7 @@ def approvals_check():
 @templated('internal/notifications.html')
 def notifications():
     if current_user.is_teacher:
-        return redirect(url_for('teacher', id=current_user.id))
+        return redirect(url_for('teacher'))
     form = forms.NotificationForm()
 
     if form.validate_on_submit():
@@ -788,7 +788,7 @@ def export(type, id):
 @templated('internal/lists.html')
 def lists():
     if current_user.is_teacher:
-        return redirect(url_for('teacher', id=current_user.id))
+        return redirect(url_for('teacher'))
     # list of tuple (lang, aggregated number of courses, aggregated number of seats)
     lang_misc = db.session.query(models.Language, func.count(models.Language.courses), func.sum(models.Course.limit)) \
         .join(models.Course, models.Language.courses) \
@@ -803,7 +803,7 @@ def lists():
 @templated('internal/language.html')
 def language(id):
     if current_user.is_teacher:
-        return redirect(url_for('teacher', id=current_user.id))
+        return redirect(url_for('teacher'))
     return dict(language=models.Language.query.get_or_404(id))
 
 
@@ -811,7 +811,7 @@ def language(id):
 @templated('internal/course.html')
 def course(id):
     if current_user.is_teacher:
-        return redirect(url_for('teacher', id=current_user.id))
+        return redirect(url_for('teacher'))
     course = models.Course.query.get_or_404(id)
     form = forms.CourseForm()
     form_delete = forms.DeleteCourseForm()
@@ -961,7 +961,7 @@ def applicant(id):
 @templated('internal/applicants/search_applicant.html')
 def search_applicant():
     if current_user.is_teacher:
-        return redirect(url_for('teacher', id=current_user.id))
+        return redirect(url_for('teacher'))
     form = forms.SearchForm()
 
     applicants = []
@@ -1052,7 +1052,7 @@ def applicant_attendances(id):
 @templated('internal/payments.html')
 def payments():
     if current_user.is_teacher:
-        return redirect(url_for('teacher', id=current_user.id))
+        return redirect(url_for('teacher'))
     form = forms.PaymentForm()
 
     if form.validate_on_submit():
@@ -1084,7 +1084,7 @@ def payments():
 @templated('internal/outstanding.html')
 def outstanding():
     if current_user.is_teacher:
-        return redirect(url_for('teacher', id=current_user.id))
+        return redirect(url_for('teacher'))
     outstanding = db.session.query(models.Attendance) \
         .join(models.Course, models.Applicant) \
         .filter(not_(models.Attendance.waiting),
@@ -1132,7 +1132,7 @@ def status(applicant_id, course_id):
 @templated('internal/statistics.html')
 def statistics():
     if current_user.is_teacher:
-        return redirect(url_for('teacher', id=current_user.id))
+        return redirect(url_for('teacher'))
     return None
 
 
@@ -1183,7 +1183,7 @@ def task_queue():
 @templated('internal/preterm.html')
 def preterm():
     if current_user.is_teacher:
-        return redirect(url_for('teacher', id=current_user.id))
+        return redirect(url_for('teacher'))
     form = forms.PretermForm()
 
     token = None
@@ -1220,7 +1220,7 @@ def preterm():
 @templated('internal/duplicates.html')
 def duplicates():
     if current_user.is_teacher:
-        return redirect(url_for('teacher', id=current_user.id))
+        return redirect(url_for('teacher'))
     taglist = db.session.query(models.Applicant.tag) \
         .filter(models.Applicant.tag is not None, models.Applicant.tag != '') \
         .group_by(models.Applicant.tag) \
@@ -1279,7 +1279,7 @@ def login():
         if user:
             login_user(user, remember=True)
             if current_user.is_teacher:
-                return redirect(url_for('teacher', id=current_user.id))
+                return redirect(url_for('teacher'))
             return redirect(url_for('internal'))
         flash(_('Du kommst hier net rein!'), 'negative')
 

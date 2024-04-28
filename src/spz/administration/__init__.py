@@ -15,8 +15,14 @@ from flask_babel import gettext as _
 
 def get_course_ids():
     course_ids_tuple = db.session.query(models.Role.course_id).filter(
-        models.Role.course_id.isnot(None)).distinct().all()
+        models.Role.course_id.isnot(None)) \
+        .filter(models.Role.role == models.Role.COURSE_TEACHER) \
+        .distinct().all()
     # transform query tuples into right integer format
+    """flash('Vergebene Kurse sind:')
+    for course_id in course_ids_tuple:
+        course = models.Course.query.get(course_id[0])
+        flash(f'{course.full_name}: {course_id[0]}')"""
     return [course_id[0] for course_id in course_ids_tuple]
 
 
@@ -29,7 +35,8 @@ class TeacherManagement:
             filter(models.Role.course_id == course.id). \
             first()
         if role_to_remove:
-            teacher.roles.remove(role_to_remove)
+            # remove complete table row from role table
+            db.session.delete(role_to_remove)
         else:
             raise ValueError(_('Folgender Kurs "{}" war kein Kurs des/der Lehrbeauftragten.'
                                ' Wurde der richtige Kurs ausgewählt?'.format(course.full_name)))
@@ -51,9 +58,11 @@ class TeacherManagement:
             .join(models.Role, models.User.roles) \
             .filter(models.Role.role == models.Role.COURSE_TEACHER).all()
         course_ids = get_course_ids()
-        for teacher in teachers:
-            if course.id in course_ids:
-                raise ValueError('{0} ist schon vergeben an {1}.'.format(course.full_name, teacher.full_name))
+        if course.id in course_ids:
+            for teacher in teachers:
+                if teacher.is_course_teacher(course):
+                    #flash(f'{course.full_name} ({course.id}) is already assigned to {teacher.full_name}')
+                    raise ValueError('{0} ist schon vergeben an {1}.'.format(course.full_name, teacher.full_name))
 
     @staticmethod
     def unassigned_courses(language_id):

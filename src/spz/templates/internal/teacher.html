@@ -2,7 +2,7 @@
 {% from 'formhelpers.html' import csrf_field, render_submit, attendance_status, render_boolean %}
 
 {% block caption %}
-    Lehrbeauftragte*r: <a href="{{ url_for('teacher', id=teacher.id) }}">{{ teacher.full_name }}</a>
+    Lehrbeauftragte*r: <a href="{{ url_for('teacher') }}">{{ user.full_name }}</a>
 {% endblock caption %}
 
 
@@ -22,7 +22,7 @@
             </tr>
             </thead>
             <tbody>
-            {% for course in teacher.teacher_courses %}
+            {% for course in user.teacher_courses %}
                 <tr>
                     <td class="collapsing"><a
                         href="{{ url_for('course', id=course.id) }}">{{ course.full_name }}</a>
@@ -33,7 +33,7 @@
                     <td class="collapsing"><a href="{{ url_for('grade', course_id=course.id) }}">
                         <button type="button" class="ui button">Notenübersicht</button>
                     </a></td>
-                    <!--<td class="collapsing"><a href="{{ url_for('attendances', id=teacher.id, course_id=course.id) }}">
+                    <!--<td class="collapsing"><a href="{{ url_for('attendances', id=user.id, course_id=course.id) }}">
                         <button type="button" class="ui button">Anwesenheiten</button>
                     </a></td>-->
                     <td class="collapsing"><a href="{{ url_for('print_course', course_id=course.id) }}">

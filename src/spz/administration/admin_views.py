@@ -22,7 +22,7 @@ from flask_babel import gettext as _
 @templated('internal/administration/teacher_overview_base.html')
 def administration_teacher():
     if current_user.is_teacher:
-        return redirect(url_for('teacher', id=current_user.id))
+        return redirect(url_for('teacher'))
     # Aliasing might be necessary if Role or User is joined through different paths
     # An outer join retrieves records that have matching values in one of the tables, and also those records from the
     # primary table that have no matches in the joined table.
@@ -122,18 +122,35 @@ def add_teacher(id):
 @templated('internal/administration/edit_teacher.html')
 def edit_teacher(id):
     teacher = models.User.query.get_or_404(id)
-    form = forms.EditTeacherForm()
+    form = forms.EditTeacherForm(teacher)
 
     if form.validate_on_submit():
 
         try:
-            teacher.first_name = form.first_name.data
-            teacher.last_name = form.last_name.data
-            teacher.mail = form.mail.data
-            teacher.tag = form.tag.data
 
-            db.session.commit()
-            flash(_('Der/die Lehrbeauftragte wurde aktualisiert'), 'success')
+            changes = False
+
+            if teacher.first_name != form.first_name.data:
+                teacher.first_name = form.first_name.data
+                changes = True
+
+            if teacher.last_name != form.last_name.data:
+                teacher.last_name = form.last_name.data
+                changes = True
+
+            if teacher.email != form.mail.data:
+                teacher.email = form.mail.data
+                changes = True
+
+            if teacher.tag != form.tag.data:
+                teacher.tag = form.tag.data
+                changes = True
+
+            if changes:
+                db.session.commit()
+                flash(_('Der/die Lehrbeauftragte wurde aktualisiert (pers. Daten)'), 'success')
+            else:
+                flash(_('Es gab keine Änderung der persönlichen Daten.'), 'info')
 
             add_to_course = form.get_add_to_course()
             remove_from_course = form.get_remove_from_course()
@@ -190,10 +207,9 @@ def edit_teacher(id):
 
 
 @templated('internal/teacher.html')
-def teacher(id):
-    teacher_db = models.User.query.get_or_404(id)
+def teacher():
 
-    return dict(teacher=teacher_db)
+    return dict(user=current_user)
 
 
 @templated('internal/administration/grade.html')
@@ -302,12 +318,12 @@ def edit_attendances(id, course_id, class_id):
 @templated('internal/administration/teacher_void.html')
 def teacher_void():
     if current_user.is_teacher:
-        return redirect(url_for('teacher', id=current_user.id))
+        return redirect(url_for('teacher'))
 
     all_users = models.User.query.all()
 
-    # Filter out users who do not have COURSE_TEACHER, COURSE_ADMIN or SUPERUSER role
+    # Filter users who do not have COURSE_TEACHER or SUPERUSER roles
     users_without_roles = [user for user in all_users if
-                           not any(role.role in ['COURSE_TEACHER', 'COURSE_ADMIN', 'SUPERUSER'] for role in user.roles)]
+                           not any(role.role in ['COURSE_TEACHER', 'SUPERUSER'] for role in user.roles)]
 
     return dict(users=users_without_roles)

@@ -991,9 +991,9 @@ class EditTeacherForm(FlaskForm):
         'Passwort zurücksetzen und Mail verschicken'
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, teacher, *args, **kwargs):
         super(EditTeacherForm, self).__init__(*args, **kwargs)
-        self.teacher = None
+        self.teacher = teacher
 
         self.add_to_course.choices = cached.all_courses_to_choicelist()
         self.remove_from_course.choices = cached.all_courses_to_choicelist()
