@@ -11,12 +11,13 @@ from flask import make_response
 from flask_login import login_required
 
 from spz import app, models
+from spz.pdf_zip import PdfZipWriter, html_response
 
 
 class SPZPDF(fpdf.FPDF):
     """Base class used for ALL PDF generators here."""
 
-    def __init__(self, orientation='L'): # orientation: L=Landscape, P=Portrait
+    def __init__(self, orientation='L'):  # orientation: L=Landscape, P=Portrait
         super(SPZPDF, self).__init__(orientation=orientation, unit='mm', format='A4', font_cache_dir='/tmp')
         self.add_font('DejaVu', '', '/usr/share/fonts/truetype/dejavu/DejaVuSansCondensed.ttf', uni=True)
         self.add_font('DejaVu', 'B', '/usr/share/fonts/truetype/dejavu/DejaVuSansCondensed-Bold.ttf', uni=True)
@@ -223,11 +224,13 @@ def print_course_presence(course_id):
 @login_required
 def print_language_presence(language_id):
     language = models.Language.query.get_or_404(language_id)
-    pdflist = PresenceGenerator()
+    zip_writer = PdfZipWriter()
     for course in language.courses:
+        pdflist = PresenceGenerator()
         list_presence(pdflist, course)
+        zip_writer.write_to_zip(pdflist.gen_final_data(), course.full_name)
 
-    return pdflist.gen_response(language.name)
+    return html_response(zip_writer, language.name)
 
 
 def list_course(pdflist, course):
@@ -374,9 +377,9 @@ class ParticipationCertGenerator(SPZPDF):
         """Get final byte string data for PDF."""
         return self.output(dest='S')
 
+
 @login_required
 def generate_participation_cert(full_name, tag, course, ects, ger, date):
-
     participation_cert = ParticipationCertGenerator('P')
     participation_cert.add_page()
     participation_cert.set_font('Helvetica', '', size=16)
