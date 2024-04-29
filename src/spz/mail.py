@@ -57,6 +57,7 @@ def generate_status_mail(applicant, course, time=None, restock=False):
             status=subject_status),
         body=render_template(
             template,
+            attendance=attendance,
             applicant=applicant,
             course=course,
             has_to_pay=not attendance.is_free if attendance else False,

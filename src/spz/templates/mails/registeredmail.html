@@ -4,7 +4,7 @@
 {% if has_to_pay %}
 Sie sind zahlungspflichtig im Kurs.
 
-Bitte überweisen Sie die Kursgebühr i. H. v. {{ course.price }} Euro unter Angabe des folgenden Verwendungszwecks:
+Bitte überweisen Sie die Kursgebühr i. H. v. {{ attendance.discounted_price }} Euro unter Angabe des folgenden Verwendungszwecks:
 
 XD02003911901 {{ applicant.last_name ~ ', ' ~ applicant.first_name ~ ', ' ~ 'A' ~ applicant.id ~ 'C' ~ course.id ~ ', ' ~ course.full_name }}
 
