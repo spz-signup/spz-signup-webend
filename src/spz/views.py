@@ -834,6 +834,9 @@ def course(id):
                     db.session.rollback()
                 return dict(course=course)
 
+            # Delete roles associated with the course before deleting the course
+            models.Role.query.filter_by(course_id=course.id).delete()
+
             db.session.delete(course)
             db.session.commit()
             flash(
