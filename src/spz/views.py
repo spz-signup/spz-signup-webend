@@ -833,9 +833,11 @@ def course(id):
                     flash(_('Der Kurs kann nicht gelöscht werden, weil aktive Teilnahmen bestehen.'), 'error')
                     db.session.rollback()
                 return dict(course=course)
-
+            
             # Delete roles associated with the course before deleting the course
             models.Role.query.filter_by(course_id=course.id).delete()
+            # Delete Logentrys
+            models.LogEntry.query.filter_by(course_id=course.id).delete()
 
             db.session.delete(course)
             db.session.commit()
