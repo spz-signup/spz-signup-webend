@@ -289,10 +289,8 @@ def edit_grade_view(course_id):
             flash(_('Es ist ein Fehler beim Abspeichern der Bestanden-Attribute aufgetreten: %(error)s', error=e),
                   'negative')
 
-        if current_user.is_admin_or_superuser:
-            return redirect(url_for('language', id=course.language_id))
-        else:
-            return redirect(url_for('grade', id=id, course_id=course_id))
+
+        return redirect(url_for('grade', id=id, course_id=course_id))
 
     return dict(course=course, exam_date=exam_date)
 

@@ -52,7 +52,7 @@ Sprache: {{ language.name }}
                 <td class="collapsing"><a href="{{ url_for('print_course', course_id=course.id) }}"><button type="button" class="ui button">PDF</button></a></td>
                 <td class="collapsing"><a href="{{ url_for('print_course_presence', course_id=course.id) }}"><button type="button" class="ui button">PDF</button></a></td>
                 <td class="collapsing"><a href="{{ url_for('export', type='course', id=course.id) }}"><button type="button" class="ui button">Export</button></a></td>
-                <td class="collapsing"><a href=" {{ url_for('edit_grade', course_id=course.id) }} ">
+                <td class="collapsing"><a href=" {{ url_for('grade', course_id=course.id) }} ">
                     <button type="button" class="ui button"><i class="edit icon"></i></button></a>
                 </td>
             </tr>

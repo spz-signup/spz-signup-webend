@@ -34,11 +34,17 @@
                         {% for t in teacher %}
                             <a href="{{ url_for('edit_teacher', id=t.id) }}">{{ t.full_name+"\n" }}</a>
                         {% endfor %}
-                        {% else %}
-                            -
+                    {% else %}
+                        -
                     {% endif %}</dd>
                 </dl>
             </div>
+        </div>
+        <div class="ui hidden divider"></div>
+        <div class="row">
+            <a href="{{ url_for('grade', course_id=course.id) }}">
+                <button type="button" class="ui button">Notenübersicht</button>
+            </a>
         </div>
         <div class="ui section divider"></div>
         <div class="row">
@@ -89,7 +95,9 @@
         <div class="ui section divider"></div>
         <div class="row">
 
-            <button type="submit" value="submit-pdf" class="fluid ui positive button" name="submit-button">PDF Generieren</button>
+            <button type="submit" value="submit-pdf" class="fluid ui positive button" name="submit-button">PDF
+                Generieren
+            </button>
         </div>
     </form>
     {% if current_user.is_superuser %}

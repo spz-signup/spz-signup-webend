@@ -8,11 +8,13 @@
 
 
 {% block internal_body %}
+    {% if current_user.is_teacher %}
     <div>
         <a href=" {{ url_for('teacher') }} ">
             <button type="button" class="ui button">Zurück zu meinen Kursen</button>
         </a>
     </div>
+    {% endif %}
 
     <div class="three column row">
         <div class="left floated column">
