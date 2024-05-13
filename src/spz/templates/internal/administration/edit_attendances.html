@@ -1,0 +1,14 @@
+{% extends 'internal/internal.html' %}
+{% from 'formhelpers.html' import csrf_field, render_submit, attendance_status, render_boolean %}
+
+{% block caption %}
+    Kurs: {{ course.language.name }} {{ course.level }}
+    {{ course.alternative }}
+{% endblock caption %}
+
+
+{% block internal_body %}
+
+    <h2>EDIT ATTENDANCES {{ class_id }}</h2>
+
+{% endblock internal_body %}

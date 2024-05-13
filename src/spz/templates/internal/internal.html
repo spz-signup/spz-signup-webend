@@ -5,7 +5,7 @@
     <div class="item">
         <a href="{{ url_for('internal') }}"><h1>Interner Bereich</h1></a>
     </div>
-    {% if current_user.is_authenticated %}
+    {% if current_user.is_admin_or_superuser %}
     <a class="item" href="{{ url_for('registrations') }}" ><i class="barcode icon"></i> Matrikelnummern</a>
     <a class="item" href="{{ url_for('approvals') }}" ><i class="file text outline icon"></i> Englisch Testergebnisse</a>
     <a class="item" href="{{ url_for('lists') }}"><i class="list icon"></i> Kurslisten</a>
@@ -15,10 +15,11 @@
     <a class="item" href="{{ url_for('outstanding') }}"><i class="warning sign icon"></i> Offene Beträge</a>
     <a class="item" href="{{ url_for('statistics') }}"><i class="pie chart icon"></i> Statistiken</a>
     <a class="item" href="{{ url_for('duplicates') }}"><i class="random icon"></i> Doppelgänger</a>
+    <a class="item" href="{{ url_for('administration_teacher') }}"><i class="users icon"></i> Dozentenverwaltung</a>
     {% if current_user.is_superuser %}
     <a class="item" href="{{ url_for('preterm') }}"><i class="star icon"></i> Prioritär&shy;anmeldungen</a>
-    {% endif %}
     <a class="item" href="{{ url_for('unique') }}"><i class="trash icon"></i> Wartelisten Bereinigen</a>
+    {% endif %}
     {% endif %}
 </div>
 {% endblock navbar %}
