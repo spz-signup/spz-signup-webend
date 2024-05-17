@@ -1,5 +1,5 @@
 {% extends 'internal/internal.html' %}
-{% from 'formhelpers.html' import csrf_field, render_input, render_option, render_submit %}
+{% from 'formhelpers.html' import csrf_field, render_input, render_option, render_submit, render_boolean %}
 
 {% block caption %}
     Lehrbeauftragte hinzufügen zu: <a href="{{ url_for('language', id=language.id) }}">{{ language.name }}</a>
@@ -25,6 +25,8 @@
                 {{ render_input(form.tag, required=False, help='Hier gibt es die Möglichkeit das Mitarbeiterkürzel einzutragen.', icon='barcode') }}
                 {{ render_option(form.courses, multiple=True, required=True) }}
             </div>
+            {{ render_boolean(form.send_mail) }}
+            <h3 class="ui dividing header"></h3>
             <button type="submit" class="fluid ui positive button" name="submit-button">Hinzufügen</button>
         </form>
     </div>

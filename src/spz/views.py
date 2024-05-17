@@ -204,7 +204,7 @@ def signupinternal(course_id):
                 # save information in temporary session token
                 o_auth_token.is_student = True
                 db.session.commit()
-        if not o_auth_token.is_student:
+        if not o_auth_token.is_student and not current_user.is_admin_or_superuser:
             # preselect employee option in origin field
             form.origin.choices = [(12, 'KIT (Mitarbeiter*in)')]
             """for num, key in form.origin.choices:
@@ -874,7 +874,7 @@ def course(id):
                     flash(_('Der Kurs kann nicht gelöscht werden, weil aktive Teilnahmen bestehen.'), 'error')
                     db.session.rollback()
                 return dict(course=course)
-            
+
             # Delete roles associated with the course before deleting the course
             models.Role.query.filter_by(course_id=course.id).delete()
             # Delete Logentrys

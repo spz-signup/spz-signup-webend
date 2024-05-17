@@ -915,6 +915,10 @@ class AddTeacherForm(FlaskForm):
         coerce=int
     )
 
+    send_mail = BooleanField(
+        'Passwort-Mail verschicken'
+    )
+
     def __init__(self, language_id, *args, **kwargs):
         super(AddTeacherForm, self).__init__(*args, **kwargs)
         self.courses.choices = cached.language_to_choicelist(language_id, True)
@@ -933,6 +937,9 @@ class AddTeacherForm(FlaskForm):
 
     def get_tag(self):
         return self.tag.data
+
+    def get_send_mail(self):
+        return self.send_mail.data
 
     def get_courses(self):
         return [models.Course.query.get(id) for id in self.courses.data]

@@ -32,7 +32,7 @@
                 {{ render_option(form.origin, icon='leaf') }}
                 {{ render_input(form.tag, help='Falls Sie kein KIT-Studierender sind und einen Englischkurs belegen wollen, tragen Sie hier die Ihnen vom Sprachenzentrum erteilte ID ein. Mitarbeiter müssen Ihren KIT-Account (login) eintragen.', icon='barcode') }}
             </div>
-            {% if is_student %}
+            {% if is_student or current_user.is_admin_or_superuser %}
                 <div class="kit-only">
                     <h3 class="ui dividing header">Angaben zum Studium</h3>
                     <div class="grouped fields">

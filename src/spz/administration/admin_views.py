@@ -86,6 +86,7 @@ def add_teacher(id):
                     error=e), 'negative')
             return dict(language=lang, form=form)
 
+        send_pw_mail = form.get_send_mail()
         if teacher is None:
             roles = []
             teacher_courses = form.get_courses()
@@ -106,11 +107,12 @@ def add_teacher(id):
                 flash(_('Es gab einen Fehler beim Hinzufügen des Lehrbeauftragten: %(error)s', error=e), 'negative')
                 return dict(form=form)
 
-            # send password reset mail, if writing to database was successfully
-            try:
-                send_password_reset_to_user(teacher)
-            except (AssertionError, socket.error, ConnectionError) as e:
-                flash(_('Eine Mail zum Passwort Reset konnte nicht verschickt werden: %(error)s', error=e), 'negative')
+            if send_pw_mail:
+                # send password reset mail, if writing to database was successfully
+                try:
+                    send_password_reset_to_user(teacher)
+                except (AssertionError, socket.error, ConnectionError) as e:
+                    flash(_('Eine Mail zum Passwort Reset konnte nicht verschickt werden: %(error)s', error=e), 'negative')
 
         return redirect(url_for('administration_teacher_lang', id=lang.id))
 
