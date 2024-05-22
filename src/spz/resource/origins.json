@@ -66,6 +66,12 @@
             "validate_registration": true,
             "is_internal": true
         },
+         {
+            "name": "KIT (Studienkolleg)",
+            "short_name": "KIT",
+            "validate_registration": true,
+            "is_internal": true
+        },
         {
             "name": "KIT (Mitarbeiter)",
             "short_name": "KIT",
