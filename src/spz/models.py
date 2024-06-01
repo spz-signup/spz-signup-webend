@@ -309,6 +309,33 @@ class Applicant(db.Model):
 
         return 0
 
+    def rating_to_ger(self, percent):
+        """
+        Converts the percentage value of the English test to the corresponding GER Level (German Language Level).
+
+        returns: GER Level as string
+        """
+        conversion_table = [
+            (90, "C2"),
+            (80, "C1"),
+            (65, "B2"),
+            (50, "B1"),
+            (20, "A2")
+        ]
+
+        for percentage, ger in conversion_table:
+            if percent >= percentage:
+                return ger
+
+        return ""
+
+    @property
+    def get_test_ger(self):
+        """
+        Returns the GER level for the best test result.
+        """
+        return self.rating_to_ger(self.best_rating())
+
     """ Discount (factor) for the next course beeing entered """
 
     def current_discount(self):
