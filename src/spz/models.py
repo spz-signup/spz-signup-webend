@@ -250,6 +250,12 @@ class Applicant(db.Model):
         return '{} {}'.format(self.first_name, self.last_name)
 
     @property
+    def sanitized_grade(self):
+        if self.grade is None:
+            return 0
+        return self.grade
+
+    @property
     def full_grade(self):
         if self.grade is None:
             return "-"
