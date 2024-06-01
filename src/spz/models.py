@@ -252,7 +252,7 @@ class Applicant(db.Model):
     @property
     def sanitized_grade(self):
         if self.grade is None:
-            return 0
+            return ""
         return self.grade
 
     @property
