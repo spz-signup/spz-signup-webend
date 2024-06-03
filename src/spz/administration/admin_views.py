@@ -112,7 +112,8 @@ def add_teacher(id):
                 try:
                     send_password_reset_to_user(teacher)
                 except (AssertionError, socket.error, ConnectionError) as e:
-                    flash(_('Eine Mail zum Passwort Reset konnte nicht verschickt werden: %(error)s', error=e), 'negative')
+                    flash(_('Eine Mail zum Passwort Reset konnte nicht verschickt werden: %(error)s', error=e),
+                          'negative')
 
         return redirect(url_for('administration_teacher_lang', id=lang.id))
 
@@ -210,7 +211,6 @@ def edit_teacher(id):
 
 @templated('internal/teacher.html')
 def teacher():
-
     return dict(user=current_user)
 
 
@@ -291,7 +291,6 @@ def edit_grade_view(course_id):
             flash(_('Es ist ein Fehler beim Abspeichern der Bestanden-Attribute aufgetreten: %(error)s', error=e),
                   'negative')
 
-
         return redirect(url_for('grade', id=id, course_id=course_id))
 
     return dict(course=course, exam_date=exam_date)
@@ -323,7 +322,14 @@ def teacher_void():
     all_users = models.User.query.all()
 
     # Filter users who do not have COURSE_TEACHER or SUPERUSER roles
-    users_without_roles = [user for user in all_users if
-                           not any(role.role in ['COURSE_TEACHER', 'SUPERUSER'] for role in user.roles)]
+    users_without_roles = [
+        user for user in all_users
+        if (
+               not any(role.role == models.Role.COURSE_TEACHER for role in user.roles) and
+               any(role.role == models.Role.COURSE_ADMIN for role in user.roles)
+           ) or (
+               not any(role.role in [models.Role.COURSE_TEACHER, models.Role.COURSE_ADMIN, models.Role.SUPERUSER] for role in user.roles)
+           )
+    ]
 
     return dict(users=users_without_roles)
