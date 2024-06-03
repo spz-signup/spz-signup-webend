@@ -586,6 +586,17 @@ class Course(db.Model):
             else:
                 return self.Status.VACANCIES
 
+    @property
+    def teacher_name(self):
+        teacher_role = Role.query.join(User).filter(
+            Role.course_id == self.id,
+            Role.role == Role.COURSE_TEACHER
+        ).first()
+
+        if teacher_role and teacher_role.user:
+            return teacher_role.user.full_name
+        return ""
+
 
 @total_ordering
 class Language(db.Model):

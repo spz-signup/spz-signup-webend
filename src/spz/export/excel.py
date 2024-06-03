@@ -139,7 +139,8 @@ class ExcelZipWriter(ExcelWriter):
                         'course.alternative',
                         'course.name_english',
                         'semester',
-                        'exam_date'
+                        'exam_date',
+                        'course.teacher_name'
                     ]
                     # in case of integers they need to be converted to a string
                     if type(key) is int:
