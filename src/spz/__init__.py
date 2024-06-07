@@ -201,10 +201,11 @@ routes = [
     ('/internal/teacher', admin_views.teacher, ['GET', 'POST']),
     ('/internal/grades/<int:course_id>', admin_views.grade, ['GET', 'POST']),
     ('/internal/grades/<int:course_id>/edit', admin_views.edit_grade, ['GET', 'POST']),
-    ('/internal//grades/<int:course_id>/edit_view', admin_views.edit_grade_view, ['GET', 'POST']),
+    ('/internal/grades/<int:course_id>/edit_view', admin_views.edit_grade_view, ['GET', 'POST']),
     ('/internal/teacher/<int:id>/attendance/<int:course_id>', admin_views.attendances, ['GET', 'POST']),
-    ('/internal/teacher/<int:id>/attendance/<int:course_id>/edit/<int:class_id>', admin_views.edit_attendances, ['GET', 'POST'])
+    ('/internal/teacher/<int:id>/attendance/<int:course_id>/edit/<int:class_id>', admin_views.edit_attendances, ['GET', 'POST']),
 
+    ('/api/campus_portal/export/<string:export_token>', views.campus_portal_grades, ['GET'])
 ]
 
 for rule, view_func, methods in routes:

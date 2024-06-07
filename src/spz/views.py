@@ -39,6 +39,8 @@ from spz.auth.password_reset import validate_reset_token_and_get_user_id
 
 from spz.administration import TeacherManagement
 
+from spz.campusportal.export_token import generate_export_token_for_courses, get_courses_from_export_token
+
 
 def check_precondition_with_auth(cond, msg, auth=False):
     """Check precondition and flash message if not satisfied.
@@ -1329,3 +1331,18 @@ def reset_password(reset_token):
     form.reset_token.data = reset_token
 
     return dict(form=form)
+
+
+def campus_portal_grades(export_token):
+    course_ids = get_courses_from_export_token(export_token)
+
+    if not course_ids:
+        return dict(error="Invalid export token.")
+
+    courses = models.Course.query.filter(models.Course.id.in_(course_ids)).all()
+
+    if len(courses) != len(course_ids):
+        return dict(error="Course not found.")
+
+    # TODO Fetch the grades for the course and return them
+    return dict(courses=courses)
