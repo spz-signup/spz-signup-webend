@@ -36,6 +36,12 @@ class CustomFlask(Flask):
     """
     jinja_options = dict(Flask.jinja_options, trim_blocks=True, lstrip_blocks=True, auto_reload=False)
 
+    def route(self, rule, **options):
+        def decorator(f):
+            self.add_url_rule(rule, endpoint=options.pop("endpoint", None), view_func=f, **options)
+            return f
+
+        return decorator
 
 app = CustomFlask(__name__, instance_relative_config=True)
 
@@ -205,7 +211,10 @@ routes = [
     ('/internal/teacher/<int:id>/attendance/<int:course_id>', admin_views.attendances, ['GET', 'POST']),
     ('/internal/teacher/<int:id>/attendance/<int:course_id>/edit/<int:class_id>', admin_views.edit_attendances, ['GET', 'POST']),
 
-    ('/api/campus_portal/export/<string:export_token>', views.campus_portal_grades, ['GET'])
+    ('/api/campus_portal/export/<string:export_token>', views.campus_portal_grades, ['GET']),
+    ('/internal/campus_portal/export', views.campus_export_language, ['GET', 'POST']),
+    ('/internal/campus_portal/export/<int:id>', views.campus_export_course, ['GET', 'POST']),
+
 ]
 
 for rule, view_func, methods in routes:

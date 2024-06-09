@@ -1,0 +1,40 @@
+{% extends 'internal/internal.html' %}
+{% from 'formhelpers.html' import td_sorted %}
+
+{% block caption %}
+    Noten-Export für Campus Portal
+{% endblock caption %}
+
+
+{% block internal_body %}
+    <div class="row">
+        <table class="ui selectable sortable compact small striped table">
+            <thead>
+            <tr>
+                <th>Kurse</th>
+                <th>Kursalternativen</th>
+                <th>Export-Link</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for level, courses in grouped_by_level.items() %}
+                <tr>
+                    <td> {{ courses[0].name }} </td>
+                    <td>
+                        {% if courses|length > 1 %}
+                            {% for course in courses %}
+                                <div class="ui button"> {{ course.alternative }} </div>
+                            {% endfor %}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div>
+                            <input type="hidden" value="This is the hidden text to be copied" id="hiddenText">
+                            <button onclick="copyToClipboard('{{ courses[0].name }}', '{{ language.id }}')">Copy to clipboard</button>
+                        </div>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock internal_body %}

@@ -829,7 +829,7 @@ def course(id):
     )
     if len(teacher) > 1:
         flash(
-            _('Achtung: Der Kurs hat mehr als nur einen Dozenten zugewiesen. Das ist ungültig',),
+            _('Achtung: Der Kurs hat mehr als nur einen Dozenten zugewiesen. Das ist ungültig', ),
             'error')
 
     # we have two forms on this page, to differ between them a hidden identifier tag is used
@@ -1346,3 +1346,39 @@ def campus_portal_grades(export_token):
 
     # TODO Fetch the grades for the course and return them
     return dict(courses=courses)
+
+
+@templated('internal/campusportal/campus_export_language.html')
+def campus_export_language():
+    languages = models.Language.query.all()
+
+    return dict(language=languages)
+
+
+@templated('internal/campusportal/campus_export.html')
+def campus_export_course(id):
+    language = models.Language.query.get_or_404(id)
+
+    # ToDo: Group courses by level with alternatives in column
+    courses = language.courses
+
+    grouped_by_level = {}
+    for course in courses:
+        if course.level not in grouped_by_level:
+            grouped_by_level[course.level] = []
+        grouped_by_level[course.level].append(course)
+
+    flash(grouped_by_level)
+
+    return dict(grouped_by_level=grouped_by_level, language=language)
+
+
+@app.route('/copy', methods=['POST', 'GET'])
+def copy_export_link():
+    data = request.get_json()
+    message = data.get('message', 'Text copied to clipboard!')
+    course_name = data.get('course_name', 'Course')
+    language_id = data.get('language_id', '0')
+    language_id = int(language_id)
+    flash(f'{course_name}: {message}')
+    return redirect(url_for('campus_export_course', id=language_id))

@@ -103,7 +103,33 @@
     {% assets "all_js" %}
         <script src="{{ ASSET_URL }}"></script>
     {% endassets %}
+
+    <script>
+        function copyToClipboard(courseName="", languageId="") {
+            var copyText = document.getElementById("hiddenText").value;
+            navigator.clipboard.writeText(copyText).then(function() {
+                // Send a POST request to trigger the flash message
+                fetch('/copy', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: 'Text copied to clipboard!',
+                        course_name: courseName,
+                        language_id: languageId
+                    })
+                }).then(function() {
+                    window.location.reload();
+                });
+            }, function(err) {
+                console.error('Async: Could not copy text: ', err);
+            });
+        }
+    </script>
 {% endblock scripts %}
+
+
 
 {{ rlrc_comment() }}
 </body>
