@@ -36,13 +36,6 @@ class CustomFlask(Flask):
     """
     jinja_options = dict(Flask.jinja_options, trim_blocks=True, lstrip_blocks=True, auto_reload=False)
 
-    def route(self, rule, **options):
-        def decorator(f):
-            self.add_url_rule(rule, endpoint=options.pop("endpoint", None), view_func=f, **options)
-            return f
-
-        return decorator
-
 app = CustomFlask(__name__, instance_relative_config=True)
 
 # Configuration loading

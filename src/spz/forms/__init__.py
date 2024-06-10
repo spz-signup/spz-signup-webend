@@ -1066,3 +1066,24 @@ def create_grade_form(applicants):
 
 class AttendanceForm(FlaskForm):
     attendance = HiddenField("attendance_id")
+
+
+class CampusExportForm(FlaskForm):
+    """
+    Represents the form for exporting the grades of the applicants to the Campus System.
+    """
+
+    courses = SelectField(
+        'Kurse',
+        coerce=str
+    )
+
+    def __init__(self, grouped_by_level, *args, **kwargs):
+        super(CampusExportForm, self).__init__(*args, **kwargs)
+        self.courses.choices = cached.grouped_by_level_to_choicelist(grouped_by_level)
+
+    def get_courses(self):
+        return self.courses.data
+
+    def update_course(self, grouped_by_level):
+        self.courses.choices = cached.grouped_by_level_to_choicelist(grouped_by_level)

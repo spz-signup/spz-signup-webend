@@ -1356,10 +1356,9 @@ def campus_export_language():
 
 
 @templated('internal/campusportal/campus_export.html')
-def campus_export_course(id):
+def campus_export_course(id, link=""):
     language = models.Language.query.get_or_404(id)
 
-    # ToDo: Group courses by level with alternatives in column
     courses = language.courses
 
     grouped_by_level = {}
@@ -1368,17 +1367,21 @@ def campus_export_course(id):
             grouped_by_level[course.level] = []
         grouped_by_level[course.level].append(course)
 
-    flash(grouped_by_level)
+    #flash(grouped_by_level)
 
-    return dict(grouped_by_level=grouped_by_level, language=language)
+    form = forms.CampusExportForm(grouped_by_level)
+    form.update_course(grouped_by_level)
 
+    if form.validate_on_submit():
+        selected_level = form.get_courses()
+        flash(selected_level)
+        courses_of_one_level = grouped_by_level[selected_level]
+        flash(courses_of_one_level)
 
-@app.route('/copy', methods=['POST', 'GET'])
-def copy_export_link():
-    data = request.get_json()
-    message = data.get('message', 'Text copied to clipboard!')
-    course_name = data.get('course_name', 'Course')
-    language_id = data.get('language_id', '0')
-    language_id = int(language_id)
-    flash(f'{course_name}: {message}')
-    return redirect(url_for('campus_export_course', id=language_id))
+        course_ids = [course.id for course in courses_of_one_level]
+
+        link = app.config['SPZ_URL'] + "/api/campus_portal/export/" + generate_export_token_for_courses(course_ids)
+
+        return dict(form=form, language=language, link=link)
+
+    return dict(form=form, language=language, link=link)
