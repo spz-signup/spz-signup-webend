@@ -1345,7 +1345,46 @@ def campus_portal_grades(export_token):
         return dict(error="Course not found.")
 
     # TODO Fetch the grades for the course and return them
-    return dict(courses=courses)
+    # which dict entries are needed? Example format
+    # the json holds an array
+    # each entry of the array is an object containing the student information
+    """[
+      {
+        matriculationId: 123456,
+        title: "Kurs 1",
+        titleEn: "Course 1",
+        examDate: "2024-03-01",
+        ects: 3,
+        grade: "2,7",
+        sqUnit: "STK"
+      },
+    ]"""
+
+    grade_objects = []
+    for course in courses:
+        for student in course.course_list:
+            # .course_list returns only active applicants (no waiting list applicants)
+            # check for valid matriculation id -> tag and if the grade was set
+            if student.tag is not None and student.full_grade != "-":
+                if student.hide_grade:
+                    grade = "bestanden"
+                else:
+                    grade = student.full_grade
+                grade_objects.append(
+                    {
+                        "matriculationId": student.tag,
+                        "title": course.name,  # name without alternatives a, b, c, ...
+                        "titleEn": "",  # ToDo: fill in properly
+                        "examDate": app.config['EXAM_DATE'],
+                        "ects": student.ects_points,
+                        "grade": grade,
+                        "sqUnit": "STK"
+                    }
+                )
+    # put filled grade objects into a json object type
+    # or better jsonify(grade_objects=grade_objects)?
+    #return dict(title="ÜQ Grade Import Request", items=grade_objects)
+    return dict(items=grade_objects)
 
 
 @templated('internal/campusportal/campus_export_language.html')
@@ -1367,16 +1406,14 @@ def campus_export_course(id, link=""):
             grouped_by_level[course.level] = []
         grouped_by_level[course.level].append(course)
 
-    #flash(grouped_by_level)
-
     form = forms.CampusExportForm(grouped_by_level)
     form.update_course(grouped_by_level)
 
     if form.validate_on_submit():
         selected_level = form.get_courses()
-        #flash(selected_level)
+        # flash(selected_level)
         courses_of_one_level = grouped_by_level[selected_level]
-        #flash(courses_of_one_level)
+        # flash(courses_of_one_level)
 
         course_ids = [course.id for course in courses_of_one_level]
 
