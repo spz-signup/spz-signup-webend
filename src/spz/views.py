@@ -1366,7 +1366,7 @@ def campus_portal_grades(export_token):
         for student in course.course_list:
             # .course_list returns only active applicants (no waiting list applicants)
             # check for valid matriculation id -> tag and if the grade was set
-            if student.tag is not None and student.full_grade != "-":
+            if student.tag and student.full_grade not in ["-", "nicht bestanden"]:
                 if student.hide_grade:
                     grade = "bestanden"
                 else:
