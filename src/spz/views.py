@@ -17,7 +17,7 @@ from redis import ConnectionError
 
 from sqlalchemy import and_, func, not_
 
-from flask import request, redirect, render_template, url_for, flash
+from flask import request, redirect, render_template, url_for, flash, jsonify
 from flask_login import current_user, login_required, login_user, logout_user
 from flask_mail import Message
 
@@ -1337,18 +1337,18 @@ def campus_portal_grades(export_token):
     course_ids = get_courses_from_export_token(export_token)
 
     if not course_ids:
-        return dict(error="Invalid export token.")
+        return jsonify(error="Invalid export token.")
 
     courses = models.Course.query.filter(models.Course.id.in_(course_ids)).all()
 
     if len(courses) != len(course_ids):
-        return dict(error="Course not found.")
+        return jsonify(error="Course not found.")
 
-    # TODO Fetch the grades for the course and return them
-    # which dict entries are needed? Example format
+    # Example of expected json structure
     # the json holds an array
     # each entry of the array is an object containing the student information
-    """[
+    """
+    [
       {
         matriculationId: 123456,
         title: "Kurs 1",
@@ -1357,8 +1357,9 @@ def campus_portal_grades(export_token):
         ects: 3,
         grade: "2,7",
         sqUnit: "STK"
-      },
-    ]"""
+      }, ...
+    ]
+    """
 
     grade_objects = []
     for course in courses:
@@ -1374,17 +1375,15 @@ def campus_portal_grades(export_token):
                     {
                         "matriculationId": student.tag,
                         "title": course.name,  # name without alternatives a, b, c, ...
-                        "titleEn": "",  # ToDo: fill in properly
+                        "titleEn": course.name_english,
                         "examDate": app.config['EXAM_DATE'],
                         "ects": student.ects_points,
                         "grade": grade,
                         "sqUnit": "STK"
                     }
                 )
-    # put filled grade objects into a json object type
-    # or better jsonify(grade_objects=grade_objects)?
-    #return dict(title="ÜQ Grade Import Request", items=grade_objects)
-    return dict(items=grade_objects)
+
+    return jsonify(grade_objects)
 
 
 @templated('internal/campusportal/campus_export_language.html')
