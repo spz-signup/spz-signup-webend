@@ -15,13 +15,34 @@
     {% block head %}
     {% endblock head %}
 
-    {% block style %}
-        .inline-flex-container {
-        display: inline-flex;
-        align-items: center; // Vertical alignment
-        justify-content: center; // Horizontal alignment
-        }
-    {% endblock style %}
+    <style>
+        {% block style %}
+            .inline-flex-container {
+                display: inline-flex;
+                align-items: center;
+            / / Vertical alignment justify-content: center;
+            / / Horizontal alignment
+            }
+            .ui.message p {
+                word-wrap: break-word;
+                word-break: break-all;
+                overflow-wrap: break-word;
+                white-space: normal;
+            }
+            #notification {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #4caf50;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            z-index: 1000;
+            }
+        {% endblock style %}
+    </style>
 </head>
 <body>
 <div class="print-warning">
@@ -105,26 +126,23 @@
     {% endassets %}
 
     <script>
-        function copyToClipboard(courseName="", languageId="") {
+        // copies test of the hiddenText input field to the clipboard
+        function copyToClipboard() {
             var copyText = document.getElementById("hiddenText").value;
-            navigator.clipboard.writeText(copyText).then(function() {
-                // Send a POST request to trigger the flash message
-                fetch('/copy', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        message: 'Text copied to clipboard!',
-                        course_name: courseName,
-                        language_id: languageId
-                    })
-                }).then(function() {
-                    window.location.reload();
-                });
-            }, function(err) {
-                console.error('Async: Could not copy text: ', err);
+            navigator.clipboard.writeText(copyText).then(function () {
+                showNotification('Link in Zwischenablage kopiert!');
+            }, function (err) {
+                console.error('Async: Link konnte nicht kopiert werden: ', err);
             });
+        }
+        // notification of successful copy-to-clipboard process
+        function showNotification(message) {
+            var notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.display = 'block';
+            setTimeout(function() {
+                notification.style.display = 'none';
+            }, 2250); // Show notification for 2.25 seconds
         }
     </script>
 {% endblock scripts %}

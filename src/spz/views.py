@@ -1374,9 +1374,9 @@ def campus_export_course(id, link=""):
 
     if form.validate_on_submit():
         selected_level = form.get_courses()
-        flash(selected_level)
+        #flash(selected_level)
         courses_of_one_level = grouped_by_level[selected_level]
-        flash(courses_of_one_level)
+        #flash(courses_of_one_level)
 
         course_ids = [course.id for course in courses_of_one_level]
 

@@ -19,14 +19,19 @@
         </form>
     </div>
     {% if link|length > 0 %}
-
-    <div class="row">
-        <h3 class="ui dividing header">Export-Link</h3>
-        <p>Der Export-Link für das Campus Portal wurde generiert. Dieser Link kann in das Campus Portal eingefügt werden.</p>
-        <div class="ui message">
-            <div class="header">Export-Link</div>
-            <p>{{ link }}</p>
+        <div class="row">
+            <h3 class="ui dividing header">Export-Link</h3>
+            <p>Der Export-Link für das Campus Portal wurde generiert. Dieser Link kann in das Campus Portal eingefügt
+                werden, um die Noten der Kurse mit dem gewählten Level zu importieren.</p>
+            <div id="notification">Link wurde in die Zwischenablage kopiert.</div>
+            <div>
+                <input type="hidden" value="{{ link }}" id="hiddenText">
+                <div class="ui button" onclick="copyToClipboard()">Link Kopieren</div>
+            </div>
+            <div class="ui message">
+                <div class="header">Export-Link</div>
+                <p>{{ link }}</p>
+            </div>
         </div>
-    </div>
     {% endif %}
 {% endblock internal_body %}
