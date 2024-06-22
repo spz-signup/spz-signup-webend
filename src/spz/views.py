@@ -1361,24 +1361,27 @@ def campus_portal_grades(export_token):
     ]
     """
 
+    # convert internal exam date format (DD.MM.YYYY) to ISO 8601 standard (YYYY-MM-DD)
+    date_object = datetime.strptime(app.config['EXAM_DATE'], '%d.%m.%Y')
+    exam_date_iso = date_object.strftime('%Y-%m-%d')  # convert date to ISO 8601 standard
+
     grade_objects = []
     for course in courses:
         for student in course.course_list:
-            # .course_list returns only active applicants (no waiting list applicants)
-            # check for valid matriculation id -> tag and if the grade was set
-            if student.tag and student.full_grade not in ["-", "nicht bestanden"]:
+            # check for valid matriculation id -> tag and if the grade was set and course is passed
+            if student.tag_is_digit and student.full_grade not in ["-", "nicht bestanden"]:
                 if student.hide_grade:
                     grade = "bestanden"
                 else:
                     grade = student.full_grade
                 grade_objects.append(
                     {
-                        "matriculationId": student.tag,
-                        "title": course.name,  # name without alternatives a, b, c, ...
-                        "titleEn": course.name_english,
-                        "examDate": app.config['EXAM_DATE'],
-                        "ects": student.ects_points,
-                        "grade": grade,
+                        "matriculationId": int(student.tag),  # required
+                        # "title": course.name,  # name without alternatives a, b, c, ...
+                        # "titleEn": course.name_english,
+                        "examDate": exam_date_iso,
+                        "ects": student.ects_points,  # required
+                        "grade": grade,  # required
                         "sqUnit": "STK"
                     }
                 )
