@@ -144,14 +144,9 @@ def all_courses_to_choicelist():
     ]
 
 
-"""
-@cache.cached(key_prefix='all_languages')
-def all_languages_to_choicelist():
-    languages = models.Language.query \
-        .order_by(models.Language.name)
-
-    return [
-        (language.id, '{0}'.format(language.name))
-        for language in languages
-    ]
-"""
+@cache.cached(key_prefix='courses_grouped_by_level')
+def grouped_by_level_to_choicelist(grouped_courses: dict):
+    choices = []
+    for level, courses in grouped_courses.items():
+        choices.append((courses[0].level, '{0}'.format(courses[0].name)))
+    return choices

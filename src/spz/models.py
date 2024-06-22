@@ -250,6 +250,16 @@ class Applicant(db.Model):
         return '{} {}'.format(self.first_name, self.last_name)
 
     @property
+    def tag_is_digit(self):
+        if self.tag is None:
+            return False
+        try:
+            int(self.tag)
+            return True
+        except ValueError:
+            return False
+
+    @property
     def sanitized_grade(self):
         if self.grade is None:
             return ""
@@ -260,16 +270,16 @@ class Applicant(db.Model):
         if self.grade is None:
             return "-"
         conversion_table = [
-            (98, 1),
-            (95, 1.3),
-            (90, 1.7),
-            (85, 2),
-            (79, 2.3),
-            (73, 2.7),
-            (68, 3),
-            (62, 3.3),
-            (56, 3.7),
-            (50, 4)
+            (98, "1"),
+            (95, "1,3"),
+            (90, "1,7"),
+            (85, "2"),
+            (79, "2,3"),
+            (73, "2,7"),
+            (68, "3"),
+            (62, "3,3"),
+            (56, "3,7"),
+            (50, "4")
         ]
 
         for percentage, grade in conversion_table:

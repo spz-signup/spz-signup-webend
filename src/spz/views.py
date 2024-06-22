@@ -17,7 +17,7 @@ from redis import ConnectionError
 
 from sqlalchemy import and_, func, not_
 
-from flask import request, redirect, render_template, url_for, flash
+from flask import request, redirect, render_template, url_for, flash, jsonify
 from flask_login import current_user, login_required, login_user, logout_user
 from flask_mail import Message
 
@@ -38,6 +38,8 @@ from spz.pdf import generate_participation_cert
 from spz.auth.password_reset import validate_reset_token_and_get_user_id
 
 from spz.administration import TeacherManagement
+
+from spz.campusportal.export_token import generate_export_token_for_courses, get_courses_from_export_token
 
 
 def check_precondition_with_auth(cond, msg, auth=False):
@@ -827,7 +829,7 @@ def course(id):
     )
     if len(teacher) > 1:
         flash(
-            _('Achtung: Der Kurs hat mehr als nur einen Dozenten zugewiesen. Das ist ungültig',),
+            _('Achtung: Der Kurs hat mehr als nur einen Dozenten zugewiesen. Das ist ungültig', ),
             'error')
 
     # we have two forms on this page, to differ between them a hidden identifier tag is used
@@ -1329,3 +1331,96 @@ def reset_password(reset_token):
     form.reset_token.data = reset_token
 
     return dict(form=form)
+
+
+def campus_portal_grades(export_token):
+    course_ids = get_courses_from_export_token(export_token)
+
+    if not course_ids:
+        return jsonify(error="Invalid export token.")
+
+    courses = models.Course.query.filter(models.Course.id.in_(course_ids)).all()
+
+    if len(courses) != len(course_ids):
+        return jsonify(error="Course not found.")
+
+    # Example of expected json structure
+    # the json holds an array
+    # each entry of the array is an object containing the student information
+    """
+    [
+      {
+        matriculationId: 123456,
+        title: "Kurs 1",
+        titleEn: "Course 1",
+        examDate: "2024-03-01",
+        ects: 3,
+        grade: "2,7",
+        sqUnit: "STK"
+      }, ...
+    ]
+    """
+
+    # convert internal exam date format (DD.MM.YYYY) to ISO 8601 standard (YYYY-MM-DD)
+    date_object = datetime.strptime(app.config['EXAM_DATE'], '%d.%m.%Y')
+    exam_date_iso = date_object.strftime('%Y-%m-%d')  # convert date to ISO 8601 standard
+
+    grade_objects = []
+    for course in courses:
+        for student in course.course_list:
+            # check for valid matriculation id -> tag and if the grade was set and course is passed
+            if student.tag_is_digit and student.full_grade not in ["-", "nicht bestanden"]:
+                if student.hide_grade:
+                    grade = "bestanden"
+                else:
+                    grade = student.full_grade
+                grade_objects.append(
+                    {
+                        "matriculationId": int(student.tag),  # required
+                        # "title": course.name,  # name without alternatives a, b, c, ...
+                        # "titleEn": course.name_english,
+                        "examDate": exam_date_iso,
+                        "ects": student.ects_points,  # required
+                        "grade": grade,  # required
+                        "sqUnit": "STK"
+                    }
+                )
+
+    return jsonify(grade_objects)
+
+
+@templated('internal/campusportal/campus_export_language.html')
+def campus_export_language():
+    languages = models.Language.query.all()
+
+    return dict(language=languages)
+
+
+@templated('internal/campusportal/campus_export.html')
+def campus_export_course(id, link=""):
+    language = models.Language.query.get_or_404(id)
+
+    courses = language.courses
+
+    grouped_by_level = {}
+    for course in courses:
+        if course.level not in grouped_by_level:
+            grouped_by_level[course.level] = []
+        grouped_by_level[course.level].append(course)
+
+    form = forms.CampusExportForm(grouped_by_level)
+    form.update_course(grouped_by_level)
+
+    if form.validate_on_submit():
+        selected_level = form.get_courses()
+        # flash(selected_level)
+        courses_of_one_level = grouped_by_level[selected_level]
+        # flash(courses_of_one_level)
+
+        course_ids = [course.id for course in courses_of_one_level]
+
+        link = app.config['SPZ_URL'] + "/api/campus_portal/export/" + generate_export_token_for_courses(course_ids)
+
+        return dict(form=form, language=language, link=link)
+
+    return dict(form=form, language=language, link=link)
