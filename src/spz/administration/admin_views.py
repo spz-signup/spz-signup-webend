@@ -53,6 +53,7 @@ def administration_teacher():
 @templated('internal/administration/teacher_overview_lang.html')
 def administration_teacher_lang(id):
     lang = models.Language.query.get_or_404(id)
+    form = forms.ResetLanguagePWs(lang)
 
     teacher = models.User.query \
         .join(models.Role, models.User.roles) \
@@ -64,7 +65,24 @@ def administration_teacher_lang(id):
     # courses with assigned teachers
     unassigned_courses = TeacherManagement.unassigned_courses(id)
 
-    return dict(language=lang, teacher=teacher, unassigned_courses=unassigned_courses)
+    if form.validate_on_submit():
+        if len(teacher) == 0:
+            flash(_('Es gibt keine Lehrbeauftragten für diese Sprache. Keine Emails wurden verschickt.'), 'info')
+            return redirect(url_for('administration_teacher_lang', id=id))
+
+        reset_pws = form.get_send_mail()
+        # reset passwords for all teachers of the language
+        if reset_pws:
+            try:
+                for t in teacher:
+                    send_password_reset_to_user(t)
+                flash(_('Emails mit Passwort Links wurden erfolgreich an alle Lehrbeauftragten verschickt.'), 'success')
+            except (AssertionError, socket.error, ConnectionError) as e:
+                flash(_('Emails zum Passwort Reset konnten nicht verschickt werden: %(error)s', error=e),
+                      'negative')
+        return redirect(url_for('administration_teacher_lang', id=id))
+
+    return dict(language=lang, teacher=teacher, unassigned_courses=unassigned_courses, form=form)
 
 
 @templated('internal/administration/add_teacher.html')
@@ -328,7 +346,9 @@ def teacher_void():
                not any(role.role == models.Role.COURSE_TEACHER for role in user.roles) and
                any(role.role == models.Role.COURSE_ADMIN for role in user.roles)
            ) or (
-               not any(role.role in [models.Role.COURSE_TEACHER, models.Role.COURSE_ADMIN, models.Role.SUPERUSER] for role in user.roles)
+               not any(
+                   role.role in [models.Role.COURSE_TEACHER, models.Role.COURSE_ADMIN, models.Role.SUPERUSER] for role
+                   in user.roles)
            )
     ]
 

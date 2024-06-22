@@ -15,6 +15,7 @@ from markupsafe import Markup
 from wtforms import widgets, StringField, SelectField, SelectMultipleField, IntegerField, Label
 from wtforms import TextAreaField, BooleanField, DecimalField, MultipleFileField, FieldList, FormField, HiddenField
 from flask_ckeditor import CKEditorField
+from wtforms.validators import DataRequired
 
 from spz import app, models, token
 
@@ -1068,6 +1069,7 @@ class AttendanceForm(FlaskForm):
     attendance = HiddenField("attendance_id")
 
 
+
 class CampusExportForm(FlaskForm):
     """
     Represents the form for exporting the grades of the applicants to the Campus System.
@@ -1087,3 +1089,17 @@ class CampusExportForm(FlaskForm):
 
     def update_course(self, grouped_by_level):
         self.courses.choices = cached.grouped_by_level_to_choicelist(grouped_by_level)
+
+class ResetLanguagePWs(FlaskForm):
+    """Represents the form for send pws to all teachers of a language."""
+
+    def __init__(self, language, *args, **kwargs):
+        super(ResetLanguagePWs, self).__init__(*args, **kwargs)
+        self.language = language
+        self.send_mail.label.text = f'Passwort für alle Dozenten von {language.name} zurücksetzen'
+
+    send_mail = BooleanField()
+
+    def get_send_mail(self):
+        return self.send_mail.data
+
