@@ -1059,7 +1059,7 @@ def create_grade_form(applicants):
     for applicant in applicants:
         field_name = f'grade_{applicant.id}'
         setattr(GradeForm, field_name,
-                IntegerField("Note", validators=[validators.NumberRange(min=0, max=100)],
+                IntegerField("Note", validators=[validators.Optional(), validators.NumberRange(min=0, max=100)],
                              default=applicant.grade))
 
     return GradeForm

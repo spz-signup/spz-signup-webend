@@ -43,7 +43,9 @@
                             {{ applicant.ects_points }}
                         </td>
                         <td>
-                            {% if applicant.grade >= 50 %}
+                            {% if applicant.grade is none %}
+                                -
+                            {% elif applicant.grade >= 50 %}
                                 <select name="view_{{ applicant.id }}" class="ui dropdown">
                                     <option value="0" {% if applicant.hide_grade %}selected{% endif %}>
                                         bestanden

@@ -1282,13 +1282,14 @@ def login():
     form = forms.LoginForm()
 
     if form.validate_on_submit():
-        user = models.User.get_by_login(form.user.data, form.password.data)
+        cleaned_email = form.user.data.strip()
+        user = models.User.get_by_login(cleaned_email, form.password.data)
         if user:
             login_user(user, remember=True)
             if current_user.is_teacher:
                 return redirect(url_for('teacher'))
             return redirect(url_for('internal'))
-        flash(_('Du kommst hier net rein!'), 'negative')
+        flash(_('Login war nicht erfolgreich.'), 'negative')
 
     return dict(form=form)
 
