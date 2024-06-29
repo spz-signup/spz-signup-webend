@@ -188,6 +188,7 @@ def signupinternal(course_id):
         form.state.data = o_auth_token.state
         form.first_name.data = o_auth_user_data['given_name']
         form.last_name.data = o_auth_user_data['family_name']
+        form.origin.data = o_auth_user_data['fieldOfStudyText']
         form.mail.data = o_auth_user_data['eduperson_principal_name']
         form.confirm_mail.data = o_auth_user_data['eduperson_principal_name']
         form.tag.data = o_auth_user_data['matriculationNumber'] if 'student@kit.edu' in o_auth_user_data[
@@ -833,7 +834,7 @@ def course(id):
                     flash(_('Der Kurs kann nicht gelöscht werden, weil aktive Teilnahmen bestehen.'), 'error')
                     db.session.rollback()
                 return dict(course=course)
-            
+
             # Delete roles associated with the course before deleting the course
             models.Role.query.filter_by(course_id=course.id).delete()
             # Delete Logentrys
