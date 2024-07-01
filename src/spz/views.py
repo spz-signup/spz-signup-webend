@@ -1383,7 +1383,7 @@ def campus_portal_grades(export_token):
                         "examDate": exam_date_iso,
                         "ects": student.ects_points,  # required
                         "grade": grade,  # required
-                        "sqUnit": "STK"
+                        "sqUnit": "SPZ"
                     }
                 )
 
