@@ -16,6 +16,11 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends fonts-dejavu gcc libc-dev git gpg libmagic1 libpq-dev postgresql-client xz-utils && \
     pip install -U pip setuptools --no-cache-dir && \
     rm -rf /root/.cache /var/cache/*
+    
+# Check and downgrade pip if necessary
+RUN pip --version && \
+    pip install --upgrade "pip<24.1" && \
+    pip --version
 
 # install python requirements and do cleanup
 COPY requirements.txt requirements.txt
