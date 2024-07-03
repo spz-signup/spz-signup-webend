@@ -258,6 +258,7 @@ def edit_grade(course_id):
     for applicant in course.course_list:
         if applicant.ects_points == 0:
             applicant.ects_points = course.ects_points
+    db.session.commit()
 
     if request.method == 'POST' and form.validate():
         try:
