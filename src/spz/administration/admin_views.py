@@ -253,6 +253,12 @@ def edit_grade(course_id):
 
     exam_date = app.config['EXAM_DATE']
 
+    # ToDo: assign course ects when applicant registers for course
+    # temporary quickfix
+    for applicant in course.course_list:
+        if applicant.ects_points == 0:
+            applicant.ects_points = course.ects_points
+
     if request.method == 'POST' and form.validate():
         try:
             changes = False
