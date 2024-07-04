@@ -1,0 +1,53 @@
+{% extends 'internal/internal.html' %}
+{% from 'formhelpers.html' import csrf_field, render_submit, attendance_status, render_boolean %}
+
+{% block caption %}
+    Lehrbeauftragte*r: <a href="{{ url_for('teacher') }}">{{ user.full_name }}</a>
+{% endblock caption %}
+
+
+{% block internal_body %}
+    <h2>Meine Kurse</h2>
+    <div class="row">
+        <table class="ui selectable sortable compact small striped table">
+            <thead>
+            <tr>
+                <th>Kurs</th>
+                <th>Teilnehmer</th>
+                <th>Note eintragen</th>
+                <!--<th>Anwesenheit eintragen</th>-->
+                <th class="collapsing">Kurs-L.</th>
+                <th class="collapsing">Anw.-L.</th>
+                <th class="collapsing">Daten</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for course in user.teacher_courses %}
+                <tr>
+                    <td class="collapsing"><a
+                        href="{{ url_for('course', id=course.id) }}">{{ course.full_name }}</a>
+                    </td>
+                    <td class="collapsing">
+                        {{ course.count_attendances(waiting=False) }} / {{ course.limit }}
+                    </td>
+                    <td class="collapsing"><a href="{{ url_for('grade', course_id=course.id) }}">
+                        <button type="button" class="ui button">Notenübersicht</button>
+                    </a></td>
+                    <!--<td class="collapsing"><a href="{{ url_for('attendances', id=user.id, course_id=course.id) }}">
+                        <button type="button" class="ui button">Anwesenheiten</button>
+                    </a></td>-->
+                    <td class="collapsing"><a href="{{ url_for('print_course', course_id=course.id) }}">
+                        <button type="button" class="ui button">PDF</button>
+                    </a></td>
+                    <td class="collapsing"><a href="{{ url_for('print_course_presence', course_id=course.id) }}">
+                        <button type="button" class="ui button">PDF</button>
+                    </a></td>
+                    <td class="collapsing"><a href="{{ url_for('export', type='course', id=course.id) }}">
+                        <button type="button" class="ui button">Export</button>
+                    </a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock internal_body %}

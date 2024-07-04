@@ -1,0 +1,34 @@
+{% extends 'internal/internal.html' %}
+{% from 'formhelpers.html' import csrf_field, render_input, render_option, render_submit, render_boolean %}
+
+{% block caption %}
+    Lehrbeauftragte hinzufügen zu: <a href="{{ url_for('language', id=language.id) }}">{{ language.name }}</a>
+{% endblock caption %}
+
+
+{% block internal_body %}
+    <div class="row">
+        <form id="signup" class="ui form" method="post" data-persist="garlic">
+            {{ csrf_field() }}
+
+            <h3 class="ui dividing header">Angaben zum/zur Lehrbeauftragten</h3>
+            <div class="grouped fields">
+                {{ render_input(form.first_name, placeholder='Mika', icon='user') }}
+                {{ render_input(form.last_name, placeholder='Müller', icon='users') }}
+            </div>
+            <div class="grouped fields">
+                {# mail needs an help-block because we write the suggestion in it #}
+                {{ render_input(form.mail, placeholder='mika.mueller@beispiel.de', required_extras='data-type="email" data-trigger="change"', help=' ', icon='at') }}
+                {{ render_input(form.confirm_mail, placeholder='mika.mueller@beispiel.de', required_extras='data-type="email" data-trigger="change"', help=' ', icon='at') }}
+            </div>
+            <div class="grouped fields">
+                {{ render_input(form.tag, required=False, help='Hier gibt es die Möglichkeit das Mitarbeiterkürzel einzutragen.', icon='barcode') }}
+                {{ render_option(form.courses, multiple=True, required=True) }}
+            </div>
+            {{ render_boolean(form.send_mail) }}
+            <h3 class="ui dividing header"></h3>
+            <button type="submit" class="fluid ui positive button" name="submit-button">Hinzufügen</button>
+        </form>
+    </div>
+
+{% endblock internal_body %}

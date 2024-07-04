@@ -40,6 +40,7 @@ def origins_to_choicelist():
         in models.Origin.query.order_by(models.Origin.id.asc())
     ]
 
+
 @cache.cached(key_prefix='internal_origins')
 def internal_origins_to_choicelist():
     return [
@@ -47,6 +48,7 @@ def internal_origins_to_choicelist():
         for x
         in models.Origin.query.filter(models.Origin.is_internal == True).order_by(models.Origin.id.asc())
     ]
+
 
 @cache.cached(key_prefix='external_origins')
 def external_origins_to_choicelist():
@@ -56,13 +58,37 @@ def external_origins_to_choicelist():
         in models.Origin.query.filter(models.Origin.is_internal == False).order_by(models.Origin.id.asc())
     ]
 
+
 @cache.cached(key_prefix='languages')
 def languages_to_choicelist():
     return [
-        (x.id, '{0}'.format(x.name))
+        (x.id, '{0}'.format(x.full_name))
         for x
         in models.Language.query.order_by(models.Language.name.asc())
     ]
+
+
+@cache.cached(key_prefix='language')
+def language_to_choicelist(lang_id, has_teacher=False):  # shows only courses from selected language
+    if not has_teacher:
+        return [
+            (x.id, '{0}'.format(x.full_name))
+            for x
+            in models.Course.query.filter(models.Course.language_id == lang_id).order_by(models.Course.id.asc())
+        ]
+    else:
+        unassigned_courses = [
+            (course.id, '{0}'.format(course.full_name))
+            for course
+            in db.session.query(models.Course)
+            .outerjoin(models.Role,
+                       (models.Role.course_id == models.Course.id) & (models.Role.role == models.Role.COURSE_TEACHER))
+            .filter(models.Course.language_id == lang_id)
+            .filter(models.Role.id == None)
+            .order_by(models.Course.id.asc())
+        ]
+
+        return unassigned_courses
 
 
 @cache.cached(key_prefix='gers')
@@ -116,3 +142,11 @@ def all_courses_to_choicelist():
         (course.id, '{0}'.format(course.full_name))
         for course in courses
     ]
+
+
+@cache.cached(key_prefix='courses_grouped_by_level')
+def grouped_by_level_to_choicelist(grouped_courses: dict):
+    choices = []
+    for level, courses in grouped_courses.items():
+        choices.append((courses[0].level, '{0}'.format(courses[0].name)))
+    return choices

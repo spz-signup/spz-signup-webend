@@ -209,6 +209,12 @@ class Applicant(db.Model):
     discounted = db.Column(db.Boolean)
     is_student = db.Column(db.Boolean)
 
+    # internal representation of the grade is in %
+    grade = db.Column(db.Integer, nullable=True)  # TODO store grade encrypted
+    ects_points = db.Column(db.Integer, nullable=True, default=0)
+    # if a student only wants 'bestanden' instead of the grade value, is set to true
+    hide_grade = db.Column(db.Boolean, nullable=False, default=False)
+
     # See {add,remove}_course_attendance member functions below
     attendances = db.relationship("Attendance", backref="applicant", cascade='all, delete-orphan', lazy="joined")
 
@@ -243,6 +249,45 @@ class Applicant(db.Model):
     def full_name(self):
         return '{} {}'.format(self.first_name, self.last_name)
 
+    @property
+    def tag_is_digit(self):
+        if self.tag is None:
+            return False
+        try:
+            int(self.tag)
+            return True
+        except ValueError:
+            return False
+
+    @property
+    def sanitized_grade(self):
+        if self.grade is None:
+            return ""
+        return self.grade
+
+    @property
+    def full_grade(self):
+        if self.grade is None:
+            return "-"
+        conversion_table = [
+            (98, "1"),
+            (95, "1,3"),
+            (90, "1,7"),
+            (85, "2"),
+            (79, "2,3"),
+            (73, "2,7"),
+            (68, "3"),
+            (62, "3,3"),
+            (56, "3,7"),
+            (50, "4")
+        ]
+
+        for percentage, grade in conversion_table:
+            if self.grade >= percentage:
+                return grade
+
+        return "nicht bestanden"
+
     def add_course_attendance(self, *args, **kwargs):
         attendance = Attendance(*args, **kwargs)
         self.attendances.append(attendance)
@@ -253,7 +298,6 @@ class Applicant(db.Model):
         for attendance in remove:
             self.attendances.remove(attendance)
         return len(remove) > 0
-
 
     def best_rating(self):
         """Results best rating, prioritize sticky entries."""
@@ -275,7 +319,35 @@ class Applicant(db.Model):
 
         return 0
 
+    def rating_to_ger(self, percent):
+        """
+        Converts the percentage value of the English test to the corresponding GER Level (German Language Level).
+
+        returns: GER Level as string
+        """
+        conversion_table = [
+            (90, "C2"),
+            (80, "C1"),
+            (65, "B2"),
+            (50, "B1"),
+            (20, "A2")
+        ]
+
+        for percentage, ger in conversion_table:
+            if percent >= percentage:
+                return ger
+
+        return ""
+
+    @property
+    def get_test_ger(self):
+        """
+        Returns the GER level for the best test result.
+        """
+        return self.rating_to_ger(self.best_rating())
+
     """ Discount (factor) for the next course beeing entered """
+
     def current_discount(self):
         attends = len([attendance for attendance in self.attendances if not attendance.waiting])
         if self.is_student and attends == 0:
@@ -390,8 +462,9 @@ class Course(db.Model):
     ))
 
     def __init__(
-        self, language, level, alternative, limit, price, level_english=None, ger=None, rating_highest=100, rating_lowest=0, collision=[],
-    ects_points=2):
+        self, language, level, alternative, limit, price, level_english=None, ger=None, rating_highest=100,
+        rating_lowest=0, collision=[],
+        ects_points=2):
         self.language = language
         self.level = level
         self.alternative = alternative
@@ -422,6 +495,7 @@ class Course(db.Model):
        :param is_unpaid: Whether the course fee is still (partially) unpaid
        :param is_free: Whether the course is fully discounted
     """
+
     def filter_attendances(self, waiting=None, is_unpaid=None, is_free=None):
         result = []
         for att in self.attendances:
@@ -496,6 +570,7 @@ class Course(db.Model):
             return '{0} {1}'.format(self.language.name_english, self.level_english)
 
     """ active attendants without debt """
+
     @property
     def course_list(self):
         list = [attendance.applicant for attendance in self.filter_attendances(waiting=False)]
@@ -520,6 +595,17 @@ class Course(db.Model):
                 return self.Status.LITTLE_VACANCIES
             else:
                 return self.Status.VACANCIES
+
+    @property
+    def teacher_name(self):
+        teacher_role = Role.query.join(User).filter(
+            Role.course_id == self.id,
+            Role.role == Role.COURSE_TEACHER
+        ).first()
+
+        if teacher_role and teacher_role.user:
+            return teacher_role.user.full_name
+        return ""
 
 
 @total_ordering
@@ -560,6 +646,7 @@ class Language(db.Model):
         self.signup_end = signup_end
         self.signup_auto_end = signup_auto_end
         self.name_english = name_english
+
     def __repr__(self):
         return '<Language %r>' % self.name
 
@@ -859,20 +946,21 @@ class User(db.Model):
     __tablename__ = 'user'
 
     id = db.Column(db.Integer, primary_key=True)
-    first_name = db.Column(db.String(120), nullable=True)
-    last_name = db.Column(db.String(120), nullable=True)
+    first_name = db.Column(db.String(120), nullable=True, default=None)
+    last_name = db.Column(db.String(120), nullable=True, default=None)
     tag = db.Column(db.String(30), unique=False, nullable=True)
     email = db.Column(db.String(120), unique=True)
     active = db.Column(db.Boolean, default=True)
     pwsalted = db.Column(db.LargeBinary(32), nullable=True)
-    roles = db.relationship('Role')
+    roles = db.relationship('Role', backref='user')
 
-    def __init__(self, email, active, roles):
+    def __init__(self, email, active, roles, tag=None):
         """Create new user without password."""
         self.email = email
         self.active = active
         self.pwsalted = None
         self.roles = roles
+        self.tag = tag
 
     def reset_password(self):
         """Reset password to random one and return it."""
@@ -910,7 +998,8 @@ class User(db.Model):
 
     @property
     def admin_courses(self):
-        return (role.course for role in [r for r in self.roles if r.role == Role.COURSE_ADMIN])
+        admin_courses = (role.course for role in [r for r in self.roles if r.role == Role.COURSE_ADMIN])
+        return sorted(admin_courses, key=lambda x: x.full_name)
 
     @property
     def teacher_courses(self):
@@ -982,6 +1071,10 @@ class User(db.Model):
             User.pwsalted != None,  # NOQA
             User.pwsalted == salted
         )).first()
+
+    @property
+    def full_name(self):
+        return '{} {}'.format(self.first_name, self.last_name)
 
 
 @total_ordering
@@ -1073,6 +1166,7 @@ class ExportFormat(db.Model):
             ExportFormat.language_id.in_(language_ids)
         )).all()
 
+
 class OAuthToken(db.Model):
     """Token used to store data while oidc flow with kit server
 
@@ -1094,4 +1188,3 @@ class OAuthToken(db.Model):
         self.code_verifier = code_verifier
         self.request_has_been_made = False
         self.is_student = False
-

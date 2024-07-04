@@ -1,0 +1,70 @@
+{% extends 'internal/internal.html' %}
+{% from 'formhelpers.html' import csrf_field, render_input, render_option, render_boolean, attendance_status %}
+
+{% block caption %}
+    Lehrbeauftragte*r: {{ form.first_name.data ~ " " ~ form.last_name.data }}
+{% endblock caption %}
+
+
+{% block internal_body %}
+    <!--<a href="{{ url_for('teacher') }}">zur Lehrbeauftragtenansicht von {{ form.first_name.data ~ " " ~ form.last_name.data }}</a>-->
+    <div class="row">
+        <form class="ui form" method="post">
+            {{ csrf_field() }}
+            <h3 class="ui dividing header">Persönliche Angaben</h3>
+            {{ render_input(form.first_name, required=False) }}
+            {{ render_input(form.last_name, required=False) }}
+            {{ render_input(form.mail, required=False) }}
+            {{ render_input(form.tag, required=False) }}
+
+            {% if form.get_courses() %}
+                <h3 class="ui dividing header">Kurse des/der Lehrbeauftragten</h3>
+                <table class="ui selectable sortable compact small striped table">
+                    <tbody>
+                    {% for course in form.get_courses() %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('course', id=course.id ) }}"> {{ course.full_name }} </a>
+                            </td>
+                            <td>
+                                {{ course.id }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+
+            {{ render_option(form.remove_from_course, help='Aus folgendem Kurs entfernen') }}
+            {{ render_option(form.add_to_course, help='Zu folgendem Kurs hinzufügen') }}
+
+            {% if form.get_languages() %}
+                <h3 class="ui dividing header">Sprachen des/der Lehrbeauftragten</h3>
+                <table class="ui selectable sortable compact small striped table">
+                    <tbody>
+                    {% for l in form.get_languages() %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('language', id=l.id ) }}"> {{ l.name }} </a>
+                            </td>
+                            <td>
+                                {{ l.id }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+
+            {{ render_boolean(form.send_mail) }}
+            <h3 class="ui dividing header"></h3>
+            <div class="field">
+                <div class="ui toggle checkbox">
+                    <input type="checkbox" name="changes_confirmed" required=true>
+                    <label for="changes_confirmed">Änderungen überprüft und alles ok?</label>
+                </div>
+            </div>
+            <button class="fluid ui positive button">Änderungen speichern</button>
+        </form>
+    </div>
+{% endblock internal_body %}

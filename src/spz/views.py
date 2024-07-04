@@ -3,6 +3,8 @@
 """The application's views.
 
    Manages the mapping between routes and their activities.
+
+   Notice: administration_views contains the views for teacher administration
 """
 
 import socket
@@ -15,7 +17,7 @@ from redis import ConnectionError
 
 from sqlalchemy import and_, func, not_
 
-from flask import request, redirect, render_template, url_for, flash
+from flask import request, redirect, render_template, url_for, flash, jsonify
 from flask_login import current_user, login_required, login_user, logout_user
 from flask_mail import Message
 
@@ -25,6 +27,7 @@ import spz.forms as forms
 from spz.util.Filetype import mime_from_filepointer
 from spz.mail import generate_status_mail
 from spz.export import export_course_list
+from spz.administration import TeacherManagement
 
 from flask_babel import gettext as _
 
@@ -33,6 +36,10 @@ from spz.oidc import oidc_callback, oidc_url, oidc_get_resources
 from spz.pdf_zip import PdfZipWriter, html_response
 from spz.pdf import generate_participation_cert
 from spz.auth.password_reset import validate_reset_token_and_get_user_id
+
+from spz.administration import TeacherManagement
+
+from spz.campusportal.export_token import generate_export_token_for_courses, get_courses_from_export_token
 
 
 def check_precondition_with_auth(cond, msg, auth=False):
@@ -200,7 +207,7 @@ def signupinternal(course_id):
                 # save information in temporary session token
                 o_auth_token.is_student = True
                 db.session.commit()
-        if not o_auth_token.is_student:
+        if not o_auth_token.is_student and not current_user.is_admin_or_superuser:
             # preselect employee option in origin field
             form.origin.choices = [(12, 'KIT (Mitarbeiter*in)')]
             """for num, key in form.origin.choices:
@@ -313,6 +320,8 @@ def signupinternal(course_id):
                 discount=applicant.current_discount(),
                 informed_about_rejection=informed_about_rejection
             )
+            # set course ects to applicant
+            applicant.ects_points = course.ects_points
             db.session.add(applicant)
             db.session.delete(o_auth_token)
             db.session.commit()
@@ -427,6 +436,8 @@ def signupexternal(course_id):
                 discount=applicant.current_discount(),
                 informed_about_rejection=informed_about_rejection
             )
+            # add course ects to applicant
+            applicant.ects_points = course.ects_points
             db.session.add(applicant)
             db.session.commit()
         except Exception as e:
@@ -502,6 +513,8 @@ def signoff():
 @login_required
 @templated('internal/overview.html')
 def internal():
+    if current_user.is_teacher:
+        return redirect(url_for('teacher'))
     logs = models.LogEntry.get_visible_log(current_user, 200)
     return dict(logs=logs)
 
@@ -509,6 +522,8 @@ def internal():
 @login_required
 @templated('internal/registrations.html')
 def registrations():
+    if current_user.is_teacher:
+        return redirect(url_for('teacher'))
     form = forms.TagForm()
     return dict(form=form)
 
@@ -577,6 +592,8 @@ def registrations_verify():
 @login_required
 @templated('internal/approvals.html')
 def approvals():
+    if current_user.is_teacher:
+        return redirect(url_for('teacher'))
     form = forms.TagForm()
     return dict(form=form)
 
@@ -691,6 +708,8 @@ def approvals_check():
 @login_required
 @templated('internal/notifications.html')
 def notifications():
+    if current_user.is_teacher:
+        return redirect(url_for('teacher'))
     form = forms.NotificationForm()
 
     if form.validate_on_submit():
@@ -761,12 +780,18 @@ def export(type, id):
             language = models.Language.query.get(id)
             form.courses.data = [course.id for course in language.courses]
 
-    return dict(form=form)
+    # update course multi-select based on assigned courses to user
+    # if teacher, then only own courses in multi-select selectable
+    # if superuser or course admin, then all courses can be downloaded
+    form.update_course_list(current_user)
+    return dict(form=form, user=current_user)
 
 
 @login_required
 @templated('internal/lists.html')
 def lists():
+    if current_user.is_teacher:
+        return redirect(url_for('teacher'))
     # list of tuple (lang, aggregated number of courses, aggregated number of seats)
     lang_misc = db.session.query(models.Language, func.count(models.Language.courses), func.sum(models.Course.limit)) \
         .join(models.Course, models.Language.courses) \
@@ -780,15 +805,33 @@ def lists():
 @login_required
 @templated('internal/language.html')
 def language(id):
+    if current_user.is_teacher:
+        return redirect(url_for('teacher'))
     return dict(language=models.Language.query.get_or_404(id))
 
 
 @login_required
 @templated('internal/course.html')
 def course(id):
+    if current_user.is_teacher:
+        return redirect(url_for('teacher'))
     course = models.Course.query.get_or_404(id)
     form = forms.CourseForm()
     form_delete = forms.DeleteCourseForm()
+
+    # check if a teacher has been assigned to the course
+    teacher = (
+        models.User.query
+        .join(models.Role, models.User.roles)
+        .filter(models.Role.course_id == course.id)
+        .filter(models.Role.role == 'COURSE_TEACHER')
+        .distinct()
+        .all()
+    )
+    if len(teacher) > 1:
+        flash(
+            _('Achtung: Der Kurs hat mehr als nur einen Dozenten zugewiesen. Das ist ungültig', ),
+            'error')
 
     # we have two forms on this page, to differ between them a hidden identifier tag is used
 
@@ -855,7 +898,7 @@ def course(id):
                 _('Der Kurs konnte nicht gelöscht werden: %(error)s', error=e),
                 'error'
             )
-    return dict(course=course, form=form, form_delete=form_delete)
+    return dict(course=course, form=form, form_delete=form_delete, teacher=teacher)
 
 
 @login_required
@@ -925,6 +968,8 @@ def applicant(id):
 @login_required
 @templated('internal/applicants/search_applicant.html')
 def search_applicant():
+    if current_user.is_teacher:
+        return redirect(url_for('teacher'))
     form = forms.SearchForm()
 
     applicants = []
@@ -1014,6 +1059,8 @@ def applicant_attendances(id):
 @login_required
 @templated('internal/payments.html')
 def payments():
+    if current_user.is_teacher:
+        return redirect(url_for('teacher'))
     form = forms.PaymentForm()
 
     if form.validate_on_submit():
@@ -1044,6 +1091,8 @@ def payments():
 @login_required
 @templated('internal/outstanding.html')
 def outstanding():
+    if current_user.is_teacher:
+        return redirect(url_for('teacher'))
     outstanding = db.session.query(models.Attendance) \
         .join(models.Course, models.Applicant) \
         .filter(not_(models.Attendance.waiting),
@@ -1090,6 +1139,8 @@ def status(applicant_id, course_id):
 @login_required
 @templated('internal/statistics.html')
 def statistics():
+    if current_user.is_teacher:
+        return redirect(url_for('teacher'))
     return None
 
 
@@ -1139,6 +1190,8 @@ def task_queue():
 @login_required
 @templated('internal/preterm.html')
 def preterm():
+    if current_user.is_teacher:
+        return redirect(url_for('teacher'))
     form = forms.PretermForm()
 
     token = None
@@ -1174,6 +1227,8 @@ def preterm():
 @login_required
 @templated('internal/duplicates.html')
 def duplicates():
+    if current_user.is_teacher:
+        return redirect(url_for('teacher'))
     taglist = db.session.query(models.Applicant.tag) \
         .filter(models.Applicant.tag is not None, models.Applicant.tag != '') \
         .group_by(models.Applicant.tag) \
@@ -1228,11 +1283,14 @@ def login():
     form = forms.LoginForm()
 
     if form.validate_on_submit():
-        user = models.User.get_by_login(form.user.data, form.password.data)
+        cleaned_email = form.user.data.strip()
+        user = models.User.get_by_login(cleaned_email, form.password.data)
         if user:
             login_user(user, remember=True)
+            if current_user.is_teacher:
+                return redirect(url_for('teacher'))
             return redirect(url_for('internal'))
-        flash(_('Du kommst hier net rein!'), 'negative')
+        flash(_('Login war nicht erfolgreich.'), 'negative')
 
     return dict(form=form)
 
@@ -1251,14 +1309,16 @@ def reset_password(reset_token):
         userId = validate_reset_token_and_get_user_id(reset_token)
 
         if userId is False:
-            flash(_('Das Passwort konnte nicht festgelegt werden. Bitte konraktieren Sie das Sprachenzentrum.'), 'negative')
+            flash(_('Das Passwort konnte nicht festgelegt werden. Bitte konraktieren Sie das Sprachenzentrum.'),
+                  'negative')
 
             return dict(form=form)
 
         user = models.User.query.filter(models.User.id == userId).first()
 
         if not user:
-            flash(_('Das Passwort konnte nicht festgelegt werden. Bitte konraktieren Sie das Sprachenzentrum.'), 'negative')
+            flash(_('Das Passwort konnte nicht festgelegt werden. Bitte konraktieren Sie das Sprachenzentrum.'),
+                  'negative')
 
             return dict(form=form)
 
@@ -1273,3 +1333,96 @@ def reset_password(reset_token):
     form.reset_token.data = reset_token
 
     return dict(form=form)
+
+
+def campus_portal_grades(export_token):
+    course_ids = get_courses_from_export_token(export_token)
+
+    if not course_ids:
+        return jsonify(error="Invalid export token.")
+
+    courses = models.Course.query.filter(models.Course.id.in_(course_ids)).all()
+
+    if len(courses) != len(course_ids):
+        return jsonify(error="Course not found.")
+
+    # Example of expected json structure
+    # the json holds an array
+    # each entry of the array is an object containing the student information
+    """
+    [
+      {
+        matriculationId: 123456,
+        title: "Kurs 1",
+        titleEn: "Course 1",
+        examDate: "2024-03-01",
+        ects: 3,
+        grade: "2,7",
+        sqUnit: "STK"
+      }, ...
+    ]
+    """
+
+    # convert internal exam date format (DD.MM.YYYY) to ISO 8601 standard (YYYY-MM-DD)
+    date_object = datetime.strptime(app.config['EXAM_DATE'], '%d.%m.%Y')
+    exam_date_iso = date_object.strftime('%Y-%m-%d')  # convert date to ISO 8601 standard
+
+    grade_objects = []
+    for course in courses:
+        for student in course.course_list:
+            # check for valid matriculation id -> tag and if the grade was set and course is passed
+            if student.tag_is_digit and student.full_grade not in ["-", "nicht bestanden"]:
+                if student.hide_grade:
+                    grade = "bestanden"
+                else:
+                    grade = student.full_grade
+                grade_objects.append(
+                    {
+                        "matriculationId": int(student.tag),  # required
+                        # "title": course.name,  # name without alternatives a, b, c, ...
+                        # "titleEn": course.name_english,
+                        "examDate": exam_date_iso,
+                        "ects": student.ects_points,  # required
+                        "grade": grade,  # required
+                        "sqUnit": "SPZ"
+                    }
+                )
+
+    return jsonify(grade_objects)
+
+
+@templated('internal/campusportal/campus_export_language.html')
+def campus_export_language():
+    languages = models.Language.query.all()
+
+    return dict(language=languages)
+
+
+@templated('internal/campusportal/campus_export.html')
+def campus_export_course(id, link=""):
+    language = models.Language.query.get_or_404(id)
+
+    courses = language.courses
+
+    grouped_by_level = {}
+    for course in courses:
+        if course.level not in grouped_by_level:
+            grouped_by_level[course.level] = []
+        grouped_by_level[course.level].append(course)
+
+    form = forms.CampusExportForm(grouped_by_level)
+    form.update_course(grouped_by_level)
+
+    if form.validate_on_submit():
+        selected_level = form.get_courses()
+        # flash(selected_level)
+        courses_of_one_level = grouped_by_level[selected_level]
+        # flash(courses_of_one_level)
+
+        course_ids = [course.id for course in courses_of_one_level]
+
+        link = app.config['SPZ_URL'] + "/api/campus_portal/export/" + generate_export_token_for_courses(course_ids)
+
+        return dict(form=form, language=language, link=link)
+
+    return dict(form=form, language=language, link=link)

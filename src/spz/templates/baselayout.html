@@ -1,83 +1,130 @@
 <!DOCTYPE html>
 <html lang="de">
-    <head>
-        <meta charset="utf-8" />
-        <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-        <title>KIT Sprachenzentrum</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+    <title>KIT Sprachenzentrum</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-        {% assets "all_css" %}
-        <link href="{{ ASSET_URL }}" rel="stylesheet" />
-        {% endassets %}
+    {% assets "all_css" %}
+        <link href="{{ ASSET_URL }}" rel="stylesheet"/>
+    {% endassets %}
 
-        <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}" />
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}"/>
 
-        {% block head %}
-        {% endblock head %}
-    </head>
-    <body>
-        <div class="print-warning">
-            Bitte denk nach, bevor du überteuerte umweltschädliche Farbe auf toten Baum druckst!
-        </div>
-        <div class="ui grid">
-            <div class="three wide computer four wide tablet sixteen wide table column ui vertical menu inverted">
-                {% block navbar %}
-                    <div class="item">
-                        <div class="item">
-                            <h1>KIT<br />Sprachen&shy;zentrum</h1>
-                        </div>
-                        <a class="item" href="{{ url_for('index') }}">Anmeldung</a>
-                        <a class="item" href="http://www.spz.kit.edu/"><span class="glyphicon glyphicon-home"></span> Sprachenzentrum</a>
-                        <a class="item" href="http://www.spz.kit.edu/angebot.php"><span class="glyphicon glyphicon-globe"></span> Kursangebot</a>
-                        <a class="item" href="http://www.spz.kit.edu/223.php"><span class="glyphicon glyphicon-list-alt"></span> Englischtest</a>
-                        <a class="item" href="http://www.spz.kit.edu/gebuehren.php"><span class="glyphicon glyphicon-euro"></span> Gebühren</a>
-                        <a class="item" href="http://www.spz.kit.edu/253.php"><span class="glyphicon glyphicon-info-sign"></span> Informationen</a>
-                    </div>
-                {% endblock navbar %}
+    {% block head %}
+    {% endblock head %}
+
+
+    <style>
+        {% block style %}
+            .inline-flex-container {
+                display: inline-flex;
+                align-items: center; /* Vertical alignment */
+                justify-content: center; /* Horizontal alignment */
+            }
+            .ui.message p {
+                word-wrap: break-word;
+                word-break: break-all;
+                overflow-wrap: break-word;
+                white-space: normal;
+            }
+            #notification {
+                display: none;
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background-color: #4caf50;
+                color: white;
+                padding: 15px;
+                border-radius: 5px;
+                z-index: 1000;
+            }
+            .mb-3 {
+                margin-bottom: 1em; /* Adjust the value as needed */
+            }
+
+            .mt-3 {
+                margin-top: 1em; /* Adjust the value as needed */
+            }
+            .my-3 {
+                margin-top: 1em; /* Adjust the value as needed */
+                margin-bottom: 1em; /* Adjust the value as needed */
+                display: block;
+            }
+        {% endblock style %}
+    </style>
+
+</head>
+<body>
+<div class="print-warning">
+    Bitte denk nach, bevor du überteuerte umweltschädliche Farbe auf toten Baum druckst!
+</div>
+<div class="ui grid">
+    <div class="three wide computer four wide tablet sixteen wide table column ui vertical menu inverted">
+        {% block navbar %}
+            <div class="item">
+                <div class="item">
+                    <h1>KIT<br/>Sprachen&shy;zentrum</h1>
+                </div>
+                <a class="item" href="{{ url_for('index') }}">Anmeldung</a>
+                <a class="item" href="http://www.spz.kit.edu/"><span class="glyphicon glyphicon-home"></span>
+                    Sprachenzentrum</a>
+                <a class="item" href="http://www.spz.kit.edu/angebot.php"><span
+                    class="glyphicon glyphicon-globe"></span> Kursangebot</a>
+                <a class="item" href="http://www.spz.kit.edu/223.php"><span class="glyphicon glyphicon-list-alt"></span>
+                    Englischtest</a>
+                <a class="item" href="http://www.spz.kit.edu/gebuehren.php"><span
+                    class="glyphicon glyphicon-euro"></span> Gebühren</a>
+                <a class="item" href="http://www.spz.kit.edu/253.php"><span
+                    class="glyphicon glyphicon-info-sign"></span> Informationen</a>
+                <a class="item" href="{{ url_for('login') }}"><span
+                    class="glyphicon glyphicon-info-sign"></span> <i class="lock icon"></i> Login (intern)</a>
             </div>
-            <div class="main thirteen wide computer twelve wide tablet sixteen wide table column">
-                <div class="ui container">
-                    <div class="ui centered grid">
-                        <div class="row">
-                            <div class="ui left aligned column">
-                                <div class="ui grid">
-                                    <div class="row">
-                                        <h1 class="ui header">
-                                            {% block caption %}
-                                            Anmeldung
-                                            {% endblock caption %}
-                                        </h1>
-                                        {% block subcaption %}
-                                        {% endblock subcaption %}
-                                        {% block alert %}
-                                            {% with messages = get_flashed_messages(with_categories=true) %}
-                                            {% if messages %}
-                                                {% for category, message in messages %}
-                                                    <div class="ui {{ category }} message">
-                                                        <i class="close icon"></i>
-                                                        {{ message }}
-                                                    </div>
-                                                {% endfor %}
-                                            {% endif %}
-                                            {% endwith %}
-                                        {% endblock alert %}
-                                    </div>
-                                    {% block body %}
-                                    {% endblock body %}
-                                    <div class="two column row">
-                                        <div class="left aligned column">
-                                            <small class="no-print">
-                                                <a href="{{ url_for('licenses') }}">Lizenzen</a>
-                                                &middot;
-                                                <a href="https://github.com/spz-signup/spz-signup">GitHub</a>
-                                            </small>
-                                        </div>
-                                        <div class="right aligned column">
-                                            <small class="no-print">
-                                                <a href="#top">Nach oben</a>
-                                            </small>
-                                        </div>
-                                    </div>
+        {% endblock navbar %}
+    </div>
+    <div class="main thirteen wide computer twelve wide tablet sixteen wide table column">
+        <div class="ui container">
+            <div class="ui centered grid">
+                <div class="row">
+                    <div class="ui left aligned column">
+                        <div class="ui grid">
+                            <div class="row">
+                                <h1 class="ui header">
+                                    {% block caption %}
+                                        Anmeldung
+                                    {% endblock caption %}
+                                </h1>
+                                {% block subcaption %}
+                                {% endblock subcaption %}
+                                {% block alert %}
+                                    {% with messages = get_flashed_messages(with_categories=true) %}
+                                        {% if messages %}
+                                            {% for category, message in messages %}
+                                                <div class="ui {{ category }} message">
+                                                    <i class="close icon"></i>
+                                                    {{ message }}
+                                                </div>
+                                            {% endfor %}
+                                        {% endif %}
+                                    {% endwith %}
+                                {% endblock alert %}
+                            </div>
+                            {% block body %}
+                            {% endblock body %}
+                            <div class="two column row">
+                                <div class="left aligned column">
+                                    <small class="no-print">
+                                        <a href="{{ url_for('licenses') }}">Lizenzen</a>
+                                        &middot;
+                                        <a href="https://github.com/spz-signup/spz-signup">GitHub</a>
+                                    </small>
+                                </div>
+                                <div class="right aligned column">
+                                    <small class="no-print">
+                                        <a href="#top">Nach oben</a>
+                                    </small>
                                 </div>
                             </div>
                         </div>
@@ -85,13 +132,39 @@
                 </div>
             </div>
         </div>
+    </div>
+</div>
 
-        {% block scripts %}
-        {% assets "all_js" %}
+{% block scripts %}
+    {% assets "all_js" %}
         <script src="{{ ASSET_URL }}"></script>
-        {% endassets %}
-        {% endblock scripts %}
+    {% endassets %}
 
-        {{ rlrc_comment() }}
-    </body>
+    <script>
+        // copies test of the hiddenText input field to the clipboard
+        function copyToClipboard() {
+            var copyText = document.getElementById("hiddenText").value;
+            navigator.clipboard.writeText(copyText).then(function () {
+                showNotification('Link in Zwischenablage kopiert!');
+            }, function (err) {
+                console.error('Async: Link konnte nicht kopiert werden: ', err);
+            });
+        }
+
+        // notification of successful copy-to-clipboard process
+        function showNotification(message) {
+            var notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.display = 'block';
+            setTimeout(function () {
+                notification.style.display = 'none';
+            }, 2250); // Show notification for 2.25 seconds
+        }
+    </script>
+{% endblock scripts %}
+
+
+
+{{ rlrc_comment() }}
+</body>
 </html>

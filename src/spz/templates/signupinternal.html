@@ -12,11 +12,15 @@
             {{ csrf_field() }}
             {{ render_raw_input(form.state, type='hidden') }}
             {{ render_raw_input(form.course, type='hidden') }}
-
             <h3 class="ui dividing header">Persönliche Angaben</h3>
             <div class="grouped fields">
-                {{ render_input(form.first_name, placeholder='Mika', icon='user', readonly=True) }}
-                {{ render_input(form.last_name, placeholder='Müller', icon='users', readonly=True) }}
+                {% if current_user.is_admin_or_superuser %}
+                    {{ render_input(form.first_name, placeholder='Mika', icon='user') }}
+                    {{ render_input(form.last_name, placeholder='Müller', icon='users') }}
+                {% else %}
+                    {{ render_input(form.first_name, placeholder='Mika', icon='user', readonly=True) }}
+                    {{ render_input(form.last_name, placeholder='Müller', icon='users', readonly=True) }}
+                {% endif %}
             </div>
             <div class="grouped fields">
                 {{ render_input(form.phone, placeholder='0 1521 1234 678', icon='mobile') }}
@@ -28,7 +32,7 @@
                 {{ render_option(form.origin, icon='leaf') }}
                 {{ render_input(form.tag, help='Falls Sie kein KIT-Studierender sind und einen Englischkurs belegen wollen, tragen Sie hier die Ihnen vom Sprachenzentrum erteilte ID ein. Mitarbeiter müssen Ihren KIT-Account (login) eintragen.', icon='barcode') }}
             </div>
-            {% if is_student %}
+            {% if is_student or current_user.is_admin_or_superuser %}
                 <div class="kit-only">
                     <h3 class="ui dividing header">Angaben zum Studium</h3>
                     <div class="grouped fields">

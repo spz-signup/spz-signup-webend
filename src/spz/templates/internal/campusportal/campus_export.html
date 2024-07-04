@@ -1,0 +1,37 @@
+{% extends 'internal/internal.html' %}
+{% from 'formhelpers.html' import td_sorted, csrf_field, render_option, render_submit %}
+
+{% block caption %}
+    Noten-Export für Campus Portal
+{% endblock caption %}
+
+
+{% block internal_body %}
+    <div class="row">
+        <form method="post" class="ui form">
+            {{ csrf_field() }}
+            <h3 class="ui dividing header">Auswahl</h3>
+            {{ render_option(form.courses, required=True, help='Kurslevel für Export auswählen') }}
+
+
+            {{ render_submit(submit='Export-Link Generieren') }}
+
+        </form>
+    </div>
+    {% if link|length > 0 %}
+        <div class="row">
+            <h3 class="ui dividing header">Export-Link</h3>
+            <p>Der Export-Link für das Campus Portal wurde generiert. Dieser Link kann in das Campus Portal eingefügt
+                werden, um die Noten der Kurse mit dem gewählten Level zu importieren.</p>
+            <div id="notification">Link wurde in die Zwischenablage kopiert.</div>
+            <div>
+                <input type="hidden" value="{{ link }}" id="hiddenText">
+                <div class="ui button" onclick="copyToClipboard()">Link Kopieren</div>
+            </div>
+            <div class="ui message">
+                <div class="header">Export-Link</div>
+                <p>{{ link }}</p>
+            </div>
+        </div>
+    {% endif %}
+{% endblock internal_body %}

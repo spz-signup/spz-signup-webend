@@ -36,7 +36,6 @@ class CustomFlask(Flask):
     """
     jinja_options = dict(Flask.jinja_options, trim_blocks=True, lstrip_blocks=True, auto_reload=False)
 
-
 app = CustomFlask(__name__, instance_relative_config=True)
 
 # Configuration loading
@@ -84,6 +83,7 @@ def rlrc_comment():
 # add Jinja helpers
 app.jinja_env.globals['include_raw'] = lambda filename: Markup(app.jinja_loader.get_source(app.jinja_env, filename)[0])
 app.jinja_env.globals['rlrc_comment'] = rlrc_comment
+app.jinja_env.globals.update(zip=zip)
 
 # Assets handling; keep the spz.assets module in sync with the static directory
 assets_env = Environment(app)
@@ -129,9 +129,9 @@ babel = Babel(app)
 # Rich Text Editor setup
 ckeditor = CKEditor(app)
 
-
 # Register all views here
 from spz import views, errorhandlers, pdf  # NOQA
+from spz.administration import admin_views
 
 routes = [
     ('/', views.index, ['GET', 'POST']),
@@ -191,6 +191,23 @@ routes = [
     ('/internal/login', views.login, ['GET', 'POST']),
     ('/internal/logout', views.logout, ['GET', 'POST']),
     ('/internal/auth/reset_password/<string:reset_token>', views.reset_password, ['GET', 'POST']),
+
+    ('/internal/administration/teacher', admin_views.administration_teacher, ['GET', 'POST']),
+    ('/internal/administration/teacher/<int:id>', admin_views.administration_teacher_lang, ['GET', 'POST']),
+    ('/internal/administration/teacher/<int:id>/add', admin_views.add_teacher, ['GET', 'POST']),
+    ('/internal/administration/teacher/edit/<int:id>', admin_views.edit_teacher, ['GET', 'POST']),
+    ('/internal/administration/teacher/void', admin_views.teacher_void, ['GET']),
+    ('/internal/teacher', admin_views.teacher, ['GET', 'POST']),
+    ('/internal/grades/<int:course_id>', admin_views.grade, ['GET', 'POST']),
+    ('/internal/grades/<int:course_id>/edit', admin_views.edit_grade, ['GET', 'POST']),
+    ('/internal/grades/<int:course_id>/edit_view', admin_views.edit_grade_view, ['GET', 'POST']),
+    ('/internal/teacher/<int:id>/attendance/<int:course_id>', admin_views.attendances, ['GET', 'POST']),
+    ('/internal/teacher/<int:id>/attendance/<int:course_id>/edit/<int:class_id>', admin_views.edit_attendances, ['GET', 'POST']),
+
+    ('/api/campus_portal/export/<string:export_token>', views.campus_portal_grades, ['GET']),
+    ('/internal/campus_portal/export', views.campus_export_language, ['GET', 'POST']),
+    ('/internal/campus_portal/export/<int:id>', views.campus_export_course, ['GET', 'POST']),
+
 ]
 
 for rule, view_func, methods in routes:

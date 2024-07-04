@@ -1,0 +1,123 @@
+{% extends 'internal/internal.html' %}
+{% from 'formhelpers.html' import csrf_field, render_submit, render_boolean, attendance_status %}
+
+{% block caption %}
+    Lehrbeauftragte der Sprache: <a href="{{ url_for('language', id=language.id) }}">{{ language.name }}</a>
+{% endblock caption %}
+
+
+{% block internal_body %}
+    <!---
+    <div class="row">
+        <div class="ui message">
+            <div class="header">Infos</div>
+            <dl>
+                <dt>Sprache &gt; exaktes Kurs-Level</dt>
+                <dd>{{ language.name }}</dd>
+                <dt>Kursgröße (maximal)</dt>
+                <dd>Teilnehmer</dd>
+                <dt>Kosten (für nicht-gratis Teilnehmer)</dt>
+                <dd>Testsache</dd>
+            </dl>
+        </div>
+    </div>
+    --->
+
+    <div class="three column row">
+        <div class="left floated column">
+            <a href="{{ url_for('add_teacher', id=language.id) }}">
+                <button class="ui basic button">
+                    <i class="icon user"></i>
+                    <strong>Lehrbeauftragte*n neu erstellen</strong>
+                </button>
+            </a>
+        </div>
+        <div class="center floated column">
+            <a href="{{ url_for('teacher_void') }}">
+                <button class="ui basic button">
+                    <i class="hide icon"></i>
+                    Lehrbeauftragte ohne Kurse
+                </button>
+            </a>
+        </div>
+    </div>
+    <div class="row">
+        <table class="ui selectable sortable compact small striped table">
+            <thead>
+            <tr>
+                <th>Lehrbeauftragte*r</th>
+                <th>Kurse</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for t in teacher %}
+                <tr>
+                    <td><a
+                        href="{{ url_for('edit_teacher', id=t.id) }}"><strong>{{ t.full_name }}</strong></a>
+
+                    </td>
+                    <td>
+                        {% for course in t.teacher_courses %}
+                            {% if course.language_id == language.id %}
+                                <a href="{{ url_for('course', id=course.id) }}">
+                                    <button
+                                        class="ui button"> {{ course.full_name }}
+                                    </button>
+                                </a>
+                            {% endif %}
+                        {% endfor %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="ui section divider"></div>
+    <div class="row">
+        <div class="row">
+            <table>
+                <thead>
+                <tr>
+                    <th><h3>Kurse ohne Dozent</h3></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <th>
+                        {% for unassigned in unassigned_courses %}
+                            <a href="{{ url_for('course', id=unassigned.id) }}">
+                                <div class="ui button my-3">
+                                    {{ unassigned.full_name }}
+                                </div>
+                            </a>
+                        {% endfor %}
+                    </th>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="ui section divider"></div>
+    <div class="row ui grid">
+        <h3 class="ui">Passwörter Zurücksetzen</h3>
+        <form method="POST">
+            {{ csrf_field() }}
+
+            <div class="ui field mb-3">
+                {{ render_boolean(form.send_mail) }}
+            </div>
+
+            <div class="field mb-3">
+                <div class="ui toggle checkbox">
+                    <input type="checkbox" name="changes_confirmed" required=true>
+                    <label for="changes_confirmed">Änderungen überprüft und alles ok?</label>
+                </div>
+            </div>
+
+            <button class="fluid ui positive button mt-3 mb-3">
+                Passwort für alle Dozenten zurücksetzen
+            </button>
+        </form>
+    </div>
+
+{% endblock internal_body %}
