@@ -102,6 +102,8 @@ class Attendance(db.Model):
     graduation_id = db.Column(db.Integer, db.ForeignKey('graduation.id'))
     graduation = db.relationship("Graduation", backref="attendances", lazy="joined")
 
+    ects_points = db.Column(db.Integer, nullable=False, default=0)
+
     waiting = db.Column(db.Boolean)  # do not change, please use the set_waiting_status function
     discount = db.Column(db.Numeric(precision=3))
     amountpaid = db.Column(db.Numeric(precision=5, scale=2), nullable=False)
@@ -121,6 +123,7 @@ class Attendance(db.Model):
     def __init__(self, course, graduation, waiting, discount, informed_about_rejection=False):
         self.course = course
         self.graduation = graduation
+        self.ects_points = course.ects_points
         self.waiting = waiting
         self.discount = discount
         self.paidbycash = False
@@ -211,7 +214,6 @@ class Applicant(db.Model):
 
     # internal representation of the grade is in %
     grade = db.Column(db.Integer, nullable=True)  # TODO store grade encrypted
-    ects_points = db.Column(db.Integer, nullable=True, default=0)
     # if a student only wants 'bestanden' instead of the grade value, is set to true
     hide_grade = db.Column(db.Boolean, nullable=False, default=False)
 
@@ -518,6 +520,11 @@ class Course(db.Model):
 
     def get_active_attendances(self):
         return [attendance for attendance in self.attendances if not attendance.waiting]
+
+    def get_course_attendance(self, course_id, applicant_id):
+        attendances = [attendance for attendance in self.attendances if
+                       (attendance.course_id == course_id and attendance.applicant_id == applicant_id)]
+        return attendances[0] if attendances else None
 
     @hybrid_method
     def count_attendances(self, *args, **kw):

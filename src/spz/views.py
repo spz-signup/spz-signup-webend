@@ -320,7 +320,6 @@ def signupinternal(course_id):
                 informed_about_rejection=informed_about_rejection
             )
             # set course ects to applicant
-            applicant.ects_points = course.ects_points
             db.session.add(applicant)
             db.session.delete(o_auth_token)
             db.session.commit()
@@ -436,7 +435,6 @@ def signupexternal(course_id):
                 informed_about_rejection=informed_about_rejection
             )
             # add course ects to applicant
-            applicant.ects_points = course.ects_points
             db.session.add(applicant)
             db.session.commit()
         except Exception as e:
