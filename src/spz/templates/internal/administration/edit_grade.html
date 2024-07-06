@@ -40,17 +40,23 @@
                         <td>{{ applicant.first_name }}</td>
                         <td>{{ applicant.last_name }}</td>
                         <td>
-                            {% if course.ects_points == 2 %}
-                                <select name="ects_{{ applicant.id }}" class="ui dropdown">
-                                    <option value="2" {% if applicant.ects_points == 2 %}selected{% endif %}>
-                                        2 (normal)
-                                    </option>
-                                    <option value="3" {% if applicant.ects_points == 3 %}selected{% endif %}>
-                                        3 (mit Zusatzleistung)
-                                    </option>
-                                </select>
+                            {% if course.get_course_attendance(course.id, applicant.id) is none %}
+                                Fehler: nicht in Liste
                             {% else %}
-                                {{ applicant.ects_points }}
+                                {% if course.ects_points == 2 %}
+                                    <select name="ects_{{ applicant.id }}" class="ui dropdown">
+                                        <option value="2"
+                                                {% if course.get_course_attendance(course.id, applicant.id).ects_points == 2 %}selected{% endif %}>
+                                            2 (normal)
+                                        </option>
+                                        <option value="3"
+                                                {% if course.get_course_attendance(course.id, applicant.id).ects_points == 3 %}selected{% endif %}>
+                                            3 (mit Zusatzleistung)
+                                        </option>
+                                    </select>
+                                {% else %}
+                                    {{ course.get_course_attendance(course.id, applicant.id).ects_points }}
+                                {% endif %}
                             {% endif %}
                         </td>
                         <td>

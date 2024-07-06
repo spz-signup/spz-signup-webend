@@ -253,11 +253,12 @@ def edit_grade(course_id):
 
     exam_date = app.config['EXAM_DATE']
 
+
     # ToDo: assign course ects when applicant registers for course
     # temporary quickfix
     for applicant in course.course_list:
-        if applicant.ects_points == 0:
-            applicant.ects_points = course.ects_points
+        if course.get_course_attendance(course.id, applicant.id).ects_points == 0:
+            course.get_course_attendance(course.id, applicant.id).ects_points = course.ects_points
     db.session.commit()
 
     if request.method == 'POST' and form.validate():
@@ -272,8 +273,8 @@ def edit_grade(course_id):
                 ects_field_name = f'ects_{applicant.id}'
                 if ects_field_name in request.form:
                     submitted_ects = int(request.form[ects_field_name])
-                    if submitted_ects != applicant.ects_points:
-                        applicant.ects_points = submitted_ects
+                    if submitted_ects != course.get_course_attendance(course.id, applicant.id).ects_points:
+                        course.get_course_attendance(course.id, applicant.id).ects_points = submitted_ects
                         changes = True
 
             if changes:
@@ -316,7 +317,7 @@ def edit_grade_view(course_id):
             flash(_('Es ist ein Fehler beim Abspeichern der Bestanden-Attribute aufgetreten: %(error)s', error=e),
                   'negative')
 
-        return redirect(url_for('grade', id=id, course_id=course_id))
+        return redirect(url_for('grade', course_id=course_id))
 
     return dict(course=course, exam_date=exam_date)
 
