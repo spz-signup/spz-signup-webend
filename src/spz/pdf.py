@@ -380,6 +380,8 @@ class ParticipationCertGenerator(SPZPDF):
 
 @login_required
 def generate_participation_cert(full_name, tag, course, ects, ger, date):
+    if tag is None:
+        tag = ""
     participation_cert = ParticipationCertGenerator('P')
     participation_cert.add_page()
     participation_cert.set_font('Helvetica', '', size=16)
@@ -412,7 +414,8 @@ def generate_participation_cert(full_name, tag, course, ects, ger, date):
     participation_cert.set_font(style='')
     participation_cert.cell(150, participation_cert.height, ' SWS) regelm\u00e4\u00DFig teilgenommen.', 0, 1)
     participation_cert.set_x(15)
-    participation_cert.cell(150, participation_cert.height, 'Dieser Kurs entspricht dem Niveau ' + ger
+    if ger is not None:
+        participation_cert.cell(150, participation_cert.height, 'Dieser Kurs entspricht dem Niveau ' + ger
                             + ' des GER (Gem.Europ.Referenzrahmen)', 0, 1)
     participation_cert.set_x(15)
     participation_cert.cell(75, 30, 'Karlsruhe, den ' + str(date), 0, 0)
