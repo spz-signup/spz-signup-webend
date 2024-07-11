@@ -366,6 +366,7 @@ class ParticipationCertGenerator(SPZPDF):
         else:
             this.semester = 'Wintersemester {0}/{1}'.format(now.year, now.year + 1)
             this.weeks = 14
+        this.weeks = 14
         this.set_font('Helvetica', '', size=36)
         path = os.path.join(os.getcwd(), 'spz/', 'static/img/kit-logo.png')
         this.image(path, x=15, y=16, w=40)
