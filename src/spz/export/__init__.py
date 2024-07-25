@@ -72,7 +72,8 @@ def export_course_list(courses, format, filename='Kursliste'):
     for course in courses:
         formatter.begin_section(course.full_name)
         for applicant in course.course_list:
-            formatter.write_element(dict(course=course, applicant=applicant))
+            attendance = course.get_course_attendance(course.id, applicant.id)
+            formatter.write_element(dict(course=course, applicant=applicant, attendance=attendance))
         formatter.set_course_information(course)
         formatter.end_section(course.full_name)
 

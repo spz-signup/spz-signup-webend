@@ -1367,19 +1367,20 @@ def campus_portal_grades(export_token):
     grade_objects = []
     for course in courses:
         for student in course.course_list:
+            attendance = course.get_course_attendance(course.id, student.id)
             # check for valid matriculation id -> tag and if the grade was set and course is passed
-            if student.tag_is_digit and student.full_grade not in ["-", "nicht bestanden"]:
-                if student.hide_grade:
+            if student.tag_is_digit and attendance.full_grade not in ["-", "nicht bestanden"]:
+                if attendance.hide_grade:
                     grade = "bestanden"
                 else:
-                    grade = student.full_grade
+                    grade = attendance.full_grade
                 grade_objects.append(
                     {
                         "matriculationId": int(student.tag),  # required
                         # "title": course.name,  # name without alternatives a, b, c, ...
                         # "titleEn": course.name_english,
                         "examDate": exam_date_iso,
-                        "ects": student.ects_points,  # required
+                        "ects": attendance.ects_points,  # required
                         "grade": grade,  # required
                         "sqUnit": "SPZ"
                     }

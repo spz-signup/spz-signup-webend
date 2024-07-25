@@ -284,7 +284,7 @@ class Applicant(db.Model):
     def full_name(self):
         return '{} {}'.format(self.first_name, self.last_name)
 
-    """@property
+    @property
     def tag_is_digit(self):
         if self.tag is None:
             return False
@@ -294,6 +294,7 @@ class Applicant(db.Model):
         except ValueError:
             return False
 
+    """
     @property
     def sanitized_grade(self):
         if self.grade is None:
