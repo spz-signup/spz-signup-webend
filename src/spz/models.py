@@ -103,6 +103,10 @@ class Attendance(db.Model):
     graduation = db.relationship("Graduation", backref="attendances", lazy="joined")
 
     ects_points = db.Column(db.Integer, nullable=False, default=0)
+    # internal representation of the grade is in %
+    grade = db.Column(db.Integer, nullable=True)  # TODO store grade encrypted
+    # if a student only wants 'bestanden' instead of the grade value, is set to true
+    hide_grade = db.Column(db.Boolean, nullable=False, default=False)
 
     waiting = db.Column(db.Boolean)  # do not change, please use the set_waiting_status function
     discount = db.Column(db.Numeric(precision=3))
@@ -144,6 +148,35 @@ class Attendance(db.Model):
             self.waiting = False
         elif not self.waiting and waiting_list:
             self.waiting = True
+
+    @property
+    def sanitized_grade(self):
+        if self.grade is None:
+            return ""
+        return self.grade
+
+    @property
+    def full_grade(self):
+        if self.grade is None:
+            return "-"
+        conversion_table = [
+            (98, "1"),
+            (95, "1,3"),
+            (90, "1,7"),
+            (85, "2"),
+            (79, "2,3"),
+            (73, "2,7"),
+            (68, "3"),
+            (62, "3,3"),
+            (56, "3,7"),
+            (50, "4")
+        ]
+
+        for percentage, grade in conversion_table:
+            if self.grade >= percentage:
+                return grade
+
+        return "nicht bestanden"
 
     @hybrid_property
     def is_free(self):
@@ -251,7 +284,7 @@ class Applicant(db.Model):
     def full_name(self):
         return '{} {}'.format(self.first_name, self.last_name)
 
-    @property
+    """@property
     def tag_is_digit(self):
         if self.tag is None:
             return False
@@ -288,7 +321,7 @@ class Applicant(db.Model):
             if self.grade >= percentage:
                 return grade
 
-        return "nicht bestanden"
+        return "nicht bestanden" """
 
     def add_course_attendance(self, *args, **kwargs):
         attendance = Attendance(*args, **kwargs)

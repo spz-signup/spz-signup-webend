@@ -40,26 +40,31 @@
             </thead>
             <tbody>
             {% for applicant in course.course_list %}
+                {% set attendance = course.get_course_attendance(course.id, applicant.id) %}
                 <tr class="{{ 'error' if applicant.full_grade == 'nicht bestanden' else '' }}">
                     <td>{% if applicant.tag %} {{ applicant.tag }} {% endif %}</td>
                     <td>{{ applicant.first_name }}</td>
                     <td>{{ applicant.last_name }}</td>
                     <td>
-                        {% if course.get_course_attendance(course.id, applicant.id) is none %}
+                        {% if attendance is none %}
                             Fehler: nicht in Liste
                         {% else %}
-                            {{ course.get_course_attendance(course.id, applicant.id).ects_points }}
+                            {{ attendance.ects_points }}
                         {% endif %}
                     </td>
                     <td>
-                        {% if applicant.grade is not none %}
-                            {% if applicant.hide_grade %}
-                                <b>bestanden</b>
-                            {% else %}
-                                {{ applicant.full_grade }}
-                            {% endif %}
+                        {% if attendance is none %}
+                            Fehler: nicht in Liste
                         {% else %}
-                            -
+                            {% if attendance.grade is not none %}
+                                {% if attendance.hide_grade %}
+                                    <b>bestanden</b>
+                                {% else %}
+                                    {{ attendance.full_grade }}
+                                {% endif %}
+                            {% else %}
+                                -
+                            {% endif %}
                         {% endif %}
                     </td>
                     <td> {{ exam_date }}</td>

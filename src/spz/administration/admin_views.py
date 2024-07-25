@@ -248,33 +248,43 @@ def edit_grade(course_id):
         return redirect(url_for('internal'))
     # !!! course.course_list returns only active applicants (not on waiting list)
     # populate grade fields with applicant parameters
-    grade_list = forms.create_grade_form(course.course_list)
+    grade_list = forms.create_grade_form(course.course_list, course_id)
     form = grade_list(request.form)
 
     exam_date = app.config['EXAM_DATE']
 
-
     # ToDo: assign course ects when applicant registers for course
     # temporary quickfix
     for applicant in course.course_list:
-        if course.get_course_attendance(course.id, applicant.id).ects_points == 0:
-            course.get_course_attendance(course.id, applicant.id).ects_points = course.ects_points
+        attendance = course.get_course_attendance(course.id, applicant.id)
+        if attendance.ects_points == 0:
+            attendance.ects_points = course.ects_points
+    db.session.commit()
+
+    # Quickfix: structure change because of bug, but I need to set the already set grades and copy to new structure
+    for applicant in course.course_list:
+        attendance = course.get_course_attendance(course.id, applicant.id)
+        if applicant.grade is not None and attendance.grade is None:
+            # only update initially with applicant grade values
+            attendance.grade = applicant.grade
+            attendance.hide_grade = applicant.hide_grade
     db.session.commit()
 
     if request.method == 'POST' and form.validate():
         try:
             changes = False
             for applicant in course.course_list:
+                attendance = course.get_course_attendance(course.id, applicant.id)
                 grade_field = getattr(form, f'grade_{applicant.id}', None)
-                if grade_field and grade_field.data != applicant.grade:
-                    applicant.grade = grade_field.data
+                if grade_field and grade_field.data != attendance.grade:
+                    attendance.grade = grade_field.data
                     changes = True
 
                 ects_field_name = f'ects_{applicant.id}'
                 if ects_field_name in request.form:
                     submitted_ects = int(request.form[ects_field_name])
-                    if submitted_ects != course.get_course_attendance(course.id, applicant.id).ects_points:
-                        course.get_course_attendance(course.id, applicant.id).ects_points = submitted_ects
+                    if submitted_ects != attendance.ects_points:
+                        attendance.ects_points = submitted_ects
                         changes = True
 
             if changes:
@@ -300,12 +310,13 @@ def edit_grade_view(course_id):
         try:
             changes = False
             for applicant in course.course_list:
+                attendance = course.get_course_attendance(course.id, applicant.id)
                 view_field_name = f'view_{applicant.id}'
                 submitted_view = request.form.get(view_field_name)
                 if submitted_view is not None:
                     hide_view = (int(submitted_view) == 0)
-                    if hide_view != applicant.hide_grade:
-                        applicant.hide_grade = hide_view
+                    if hide_view != attendance.hide_grade:
+                        attendance.hide_grade = hide_view
                         changes = True
             if changes:
                 db.session.commit()

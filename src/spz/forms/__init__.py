@@ -1048,7 +1048,7 @@ class CourseForm(FlaskForm):
     identifier = StringField()
 
 
-def create_grade_form(applicants):
+def create_grade_form(applicants, course_id):
     """
     Dynamically creates a GradeForm class with fields for each applicant.
     """
@@ -1057,10 +1057,11 @@ def create_grade_form(applicants):
         pass
 
     for applicant in applicants:
+        attendance = models.Attendance.query.filter_by(applicant_id=applicant.id, course_id=course_id).first()
         field_name = f'grade_{applicant.id}'
         setattr(GradeForm, field_name,
                 IntegerField("Note", validators=[validators.Optional(), validators.NumberRange(min=0, max=100)],
-                             default=applicant.grade))
+                             default=attendance.grade))
 
     return GradeForm
 

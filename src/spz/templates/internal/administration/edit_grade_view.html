@@ -35,27 +35,36 @@
                 </thead>
                 <tbody>
                 {% for applicant in course.course_list %}
-                    <tr class="{{ 'error' if applicant.full_grade == 'nicht bestanden' else '' }}">
+                    {% set attendance = course.get_course_attendance(course.id, applicant.id) %}
+                    <tr class="{{ 'error' if attendance.full_grade == 'nicht bestanden' else '' }}">
                         <td>{% if applicant.tag %} {{ applicant.tag }} {% endif %}</td>
                         <td>{{ applicant.first_name }}</td>
                         <td>{{ applicant.last_name }}</td>
                         <td>
-                            {{ course.get_course_attendance(course.id, applicant.id).ects_points }}
+                            {% if attendance is none %}
+                                Fehler: nicht in Liste
+                            {% else %}
+                                {{ attendance.ects_points }}
+                            {% endif %}
                         </td>
                         <td>
-                            {% if applicant.grade is none %}
-                                -
-                            {% elif applicant.grade >= 50 %}
-                                <select name="view_{{ applicant.id }}" class="ui dropdown">
-                                    <option value="0" {% if applicant.hide_grade %}selected{% endif %}>
-                                        bestanden
-                                    </option>
-                                    <option value="1"
-                                            {% if not applicant.hide_grade %}selected{% endif %}>
-                                        {{ applicant.full_grade }}</option>
-                                </select>
+                            {% if attendance is none %}
+                                Fehler: nicht in Liste
                             {% else %}
-                                nicht bestanden
+                                {% if attendance.grade is none %}
+                                    -
+                                {% elif attendance.grade >= 50 %}
+                                    <select name="view_{{ applicant.id }}" class="ui dropdown">
+                                        <option value="0" {% if attendance.hide_grade %}selected{% endif %}>
+                                            bestanden
+                                        </option>
+                                        <option value="1"
+                                                {% if not attendance.hide_grade %}selected{% endif %}>
+                                            {{ attendance.full_grade }}</option>
+                                    </select>
+                                {% else %}
+                                    nicht bestanden
+                                {% endif %}
                             {% endif %}
                         </td>
                         <td>
