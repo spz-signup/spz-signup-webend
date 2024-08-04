@@ -23,6 +23,29 @@
 </div>
 {% endmacro %}
 
+{% macro render_pw_input(field, width=12, placeholder=None, required=True, skip=False, skip_value=None, required_extras=None, type="text", help=None, icon=None, step=None, min=None, max=None, readonly=False) %}
+<div class="{% if required %}required {% endif %}field{% if field.errors %} error{% endif %}">
+    <div class="ui labeled input password-field">
+        <div class="ui label" for="{{ field.id }}">
+            {% if icon %}<i class="{{ icon }} icon"></i>{% endif %}
+            {{ field.label }}
+        </div>
+        {{ render_raw_input(field, placeholder, required, required_extras, 'password', step, min, max, readonly) }}
+        <i class="eye icon eye-icon" id="togglePassword_{{ field.id }}"></i>
+    </div>
+    {% if skip %}
+        <div class="skip_container">
+            <label class="skip_label"><input type="checkbox" name="{{ field.id }}_skipped" data-value="{{ skip_value }}" autocomplete="off" />&nbsp;{{ skip }}</label>
+        </div>
+    {% endif %}
+    {% for error in field.errors %}
+        <span class="ui red pointing prompt label transition visible">{{ error }}</span>
+    {% endfor %}
+    {% if help %}<span class="help-block">{{ help }}</span>{% endif %}
+</div>
+{% endmacro %}
+
+
 {% macro render_raw_input(field, placeholder=None, required=True, required_extras=None, type="text", step=None, min=None, max=None, readonly=False) %}
 <input type="{{ type }}" id="{{ field.id }}" name="{{ field.id }}"{% if field.data != None %} value="{{ field.data }}" {% endif %} placeholder="{{ placeholder|default('', true) }}"{% if required %} data-required="true"{% endif %}{% if step %} step="{{ step }}"{% endif %}{% if min %} min="{{ min }}"{% endif %}{% if max %} max="{{ max }}"{% endif %}{% if readonly == True %} readonly {% endif %}{{ (' ' ~ required_extras|safe) if required_extras }} />
 {% endmacro %}

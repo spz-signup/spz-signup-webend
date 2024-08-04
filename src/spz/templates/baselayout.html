@@ -53,6 +53,17 @@
                 margin-bottom: 1em; /* Adjust the value as needed */
                 display: block;
             }
+            .password-field {
+                position: relative;
+            }
+
+            .password-field .eye-icon {
+                position: absolute;
+                right: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+                cursor: pointer;
+            }
         {% endblock style %}
     </style>
 
@@ -141,7 +152,7 @@
     {% endassets %}
 
     <script>
-        // copies test of the hiddenText input field to the clipboard
+        // copies text of the hiddenText input field to the clipboard
         function copyToClipboard() {
             var copyText = document.getElementById("hiddenText").value;
             navigator.clipboard.writeText(copyText).then(function () {
@@ -160,6 +171,21 @@
                 notification.style.display = 'none';
             }, 2250); // Show notification for 2.25 seconds
         }
+
+        // toggle password visibility in login form
+        $(document).ready(function () {
+            $('.eye-icon').click(function () {
+                var input = $(this).siblings('input');
+                var icon = $(this);
+                if (input.attr('type') === 'password') {
+                    input.attr('type', 'text');
+                    icon.removeClass('eye').addClass('eye slash');
+                } else {
+                    input.attr('type', 'password');
+                    icon.removeClass('eye slash').addClass('eye');
+                }
+            });
+        });
     </script>
 {% endblock scripts %}
 

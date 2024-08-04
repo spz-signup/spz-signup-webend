@@ -806,7 +806,7 @@ class LoginForm(FlaskForm):
     """Represents the login form the the internal partsPasswort
     """
 
-    user = StringField('User', [validators.DataRequired('User muss angegeben werden')])
+    user = StringField('Email', [validators.DataRequired('User muss angegeben werden')])
     password = StringField('Passwort', [validators.DataRequired('Passwort muss angegeben werden')])
 
 
