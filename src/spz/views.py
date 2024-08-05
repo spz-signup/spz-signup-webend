@@ -1436,3 +1436,10 @@ def campus_export_course(id, link=""):
         return dict(form=form, language=language, link=link)
 
     return dict(form=form, language=language, link=link)
+
+@templated('internal/overviewExportList.html')
+def overview_export_list():
+    form = forms.ExportOverviewForm(languages=models.Language.query.all())
+    semester = app.config['SEMESTER_NAME']
+
+    return dict(form=form, semester=semester)

@@ -4,7 +4,7 @@
 
    Manages the mapping between abstract entities and concrete database models.
 """
-
+import enum
 from enum import Enum
 from binascii import hexlify
 from datetime import datetime, timedelta
@@ -1173,7 +1173,11 @@ class ExportFormat(db.Model):
        :param formatter: class name of the python formatter to be used
        :param template: optional template descriptor, supplied to the formatter
        :param language: language for which the export format is intended (NULL for any)
+       :param instance: instance at which the export format is applied ('course' or 'language')
     """
+    COURSE = "COURSE"
+    LANGUAGE = "LANGUAGE"
+
     __tablename__ = 'export_format'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -1182,12 +1186,14 @@ class ExportFormat(db.Model):
     template = db.Column(db.String(50))
     language_id = db.Column(db.Integer, db.ForeignKey('language.id'))
     language = db.relationship("Language")
+    instance = db.Column(db.String(), nullable=False, default=COURSE)
 
-    def __init__(self, name, formatter, template=None, extension=None, language=None):
+    def __init__(self, name, formatter, template=None, extension=None, language=None, instance=COURSE):
         self.name = name
         self.formatter = formatter
         self.template = template
         self.language = language
+        self.instance = instance
 
     def __repr__(self):
         return '<ExportFormat "{}">'.format(self.descriptive_name)
@@ -1200,12 +1206,17 @@ class ExportFormat(db.Model):
         return self.name
 
     @staticmethod
-    def list_formatters(languages=[]):
+    def list_formatters(languages=[], instance=COURSE):
         language_ids = [lang.id for lang in languages]
-        return ExportFormat.query.filter(or_(
-            ExportFormat.language == None,  # NOQA
-            ExportFormat.language_id.in_(language_ids)
-        )).all()
+        return ExportFormat.query.filter(
+            and_(
+                or_(
+                    ExportFormat.language == None,  # NOQA
+                    ExportFormat.language_id.in_(language_ids)
+                ),
+                ExportFormat.instance == instance
+            )
+        ).all()
 
 
 class OAuthToken(db.Model):

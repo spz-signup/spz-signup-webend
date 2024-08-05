@@ -181,6 +181,8 @@ routes = [
 
     ('/internal/preterm', views.preterm, ['GET', 'POST']),
 
+    ('/internal/overview_list', views.overview_export_list, ['GET', 'POST']),
+
     ('/internal/statistics/', views.statistics, ['GET']),
     ('/internal/statistics/free_courses', views.free_courses, ['GET']),
     ('/internal/statistics/origins_breakdown', views.origins_breakdown, ['GET']),

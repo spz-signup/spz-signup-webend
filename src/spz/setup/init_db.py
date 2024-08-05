@@ -20,8 +20,7 @@ def validate_resources():
 
     for fname in resources:
         with app.open_resource('resource/{0}.json'.format(fname)) as fd_json, \
-             app.open_resource('resource/{0}.schema'.format(fname)) as fd_schema:
-
+            app.open_resource('resource/{0}.schema'.format(fname)) as fd_schema:
             res_json = json.load(fd_json)
             res_schema = json.load(fd_schema)
 
@@ -105,6 +104,9 @@ def insert_export_formats(json_file):
                 lang_ref = Language.query.filter(Language.name == format.pop('language')).first()
             else:
                 lang_ref = None
+
+            #instance = format.pop('instance', ExportFormat.COURSE)
+
             db.session.add(ExportFormat(**format, language=lang_ref))
 
 

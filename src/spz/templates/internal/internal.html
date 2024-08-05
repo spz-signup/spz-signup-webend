@@ -1,58 +1,62 @@
 {% extends 'baselayout.html' %}
 
 {% block navbar %}
-<div class="item">
     <div class="item">
-        <a href="{{ url_for('internal') }}"><h1>Interner Bereich</h1></a>
+        <div class="item">
+            <a href="{{ url_for('internal') }}"><h1>Interner Bereich</h1></a>
+        </div>
+        {% if current_user.is_admin_or_superuser %}
+            <a class="item" href="{{ url_for('registrations') }}"><i class="barcode icon"></i> Matrikelnummern</a>
+            <a class="item" href="{{ url_for('approvals') }}"><i class="file text outline icon"></i> Englisch
+                Testergebnisse</a>
+            <a class="item" href="{{ url_for('lists') }}"><i class="list icon"></i> Kurslisten</a>
+            <a class="item" href="{{ url_for('notifications') }}"><i class="mail icon"></i> Mail Zentrale</a>
+            <a class="item" href="{{ url_for('search_applicant') }}"><i class="search icon"></i> Bewerbersuche</a>
+            <a class="item" href="{{ url_for('payments') }}"><i class="euro icon"></i> Zahlungen</a>
+            <a class="item" href="{{ url_for('outstanding') }}"><i class="warning sign icon"></i> Offene Beträge</a>
+            <a class="item" href="{{ url_for('statistics') }}"><i class="pie chart icon"></i> Statistiken</a>
+            <a class="item" href="{{ url_for('duplicates') }}"><i class="random icon"></i> Doppelgänger</a>
+            <a class="item" href="{{ url_for('administration_teacher') }}"><i class="users icon"></i>Dozentenverwaltung</a>
+            <a class="item" href="{{ url_for('campus_export_language') }}"><i class="cloud upload icon"></i>Campus
+                Portal Export</a>
+            <a class="item" href="{{ url_for('overview_export_list') }}"><i class="file excel icon"></i>Gesamtliste</a>
+            {% if current_user.is_superuser %}
+                <a class="item" href="{{ url_for('preterm') }}"><i class="star icon"></i> Prioritär&shy;anmeldungen</a>
+                <a class="item" href="{{ url_for('unique') }}"><i class="trash icon"></i> Wartelisten Bereinigen</a>
+            {% endif %}
+        {% endif %}
     </div>
-    {% if current_user.is_admin_or_superuser %}
-    <a class="item" href="{{ url_for('registrations') }}" ><i class="barcode icon"></i> Matrikelnummern</a>
-    <a class="item" href="{{ url_for('approvals') }}" ><i class="file text outline icon"></i> Englisch Testergebnisse</a>
-    <a class="item" href="{{ url_for('lists') }}"><i class="list icon"></i> Kurslisten</a>
-    <a class="item" href="{{ url_for('notifications') }}"><i class="mail icon"></i> Mail Zentrale</a>
-    <a class="item" href="{{ url_for('search_applicant') }}"><i class="search icon"></i> Bewerbersuche</a>
-    <a class="item" href="{{ url_for('payments') }}"><i class="euro icon"></i> Zahlungen</a>
-    <a class="item" href="{{ url_for('outstanding') }}"><i class="warning sign icon"></i> Offene Beträge</a>
-    <a class="item" href="{{ url_for('statistics') }}"><i class="pie chart icon"></i> Statistiken</a>
-    <a class="item" href="{{ url_for('duplicates') }}"><i class="random icon"></i> Doppelgänger</a>
-    <a class="item" href="{{ url_for('administration_teacher') }}"><i class="users icon"></i>Dozentenverwaltung</a>
-    <a class="item" href="{{ url_for('campus_export_language') }}"><i class="cloud upload icon"></i>Campus Portal Export</a>
-    {% if current_user.is_superuser %}
-    <a class="item" href="{{ url_for('preterm') }}"><i class="star icon"></i> Prioritär&shy;anmeldungen</a>
-    <a class="item" href="{{ url_for('unique') }}"><i class="trash icon"></i> Wartelisten Bereinigen</a>
-    {% endif %}
-    {% endif %}
-</div>
 {% endblock navbar %}
 
 
 {% block caption %}
-Interner Bereich
+    Interner Bereich
 {% endblock caption %}
 
 
 {% block subcaption %}
-<div class="pull-right no-print">
-{% if current_user.is_authenticated %}
-    Angemeldet als <strong>{{ current_user.email }} ({% if current_user.is_superuser %}SUPERUSER{% else %}Kursadministrator{% endif %})</strong>
-(<a href="{{ url_for('logout')  }}" class="signout">Abmelden</a>)
-{% else %}
-    Nicht angemeldet. <a href="{{ url_for('login') }}" class="signin">Anmelden</a>
-{% endif %}
-</div>
+    <div class="pull-right no-print">
+        {% if current_user.is_authenticated %}
+            Angemeldet als<strong>{{ current_user.email }} ({% if current_user.is_superuser %}SUPERUSER{% else %}
+            Kursadministrator{% endif %})</strong>
+            (<a href="{{ url_for('logout') }}" class="signout">Abmelden</a>)
+        {% else %}
+            Nicht angemeldet. <a href="{{ url_for('login') }}" class="signin">Anmelden</a>
+        {% endif %}
+    </div>
 {% endblock subcaption %}
 
 
 {% block body %}
-{% if current_user.is_authenticated %}
-{% block internal_body %}{% endblock internal_body %}
-{% endif %}
+    {% if current_user.is_authenticated %}
+        {% block internal_body %}{% endblock internal_body %}
+    {% endif %}
 {% endblock body %}
 
 
 {% block scripts %}
-{{ super() }}
-{% assets "tools_js" %}
-<script src="{{ ASSET_URL }}"></script>
-{% endassets %}
+    {{ super() }}
+    {% assets "tools_js" %}
+        <script src="{{ ASSET_URL }}"></script>
+    {% endassets %}
 {% endblock scripts %}
