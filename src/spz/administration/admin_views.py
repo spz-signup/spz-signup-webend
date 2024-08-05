@@ -238,15 +238,6 @@ def grade(course_id):
 
     exam_date = app.config['EXAM_DATE']
 
-    # Quickfix: structure change because of bug, but I need to set the already set grades and copy to new structure
-    """for applicant in course.course_list:
-        attendance = course.get_course_attendance(course.id, applicant.id)
-        if applicant.grade is not None and attendance.grade is None:
-            # only update initially with applicant grade values
-            attendance.grade = applicant.grade
-            attendance.hide_grade = applicant.hide_grade
-    db.session.commit()"""
-
     return dict(course=course, exam_date=exam_date)
 
 
