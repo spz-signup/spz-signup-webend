@@ -83,6 +83,23 @@ def export_course_list(courses, format, filename='Kursliste'):
 
     return resp
 
+def export_overview_list(language, format):
+    semester = app.config['SEMESTER_NAME_SHORT']
+    formatter = init_formatter(course_formatters, format)
+    filename = language.name
+    formatter.begin_section(language.name)
+    for course in language.courses:
+        for applicant in course.course_list:
+            attendance = course.get_course_attendance(course.id, applicant.id)
+            formatter.write_element(dict(course=course, applicant=applicant, attendance=attendance, semester=semester))
+    formatter.end_section(language.name)
+
+    resp = make_response(formatter.get_data())
+    resp.headers['Content-Disposition'] = 'attachment; filename="{0}.{1}"'.format(filename, formatter.extension)
+    resp.mimetype = formatter.mimetype
+
+    return resp
+
 
 def specify_export_name(courses):
     if len(courses) == 1:

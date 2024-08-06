@@ -62,7 +62,7 @@ def external_origins_to_choicelist():
 @cache.cached(key_prefix='languages')
 def languages_to_choicelist():
     return [
-        (x.id, '{0}'.format(x.full_name))
+        (x.id, '{0}'.format(x.name))
         for x
         in models.Language.query.order_by(models.Language.name.asc())
     ]

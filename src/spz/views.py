@@ -26,7 +26,7 @@ from spz.decorators import templated
 import spz.forms as forms
 from spz.util.Filetype import mime_from_filepointer
 from spz.mail import generate_status_mail
-from spz.export import export_course_list
+from spz.export import export_course_list, export_overview_list
 from spz.administration import TeacherManagement
 
 from flask_babel import gettext as _
@@ -1441,5 +1441,16 @@ def campus_export_course(id, link=""):
 def overview_export_list():
     form = forms.ExportOverviewForm(languages=models.Language.query.all())
     semester = app.config['SEMESTER_NAME']
+
+    # 1) ToDo: create excel template -> it is working basic, but I need excel to be able to work futher on it
+
+    # 2) ToDo: check if special ordering is required (could make ordering possible later in excel table)
+
+    if form.validate_on_submit():
+        language = form.get_selected()
+        return export_overview_list(
+            language=language,
+            format=form.get_format()
+        )
 
     return dict(form=form, semester=semester)

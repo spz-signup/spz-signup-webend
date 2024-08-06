@@ -14,6 +14,7 @@
             <h3 class="ui dividing header">Sprache</h3>
             Download der Gesamtliste mit allen Studierenden der ausgewählten Sprache im {{ semester }}.
             <div class="ui hidden divider"></div>
+            {{ render_option(form.language, required=True) }}
             {{ render_option(form.format, required=True) }}
 
             {{ render_submit(submit='Herunterladen') }}

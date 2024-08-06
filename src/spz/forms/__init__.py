@@ -885,17 +885,27 @@ class ExportOverviewForm(FlaskForm):
 
     """
 
-    format = SelectField(
-        'Format',
-        [validators.DataRequired('Die Sprache muss angegeben werden')],
+    language = SelectField(
+        'Sprache',
+        [validators.DataRequired('Die Sprache muss ausgewählt werden')],
         coerce=int
     )
+
+    format = SelectField(
+        'Format',
+        [validators.DataRequired('Das Export-Format muss angegeben werden')],
+        coerce=int
+    )
+
+    def get_selected(self):
+        return models.Language.query.get(self.language.data)
 
     def get_format(self):
         return models.ExportFormat.query.get(self.format.data)
 
     def __init__(self, languages=[], *args, **kwargs):
         super(ExportOverviewForm, self).__init__(*args, **kwargs)
+        self.language.choices = cached.languages_to_choicelist()
         # get choices on language wise level
         self.format.choices = [
             (f.id, f.descriptive_name) for f in

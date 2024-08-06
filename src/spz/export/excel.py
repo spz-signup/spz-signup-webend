@@ -203,3 +203,4 @@ class SingleSectionExcelWriter(ExcelWriter):
         if self.section:
             super().end_section(self.section)
         return super().get_data()
+

@@ -41,7 +41,7 @@
         {
             "name": "Englisch Gesamtliste",
             "language": "Englisch",
-            "formatter": "XXX",
+            "formatter": "single-excel",
             "template": "export/english_overview.xlsx",
             "instance": "LANGUAGE"
         }
