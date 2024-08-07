@@ -378,7 +378,7 @@ class Applicant(db.Model):
     @property
     def get_test_ger(self):
         """
-        Returns the GER level for the best test result.
+        Returns the GER level for the best (ilias) test result.
         """
         return self.rating_to_ger(self.best_rating())
 

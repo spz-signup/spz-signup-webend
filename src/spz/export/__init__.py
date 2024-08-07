@@ -86,7 +86,7 @@ def export_course_list(courses, format, filename='Kursliste'):
 def export_overview_list(language, format):
     semester = app.config['SEMESTER_NAME_SHORT']
     formatter = init_formatter(course_formatters, format)
-    filename = language.name
+    filename = f"Gesamtliste_{language.name}"
     formatter.begin_section(language.name)
     for course in language.courses:
         for applicant in course.course_list:

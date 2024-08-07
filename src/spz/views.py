@@ -6,7 +6,7 @@
 
    Notice: administration_views contains the views for teacher administration
 """
-
+import io
 import socket
 import re
 import csv
@@ -17,7 +17,7 @@ from redis import ConnectionError
 
 from sqlalchemy import and_, func, not_
 
-from flask import request, redirect, render_template, url_for, flash, jsonify
+from flask import request, redirect, render_template, url_for, flash, jsonify, make_response
 from flask_login import current_user, login_required, login_user, logout_user
 from flask_mail import Message
 
@@ -700,6 +700,38 @@ def approvals_check():
         tag = form.get_tag()
         approvals = models.Approval.get_for_tag(tag)
     return dict(form=form, tag=tag, approvals=approvals)
+
+@login_required
+@templated('internal/approvals.html')
+def approvals_export():
+    if request.method == 'POST':
+        # get all best ratings (dont take double entries)
+        english_courses = models.Language.query.filter(models.Language.name == 'Englisch').first().courses
+
+        tags_seen = set()
+        export_data = []
+        for course in english_courses:
+            for applicant in course.course_list:
+                if applicant.tag and applicant.tag not in tags_seen:
+                    tags_seen.add(applicant.tag)
+                    export_data.append((applicant.tag, applicant.best_rating()))
+        # sort by tag
+        export_data.sort(key=lambda x: x[0])
+        # create a buffer
+        with io.StringIO() as buffer:
+            writer = csv.writer(buffer, delimiter=';')
+            for line in export_data:
+                writer.writerow(line)
+            csv_out = buffer.getvalue()
+
+        resp = make_response(csv_out)
+        resp.headers['Content-Disposition'] = 'attachment; filename="returners.csv"'
+        resp.mimetype = "text/csv"
+        return resp
+
+
+    flash(_('Export-Datei konnte nicht generiert werden'), 'negative')
+    return redirect(url_for('approvals'))
 
 
 @login_required
