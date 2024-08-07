@@ -44,6 +44,12 @@
             "formatter": "single-excel",
             "template": "export/english_overview.xlsx",
             "instance": "LANGUAGE"
+        },
+        {
+            "name": "Gesamtliste (allgemein)",
+            "formatter": "single-excel",
+            "template": "export/overview.xlsx",
+            "instance": "LANGUAGE"
         }
     ]
 }
