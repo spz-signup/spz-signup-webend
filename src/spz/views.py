@@ -701,21 +701,21 @@ def approvals_check():
         approvals = models.Approval.get_for_tag(tag)
     return dict(form=form, tag=tag, approvals=approvals)
 
+
 @login_required
 @templated('internal/approvals.html')
 def approvals_export():
     if request.method == 'POST':
-        # get all best ratings (dont take double entries)
         english_courses = models.Language.query.filter(models.Language.name == 'Englisch').first().courses
 
-        tags_seen = set()
+        tags_seen = set()  # append tags to this set to avoid duplicates
         export_data = []
         for course in english_courses:
             for applicant in course.course_list:
                 if applicant.tag and applicant.tag not in tags_seen:
                     tags_seen.add(applicant.tag)
                     export_data.append((applicant.tag, applicant.best_rating()))
-        # sort by tag
+        # sort by tag (remains untested)
         export_data.sort(key=lambda x: x[0])
         # create a buffer
         with io.StringIO() as buffer:
@@ -728,7 +728,6 @@ def approvals_export():
         resp.headers['Content-Disposition'] = 'attachment; filename="returners.csv"'
         resp.mimetype = "text/csv"
         return resp
-
 
     flash(_('Export-Datei konnte nicht generiert werden'), 'negative')
     return redirect(url_for('approvals'))
@@ -1468,6 +1467,7 @@ def campus_export_course(id, link=""):
         return dict(form=form, language=language, link=link)
 
     return dict(form=form, language=language, link=link)
+
 
 @templated('internal/overviewExportList.html')
 def overview_export_list():

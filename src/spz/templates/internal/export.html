@@ -18,10 +18,10 @@
         <form class="ui form" method="post" id="export" enctype="multipart/form-data">
             {{ csrf_field() }}
             <h3 class="ui dividing header">Auswahl</h3>
-            {{ render_option(form.courses, multiple=True, required=True) }}
+            {{ render_option(form.courses, multiple=True, required=True, icon="list icon") }}
 
             <h3 class="ui dividing header">Konfiguration</h3>
-            {{ render_option(form.format, required=True) }}
+            {{ render_option(form.format, required=True, icon="paperclip icon") }}
 
 
             {{ render_submit(submit='Herunterladen') }}
