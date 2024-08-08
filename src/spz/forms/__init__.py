@@ -1139,3 +1139,17 @@ class ResetLanguagePWs(FlaskForm):
 
     def get_send_mail(self):
         return self.send_mail.data
+
+
+def create_approval_form(tag):
+    class EditApprovalForm(FlaskForm):
+        pass
+
+    approvals = models.Approval.get_for_tag(tag)
+    for approval in approvals:
+        field_name = f'approval_{approval.id}'
+        setattr(EditApprovalForm, field_name,
+                IntegerField("Test", validators=[validators.DataRequired(), validators.NumberRange(min=0, max=100)],
+                             default=approval.percent))
+
+    return EditApprovalForm
