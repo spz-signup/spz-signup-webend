@@ -36,6 +36,7 @@ class CustomFlask(Flask):
     """
     jinja_options = dict(Flask.jinja_options, trim_blocks=True, lstrip_blocks=True, auto_reload=False)
 
+
 app = CustomFlask(__name__, instance_relative_config=True)
 
 # Configuration loading
@@ -145,6 +146,7 @@ routes = [
 
     ('/internal/approvals/', views.approvals, ['GET']),
     ('/internal/approvals/import', views.approvals_import, ['GET', 'POST']),
+    ('/internal/approvals/export', views.approvals_export, ['GET', 'POST']),
     ('/internal/approvals/check', views.approvals_check, ['GET', 'POST']),
     ('/internal/approvals/edit/<string:tag>', views.approvals_edit, ['GET', 'POST']),
 
@@ -182,6 +184,8 @@ routes = [
 
     ('/internal/preterm', views.preterm, ['GET', 'POST']),
 
+    ('/internal/overview_list', views.overview_export_list, ['GET', 'POST']),
+
     ('/internal/statistics/', views.statistics, ['GET']),
     ('/internal/statistics/free_courses', views.free_courses, ['GET']),
     ('/internal/statistics/origins_breakdown', views.origins_breakdown, ['GET']),
@@ -203,7 +207,8 @@ routes = [
     ('/internal/grades/<int:course_id>/edit', admin_views.edit_grade, ['GET', 'POST']),
     ('/internal/grades/<int:course_id>/edit_view', admin_views.edit_grade_view, ['GET', 'POST']),
     ('/internal/teacher/<int:id>/attendance/<int:course_id>', admin_views.attendances, ['GET', 'POST']),
-    ('/internal/teacher/<int:id>/attendance/<int:course_id>/edit/<int:class_id>', admin_views.edit_attendances, ['GET', 'POST']),
+    ('/internal/teacher/<int:id>/attendance/<int:course_id>/edit/<int:class_id>', admin_views.edit_attendances,
+     ['GET', 'POST']),
 
     ('/api/campus_portal/export/<string:export_token>', views.campus_portal_grades, ['GET']),
     ('/internal/campus_portal/export', views.campus_export_language, ['GET', 'POST']),

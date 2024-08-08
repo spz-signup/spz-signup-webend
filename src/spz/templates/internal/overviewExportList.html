@@ -2,27 +2,20 @@
 {% from 'formhelpers.html' import csrf_field, render_option, render_boolean, render_submit %}
 
 {% block caption %}
-    Kurslisten Export
+    Export Semester Gesamtliste
 {% endblock caption %}
 
 
 {% block internal_body %}
     <div class="row">
-        {% if not user.is_admin_or_superuser %}
-            <div>
-                <a href="{{ url_for('teacher', id=user.id) }}">
-                    <button type="button" class="ui button">Zurück zu meinen Kursen</button>
-                </a>
-            </div>
-        {% endif %}
         <form class="ui form" method="post" id="export" enctype="multipart/form-data">
             {{ csrf_field() }}
-            <h3 class="ui dividing header">Auswahl</h3>
-            {{ render_option(form.courses, multiple=True, required=True, icon="list icon") }}
 
-            <h3 class="ui dividing header">Konfiguration</h3>
+            <h3 class="ui dividing header">Sprache</h3>
+            Download der Gesamtliste mit allen Studierenden der ausgewählten Sprache im {{ semester }}.
+            <div class="ui hidden divider"></div>
+            {{ render_option(form.language, required=True, icon="language icon") }}
             {{ render_option(form.format, required=True, icon="paperclip icon") }}
-
 
             {{ render_submit(submit='Herunterladen') }}
         </form>

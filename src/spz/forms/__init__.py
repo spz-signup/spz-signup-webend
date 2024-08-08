@@ -44,7 +44,10 @@ __all__ = [
     'VacanciesForm',
     'DeleteCourseForm',
     'TriStateField',
-    'TriStateLabel'
+    'TriStateLabel',
+    'AttendanceForm',
+    'CampusExportForm',
+    'ResetLanguagePWs'
 ]
 
 
