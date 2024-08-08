@@ -61,30 +61,36 @@
         </form>
     </div>
     <div class="row">
-        <table class="ui selectable sortable compact small striped table">
-            <thead>
-            <tr>
-                <th>Level</th>
-                <th>Per Web-Oberfläche hinzugefügt</th>
-                <th>Priorität</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for approval in approvals %}
+        <form class="ui form" method="post">
+            {{ csrf_field() }}
+            <table class="ui selectable sortable compact small striped table">
+                <thead>
                 <tr>
-                    <td>{{ approval.percent }}%</td>
-                    <td>{% if approval.sticky %}Ja {% else %}Nein {% endif %} </td>
-                    <td>{% if approval.priority %}Ja {% else %}Nein {% endif %}</td>
+                    <th>Level</th>
+                    <th>Per Web-Oberfläche hinzugefügt</th>
+                    <th>Priorität</th>
                 </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-        {% if approvals|length > 0 %}
-            <div class="ui form">
-                <a href="{{ url_for('approvals_edit', tag=form.get_tag()) }}">
-                    <button type="submit" class="ui fluid positive button">Testergebnisse Bearbeiten</button>
-                </a>
-            </div>
-        {% endif %}
+                </thead>
+                <tbody>
+                {% for approval in approvals %}
+                    <tr>
+                        <td>
+                            <div class="ui labeled input">
+                                {{ edit_form['approval_' ~ approval.id]() }}
+                                {% if edit_form['approval_' ~ approval.id].errors %}
+                                    <span
+                                        class="ui red left pointing label">
+                                        {{ edit_form['approval_' ~ approval.id].errors[0] }}</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>{% if approval.sticky %}Ja {% else %}Nein {% endif %} </td>
+                        <td>{% if approval.priority %}Ja {% else %}Nein {% endif %}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <button type="submit" class="ui fluid positive button">Speichern</button>
+        </form>
     </div>
 {% endblock internal_body %}

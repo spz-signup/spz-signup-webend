@@ -146,6 +146,7 @@ routes = [
     ('/internal/approvals/', views.approvals, ['GET']),
     ('/internal/approvals/import', views.approvals_import, ['GET', 'POST']),
     ('/internal/approvals/check', views.approvals_check, ['GET', 'POST']),
+    ('/internal/approvals/edit/<string:tag>', views.approvals_edit, ['GET', 'POST']),
 
     ('/internal/registrations/', views.registrations, ['GET']),
     ('/internal/registrations/import', views.registrations_import, ['GET', 'POST']),
