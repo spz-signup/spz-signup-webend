@@ -6,7 +6,7 @@
 
    Notice: administration_views contains the views for teacher administration
 """
-
+import io
 import socket
 import re
 import csv
@@ -17,7 +17,7 @@ from redis import ConnectionError
 
 from sqlalchemy import and_, func, not_
 
-from flask import request, redirect, render_template, url_for, flash, jsonify
+from flask import request, redirect, render_template, url_for, flash, jsonify, make_response
 from flask_login import current_user, login_required, login_user, logout_user
 from flask_mail import Message
 
@@ -26,7 +26,7 @@ from spz.decorators import templated
 import spz.forms as forms
 from spz.util.Filetype import mime_from_filepointer
 from spz.mail import generate_status_mail
-from spz.export import export_course_list
+from spz.export import export_course_list, export_overview_list
 from spz.administration import TeacherManagement
 
 from flask_babel import gettext as _
@@ -700,6 +700,37 @@ def approvals_check():
         tag = form.get_tag()
         approvals = models.Approval.get_for_tag(tag)
     return dict(form=form, tag=tag, approvals=approvals)
+
+
+@login_required
+@templated('internal/approvals.html')
+def approvals_export():
+    if request.method == 'POST':
+        english_courses = models.Language.query.filter(models.Language.name == 'Englisch').first().courses
+
+        tags_seen = set()  # append tags to this set to avoid duplicates
+        export_data = []
+        for course in english_courses:
+            for applicant in course.course_list:
+                if applicant.tag and applicant.tag not in tags_seen:
+                    tags_seen.add(applicant.tag)
+                    export_data.append((applicant.tag, applicant.best_rating()))
+        # sort by tag (remains untested)
+        export_data.sort(key=lambda x: x[0])
+        # create a buffer
+        with io.StringIO() as buffer:
+            writer = csv.writer(buffer, delimiter=';')
+            for line in export_data:
+                writer.writerow(line)
+            csv_out = buffer.getvalue()
+
+        resp = make_response(csv_out)
+        resp.headers['Content-Disposition'] = 'attachment; filename="returners.csv"'
+        resp.mimetype = "text/csv"
+        return resp
+
+    flash(_('Export-Datei konnte nicht generiert werden'), 'negative')
+    return redirect(url_for('approvals'))
 
 
 @login_required
@@ -1436,3 +1467,22 @@ def campus_export_course(id, link=""):
         return dict(form=form, language=language, link=link)
 
     return dict(form=form, language=language, link=link)
+
+
+@templated('internal/overviewExportList.html')
+def overview_export_list():
+    form = forms.ExportOverviewForm(languages=models.Language.query.all())
+    semester = app.config['SEMESTER_NAME']
+
+    # 1) ToDo: create excel template -> it is working basic, but I need excel to be able to work futher on it
+
+    # 2) ToDo: check if special ordering is required (could make ordering possible later in excel table)
+
+    if form.validate_on_submit():
+        language = form.get_selected()
+        return export_overview_list(
+            language=language,
+            format=form.get_format()
+        )
+
+    return dict(form=form, semester=semester)

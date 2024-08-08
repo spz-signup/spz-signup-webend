@@ -41,11 +41,13 @@ __all__ = [
     'CourseForm',
     'AddTeacherForm',
     'EditTeacherForm',
-    'CourseForm',
     'VacanciesForm',
     'DeleteCourseForm',
     'TriStateField',
-    'TriStateLabel'
+    'TriStateLabel',
+    'AttendanceForm',
+    'CampusExportForm',
+    'ResetLanguagePWs'
 ]
 
 
@@ -860,6 +862,7 @@ class ExportCourseForm(FlaskForm):
     def __init__(self, languages=[], *args, **kwargs):
         super(ExportCourseForm, self).__init__(*args, **kwargs)
         self.courses.choices = cached.all_courses_to_choicelist()
+        # get choices on course wise level
         self.format.choices = [
             (f.id, f.descriptive_name) for f in models.ExportFormat.list_formatters(languages=languages)
         ]
@@ -875,6 +878,39 @@ class ExportCourseForm(FlaskForm):
             new_choices = [(course.id, course.full_name) for course in courses]
             if self.courses.choices != new_choices:
                 self.courses.choices = new_choices
+
+
+class ExportOverviewForm(FlaskForm):
+    """Form for exporting the semester list overview of all courses of a language.
+
+    """
+
+    language = SelectField(
+        'Sprache',
+        [validators.DataRequired('Die Sprache muss ausgewählt werden')],
+        coerce=int
+    )
+
+    format = SelectField(
+        'Format',
+        [validators.DataRequired('Das Export-Format muss angegeben werden')],
+        coerce=int
+    )
+
+    def get_selected(self):
+        return models.Language.query.get(self.language.data)
+
+    def get_format(self):
+        return models.ExportFormat.query.get(self.format.data)
+
+    def __init__(self, languages=[], *args, **kwargs):
+        super(ExportOverviewForm, self).__init__(*args, **kwargs)
+        self.language.choices = cached.languages_to_choicelist()
+        # get choices on language wise level
+        self.format.choices = [
+            (f.id, f.descriptive_name) for f in
+            models.ExportFormat.list_formatters(languages=languages, instance=models.ExportFormat.LANGUAGE)
+        ]
 
 
 class AddTeacherForm(FlaskForm):
@@ -1070,7 +1106,6 @@ class AttendanceForm(FlaskForm):
     attendance = HiddenField("attendance_id")
 
 
-
 class CampusExportForm(FlaskForm):
     """
     Represents the form for exporting the grades of the applicants to the Campus System.
@@ -1091,6 +1126,7 @@ class CampusExportForm(FlaskForm):
     def update_course(self, grouped_by_level):
         self.courses.choices = cached.grouped_by_level_to_choicelist(grouped_by_level)
 
+
 class ResetLanguagePWs(FlaskForm):
     """Represents the form for send pws to all teachers of a language."""
 
@@ -1103,4 +1139,3 @@ class ResetLanguagePWs(FlaskForm):
 
     def get_send_mail(self):
         return self.send_mail.data
-
