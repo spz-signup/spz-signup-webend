@@ -201,7 +201,10 @@ def signupinternal(course_id):
             'Mechatronik und Informationstechnik': 2
         }
 
+        # choices: all fields that are selectable
         form.origin.choices = [(FieldOfstudy[o_auth_user_data['fieldOfStudyText']], o_auth_user_data['fieldOfStudyText'])]
+        # if you want to preselect a field, set the corresponding id to form.origin.data
+        form.origin.data = FieldOfstudy[o_auth_user_data['fieldOfStudyText']]
 
         form.mail.data = o_auth_user_data['eduperson_principal_name']
         form.confirm_mail.data = o_auth_user_data['eduperson_principal_name']
