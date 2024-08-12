@@ -196,19 +196,17 @@ def signupinternal(course_id):
         form.first_name.data = o_auth_user_data['given_name']
         form.last_name.data = o_auth_user_data['family_name']
 
-        FieldOfstudy={'Studienkolleg':1,}
+        FieldOfstudy = {
+            'Studienkolleg': 1,
+            'Mechatronik und Informationstechnik': 2
+        }
 
-        form.origin.choices=FieldOfstudy[o_auth_user_data['fieldOfStudyText']]
-
+        form.origin.choices = [(FieldOfstudy[o_auth_user_data['fieldOfStudyText']], o_auth_user_data['fieldOfStudyText'])]
 
         form.mail.data = o_auth_user_data['eduperson_principal_name']
         form.confirm_mail.data = o_auth_user_data['eduperson_principal_name']
         form.tag.data = o_auth_user_data['matriculationNumber'] if 'student@kit.edu' in o_auth_user_data[
             'eduperson_scoped_affiliation'] else o_auth_user_data['preferred_username']
-
-
-
-
 
         # get information if requester is employee or student
         for affiliation in o_auth_user_data['eduperson_scoped_affiliation']:
@@ -222,7 +220,6 @@ def signupinternal(course_id):
             """for num, key in form.origin.choices:
                 if key == 'KIT (Mitarbeiter*in)':
                     form.origin.process_data(num)"""
-
 
     # set is_student value
     is_student = o_auth_token.is_student
