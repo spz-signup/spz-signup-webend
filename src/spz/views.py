@@ -195,11 +195,20 @@ def signupinternal(course_id):
         form.state.data = o_auth_token.state
         form.first_name.data = o_auth_user_data['given_name']
         form.last_name.data = o_auth_user_data['family_name']
-        form.origin.data = o_auth_user_data['fieldOfStudyText']
+
+        FieldOfstudy={'Studienkolleg':1,}
+
+        form.origin.choices=FieldOfstudy[o_auth_user_data['fieldOfStudyText']]
+
+
         form.mail.data = o_auth_user_data['eduperson_principal_name']
         form.confirm_mail.data = o_auth_user_data['eduperson_principal_name']
         form.tag.data = o_auth_user_data['matriculationNumber'] if 'student@kit.edu' in o_auth_user_data[
             'eduperson_scoped_affiliation'] else o_auth_user_data['preferred_username']
+
+
+
+
 
         # get information if requester is employee or student
         for affiliation in o_auth_user_data['eduperson_scoped_affiliation']:
@@ -209,10 +218,11 @@ def signupinternal(course_id):
                 db.session.commit()
         if not o_auth_token.is_student and not current_user.is_admin_or_superuser:
             # preselect employee option in origin field
-            form.origin.choices = [(12, 'KIT (Mitarbeiter*in)')]
+            form.origin.choices = [(13, 'KIT (Mitarbeiter*in)')]
             """for num, key in form.origin.choices:
                 if key == 'KIT (Mitarbeiter*in)':
                     form.origin.process_data(num)"""
+
 
     # set is_student value
     is_student = o_auth_token.is_student
