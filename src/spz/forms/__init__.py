@@ -897,11 +897,18 @@ class ExportOverviewForm(FlaskForm):
         coerce=int
     )
 
+    only_passed = BooleanField(
+        'Nur Studierende mit \'bestanden\' exportieren'
+    )
+
     def get_selected(self):
         return models.Language.query.get(self.language.data)
 
     def get_format(self):
         return models.ExportFormat.query.get(self.format.data)
+
+    def get_passed(self):
+        return self.only_passed.data
 
     def __init__(self, languages=[], *args, **kwargs):
         super(ExportOverviewForm, self).__init__(*args, **kwargs)

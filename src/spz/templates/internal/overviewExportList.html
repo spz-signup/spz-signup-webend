@@ -17,6 +17,7 @@
             {{ render_option(form.language, required=True, icon="language icon") }}
             {{ render_option(form.format, required=True, icon="paperclip icon") }}
 
+            {{ render_boolean(form.only_passed) }}
             {{ render_submit(submit='Herunterladen') }}
         </form>
     </div>

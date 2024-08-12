@@ -83,7 +83,7 @@ def export_course_list(courses, format, filename='Kursliste'):
 
     return resp
 
-def export_overview_list(language, format):
+def export_overview_list(language, format, passed=False):
     semester = app.config['SEMESTER_NAME_SHORT']
     formatter = init_formatter(course_formatters, format)
     filename = f"Gesamtliste_{language.name}"
@@ -91,6 +91,8 @@ def export_overview_list(language, format):
     for course in language.courses:
         for applicant in course.course_list:
             attendance = course.get_course_attendance(course.id, applicant.id)
+            if passed and (attendance.grade is None or attendance.grade < 50):
+                    continue
             formatter.write_element(dict(course=course, applicant=applicant, attendance=attendance, semester=semester))
     formatter.end_section(language.name)
 

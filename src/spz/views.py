@@ -1536,15 +1536,14 @@ def overview_export_list():
     form = forms.ExportOverviewForm(languages=models.Language.query.all())
     semester = app.config['SEMESTER_NAME']
 
-    # 1) ToDo: create excel template -> it is working basic, but I need excel to be able to work futher on it
-
-    # 2) ToDo: check if special ordering is required (could make ordering possible later in excel table)
-
     if form.validate_on_submit():
         language = form.get_selected()
+        only_passed = form.get_passed()
+
         return export_overview_list(
             language=language,
-            format=form.get_format()
+            format=form.get_format(),
+            passed=only_passed
         )
 
     return dict(form=form, semester=semester)
