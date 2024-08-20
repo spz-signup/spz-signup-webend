@@ -196,13 +196,25 @@ def signupinternal(course_id):
         form.first_name.data = o_auth_user_data['given_name']
         form.last_name.data = o_auth_user_data['family_name']
 
-        FieldOfstudy = {
-            'Studienkolleg': 1,
-            'Mechatronik und Informationstechnik': 2
+        #mapping the subcategories
+        Particular_Fields = {
+            'Studienkolleg':'Studienkolleg',
+
+            "Informatik" : "Informatik",
+            'Informatik  TVWL' :"Informatik",
+
+            "Sportwissenschaft  WINF":"Sportwissenschaft",
+            "Sportwissenschaft":"Sportwissenschaft"
         }
 
-        # choices: all fields that are selectable
-        form.origin.choices = [(FieldOfstudy[o_auth_user_data['fieldOfStudyText']], o_auth_user_data['fieldOfStudyText'])]
+        #id of the main categories
+        FieldOfstudy = {
+            "Informatik":1,
+            "Sportwissenschaft":2
+        }
+
+         # choices: all fields that are selectable
+        form.origin.choices = [(FieldOfstudy[Particular_Fields[o_auth_user_data['fieldOfStudyText']]],Particular_Fields[o_auth_user_data['fieldOfStudyText']])]
         # if you want to preselect a field, set the corresponding id to form.origin.data
         form.origin.data = FieldOfstudy[o_auth_user_data['fieldOfStudyText']]
 
