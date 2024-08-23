@@ -197,7 +197,7 @@ def signupinternal(course_id):
         form.last_name.data = o_auth_user_data['family_name']
 
         #mapping the subcategories
-        Particular_Fields = {
+        particular_fields = {
             'Studienkolleg':'Studienkolleg',
 
             "Informatik" : "Informatik",
@@ -210,13 +210,25 @@ def signupinternal(course_id):
         #id of the main categories
         FieldOfstudy = {
             "Informatik":1,
-            "Sportwissenschaft":2
+            "Sportwissenschaft":2,
+            "sonstige":3
         }
 
+
          # choices: all fields that are selectable
-        form.origin.choices = [(FieldOfstudy[Particular_Fields[o_auth_user_data['fieldOfStudyText']]],Particular_Fields[o_auth_user_data['fieldOfStudyText']])]
-        # if you want to preselect a field, set the corresponding id to form.origin.data
-        form.origin.data = FieldOfstudy[o_auth_user_data['fieldOfStudyText']]
+        study_program = o_auth_user_data['fieldOfStudyText']
+
+        if study_program in particular_fields:
+            form.origin.choices = [(FieldOfstudy[particular_fields[study_program]],particular_fields[study_program])]
+            # if you want to preselect a field, set the corresponding id to form.origin.data
+            form.origin.data = FieldOfstudy[o_auth_user_data['fieldOfStudyText']]
+
+        else:
+            form.origin.choices = [(FieldOfstudy["sonstige"],"sonstige")]
+            program = models.UnknownStudyPrograms(study_program)
+            db.session.add(program)  # add object to database
+            db.session.commit()  # final writing to database of all added objects to session
+
 
         form.mail.data = o_auth_user_data['eduperson_principal_name']
         form.confirm_mail.data = o_auth_user_data['eduperson_principal_name']

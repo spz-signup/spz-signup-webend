@@ -932,6 +932,16 @@ class Role(db.Model):
         self.course = course
         self.role = role
 
+class UnknownStudyPrograms(db.Model):
+    """Study Program Table used to store data with new study programs received from oidc flow with kit server
+
+         :param id: unique ID
+         :param program: field of study text
+      """
+    __tablename__ = 'study_program'
+
+    id = db.Column(db.Integer, primary_key=True)
+    program = db.Column(db.String(50), nullable=False)
 
 class User(db.Model):
     """User for internal UI
