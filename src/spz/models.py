@@ -912,6 +912,31 @@ class Approval(db.Model):
                 Approval.tag_salted == Approval.cleartext_to_salted(tag)
             ).all()
 
+class StudyPrograms(db.Model):
+    """Study Program Table used to store data with new study programs received from oidc flow with kit server
+
+         :param id: unique ID
+         :param program: field of study text
+      """
+
+    # table structure
+    # id | program | origin_id
+    # 1  | Architektur | 1 (Architektur)
+    # 2  | Informatik TVWL  | 7 (Informatik)
+    # example: fieldOfStudyText is not in study_programs
+    # 3  | <fieldOfStudyText> |
+    # -> leave origin_id empty, so we know that this is a new field of study we need to add to the resources file
+
+    __tablename__ = 'study_program'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False)
+    origin_id = db.Column(db.Integer, db.ForeignKey('origin.id'), nullable=True)
+
+    def __init__(self, name, origin_id=None):
+        self.name = name
+        self.origin_id = origin_id
+
 
 class Role(db.Model):
     SUPERUSER = 'SUPERUSER'
@@ -932,16 +957,6 @@ class Role(db.Model):
         self.course = course
         self.role = role
 
-class UnknownStudyPrograms(db.Model):
-    """Study Program Table used to store data with new study programs received from oidc flow with kit server
-
-         :param id: unique ID
-         :param program: field of study text
-      """
-    __tablename__ = 'study_program'
-
-    id = db.Column(db.Integer, primary_key=True)
-    program = db.Column(db.String(50), nullable=False)
 
 class User(db.Model):
     """User for internal UI

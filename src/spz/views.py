@@ -196,6 +196,16 @@ def signupinternal(course_id):
         form.first_name.data = o_auth_user_data['given_name']
         form.last_name.data = o_auth_user_data['family_name']
 
+        # list with all particular fields
+        study_programs = models.StudyPrograms.query.all()
+        # iterate over all study programs and check if the program is already in the database
+        program_exists = False
+        for entry in study_programs:
+            if entry.program == o_auth_user_data['fieldOfStudyText']:
+                program_exists = True # flag to know whether program has been found or not
+                form.origin.data = entry.origin_id
+                break
+
         #mapping the subcategories
         particular_fields = {
             'Studienkolleg':'Studienkolleg',
@@ -203,15 +213,15 @@ def signupinternal(course_id):
             "Informatik" : "Informatik",
             'Informatik  TVWL' :"Informatik",
 
-            "Sportwissenschaft  WINF":"Sportwissenschaft",
-            "Sportwissenschaft":"Sportwissenschaft"
+            "Sportwissenschaft  WINF": "Sportwissenschaft",
+            "Sportwissenschaft": "Sportwissenschaft"
         }
 
         #id of the main categories
-        FieldOfstudy = {
+        fieldOfstudy = {
             "Informatik":1,
             "Sportwissenschaft":2,
-            "sonstige":3
+            "sonstige": 17
         }
 
 
@@ -219,13 +229,14 @@ def signupinternal(course_id):
         study_program = o_auth_user_data['fieldOfStudyText']
 
         if study_program in particular_fields:
-            form.origin.choices = [(FieldOfstudy[particular_fields[study_program]],particular_fields[study_program])]
+            #form.origin.choices = [(fieldOfstudy[particular_fields[study_program]],particular_fields[study_program])]
             # if you want to preselect a field, set the corresponding id to form.origin.data
-            form.origin.data = FieldOfstudy[o_auth_user_data['fieldOfStudyText']]
+            form.origin.data = fieldOfstudy[study_program]
 
         else:
-            form.origin.choices = [(FieldOfstudy["sonstige"],"sonstige")]
-            program = models.UnknownStudyPrograms(study_program)
+            form.origin.data = 17 # hardcoded
+            form.origin.choices = [(fieldOfstudy["sonstige"],"sonstige")]
+            program = models.StudyPrograms(study_program)
             db.session.add(program)  # add object to database
             db.session.commit()  # final writing to database of all added objects to session
 
