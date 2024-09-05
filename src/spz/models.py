@@ -778,12 +778,13 @@ class Origin(db.Model):
     short_name = db.Column(db.String(10), nullable=False)
     validate_registration = db.Column(db.Boolean, nullable=False)
     is_internal = db.Column(db.Boolean, nullable=False)
-
+    studyprogram=db.relationship('StudyProgram',backref="Faculty")
     def __init__(self, name, short_name, validate_registration, is_internal):
         self.name = name
         self.short_name = short_name
         self.validate_registration = validate_registration
         self.is_internal = is_internal
+        self.studyprogram= StudyPrograms
 
     def __repr__(self):
         return '<Origin %r>' % self.name
@@ -922,7 +923,6 @@ class StudyPrograms(db.Model):
     # table structure
     # id | program | origin_id
     # 1  | Architektur | 1 (Architektur)
-    # 2  | Informatik TVWL  | 7 (Informatik)
     # example: fieldOfStudyText is not in study_programs
     # 3  | <fieldOfStudyText> |
     # -> leave origin_id empty, so we know that this is a new field of study we need to add to the resources file
@@ -933,8 +933,8 @@ class StudyPrograms(db.Model):
     name = db.Column(db.String(50), nullable=False)
     origin_id = db.Column(db.Integer, db.ForeignKey('origin.id'), nullable=True)
 
-    def __init__(self, name, origin_id=None):
-        self.name = name
+    def __init__(self, study_program, origin_id=None):
+        self.name = study_program
         self.origin_id = origin_id
 
 

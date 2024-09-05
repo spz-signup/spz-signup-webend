@@ -66,6 +66,9 @@ def insert_origins(json_file):
         for origin in res["origins"]:
             db.session.add(Origin(**origin))
 
+        for study_program in res["origin"]:
+            db.session.add(StudyPrograms(study_program))
+
 
 def insert_courses(json_file):
     with app.open_resource(json_file) as fd:

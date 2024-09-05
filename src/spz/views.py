@@ -201,44 +201,18 @@ def signupinternal(course_id):
         # iterate over all study programs and check if the program is already in the database
         program_exists = False
         for entry in study_programs:
-            if entry.program == o_auth_user_data['fieldOfStudyText']:
+            if entry.study_program == o_auth_user_data['fieldOfStudyText']:
                 program_exists = True # flag to know whether program has been found or not
                 form.origin.data = entry.origin_id
                 break
 
         #mapping the subcategories
-        particular_fields = {
-            'Studienkolleg':'Studienkolleg',
 
-            "Informatik" : "Informatik",
-            'Informatik  TVWL' :"Informatik",
-
-            "Sportwissenschaft  WINF": "Sportwissenschaft",
-            "Sportwissenschaft": "Sportwissenschaft"
-        }
-
-        #id of the main categories
-        fieldOfstudy = {
-            "Informatik":1,
-            "Sportwissenschaft":2,
-            "sonstige": 17
-        }
 
 
          # choices: all fields that are selectable
         study_program = o_auth_user_data['fieldOfStudyText']
 
-        if study_program in particular_fields:
-            #form.origin.choices = [(fieldOfstudy[particular_fields[study_program]],particular_fields[study_program])]
-            # if you want to preselect a field, set the corresponding id to form.origin.data
-            form.origin.data = fieldOfstudy[study_program]
-
-        else:
-            form.origin.data = 17 # hardcoded
-            form.origin.choices = [(fieldOfstudy["sonstige"],"sonstige")]
-            program = models.StudyPrograms(study_program)
-            db.session.add(program)  # add object to database
-            db.session.commit()  # final writing to database of all added objects to session
 
 
         form.mail.data = o_auth_user_data['eduperson_principal_name']
