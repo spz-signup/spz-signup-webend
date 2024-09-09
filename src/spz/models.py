@@ -778,13 +778,14 @@ class Origin(db.Model):
     short_name = db.Column(db.String(10), nullable=False)
     validate_registration = db.Column(db.Boolean, nullable=False)
     is_internal = db.Column(db.Boolean, nullable=False)
-    studyprogram=db.relationship('StudyProgram',backref="Faculty")
-    def __init__(self, name, short_name, validate_registration, is_internal):
+    studyprogram = db.relationship('StudyPrograms', backref="Faculty")
+
+    def __init__(self, name, short_name, validate_registration, is_internal, study_program):
         self.name = name
         self.short_name = short_name
         self.validate_registration = validate_registration
         self.is_internal = is_internal
-        self.studyprogram= StudyPrograms
+        self.studyprogram = study_program
 
     def __repr__(self):
         return '<Origin %r>' % self.name
@@ -933,8 +934,8 @@ class StudyPrograms(db.Model):
     name = db.Column(db.String(50), nullable=False)
     origin_id = db.Column(db.Integer, db.ForeignKey('origin.id'), nullable=True)
 
-    def __init__(self, study_program, origin_id=None):
-        self.name = study_program
+    def __init__(self, name, origin_id=None):
+        self.name = name
         self.origin_id = origin_id
 
 

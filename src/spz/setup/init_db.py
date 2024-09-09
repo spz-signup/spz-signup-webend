@@ -64,10 +64,23 @@ def insert_origins(json_file):
         res = json.load(fd)
 
         for origin in res["origins"]:
-            db.session.add(Origin(**origin))
+            #db.session.add(Origin(**origin))
+            program_objects = []
+            for list_pointer in origin["study_program"]: # for programs as list
+                program_objects.append(StudyPrograms(name=list_pointer))
 
-        for study_program in res["origin"]:
-            db.session.add(StudyPrograms(study_program))
+            #program_objects.append(StudyPrograms(name=origin["study_program"]))
+            db_object = Origin(
+                name=origin["name"], # string
+                short_name=origin["short_name"],  # string
+                is_internal=origin["is_internal"], # boolean
+                study_program=program_objects, # db object of type StudyPrograms
+                validate_registration=origin["validate_registration"], # boolean
+            )
+            db.session.add(db_object)
+
+        #for study_program in res["origins"]["study_programs"]:
+        #    db.session.add(StudyPrograms(study_program))
 
 
 def insert_courses(json_file):

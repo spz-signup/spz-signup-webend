@@ -201,12 +201,12 @@ def signupinternal(course_id):
         # iterate over all study programs and check if the program is already in the database
         program_exists = False
         for entry in study_programs:
-            if entry.study_program == o_auth_user_data['fieldOfStudyText']:
+            if entry.name == o_auth_user_data['fieldOfStudyText']:
                 program_exists = True # flag to know whether program has been found or not
+                flash(f"origin_id: {entry.origin_id}, name: {entry.name}")
                 form.origin.data = entry.origin_id
                 break
 
-        #mapping the subcategories
 
 
 
@@ -235,6 +235,10 @@ def signupinternal(course_id):
 
     # set is_student value
     is_student = o_auth_token.is_student
+
+    flash(f"preselected data: {form.origin.data}")
+    for i, entry in enumerate(form.origin.choices):
+        flash(f"{i+1} entry: {entry}")
 
     if form.validate_on_submit():
         o_auth_state = form.get_state()

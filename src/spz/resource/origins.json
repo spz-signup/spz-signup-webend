@@ -3,126 +3,132 @@
         {
             "name": "KIT (Fakultät Architektur)",
             "short_name": "KIT",
-            "study_program": "Architektur",
+            "study_program": [
+                "Architektur",
+                "Städtebau",
+                "Innenarchitektur"
+            ],
             "validate_registration": true,
             "is_internal": true
         },
         {
             "name": "KIT (Fakultät Bauingenieur-, Geo- und Umweltwissenschaften)",
             "short_name": "KIT",
-            "study_program":"",
+            "study_program": [],
             "validate_registration": true,
             "is_internal": true
         },
         {
             "name": "KIT (Fakultät Chemie und Biowissenschaften)",
             "short_name": "KIT",
-            "study_program":
-            "validate_registration",: true,
+            "study_program": [],
+            "validate_registration": true,
             "is_internal": true
         },
         {
             "name": "KIT (Fakultät Chemieingenieurwesen und Verfahrenstechnik)",
             "short_name": "KIT",
-            "study_program":"",
+            "study_program": [],
             "validate_registration": true,
             "is_internal": true
         },
         {
             "name": "KIT (Fakultät Elektrotechnik und Informationstechnik)",
             "short_name": "KIT",
-            "study_program":"MechatronikundInformationstechnik",
+            "study_program": [
+                "Mechatronik und Informationstechnik"
+            ],
             "validate_registration": true,
             "is_internal": true
         },
         {
             "name": "KIT (Fakultät Geistes- und Sozialwissenschaften)",
             "short_name": "KIT",
-            "study_program":"",
-            "validate_registration",: true,
+            "study_program": [],
+            "validate_registration": true,
             "is_internal": true
         },
         {
             "name": "KIT (Fakultät Informatik)",
             "short_name": "KIT",
-            "study_program":"",
+            "study_program": [],
             "validate_registration": true,
             "is_internal": true
         },
         {
             "name": "KIT (Fakultät Maschinenbau)",
             "short_name": "KIT",
-            "study_program":"",
+            "study_program": [],
             "validate_registration": true,
             "is_internal": true
         },
         {
             "name": "KIT (Fakultät Mathematik)",
             "short_name": "KIT",
-            "study_program":"",
+            "study_program": [],
             "validate_registration": true,
             "is_internal": true
         },
         {
             "name": "KIT (Fakultät Physik)",
             "short_name": "KIT",
-            "study_program":"",
+            "study_program": [],
             "validate_registration": true,
             "is_internal": true
         },
         {
             "name": "KIT (Fakultät Wirtschaftswissenschaften)",
             "short_name": "KIT",
-            "study_program":"",
+            "study_program": [],
             "validate_registration": true,
             "is_internal": true
         },
-         {
+        {
             "name": "KIT (Studienkolleg)",
             "short_name": "KIT",
-             "study_program":"",
+            "study_program": [],
             "validate_registration": true,
             "is_internal": true
         },
         {
             "name": "KIT (Mitarbeiter)",
             "short_name": "KIT",
-            "study_program":"",
+            "study_program": [],
             "validate_registration": false,
             "is_internal": true
         },
         {
             "name": "Hochschule Karlsruhe",
             "short_name": "HS KA",
-            "study_program":"",
+            "study_program": [],
             "validate_registration": false,
             "is_internal": false
         },
         {
             "name": "PH Karlsruhe",
             "short_name": "PH KA",
-            "study_program":"",
+            "study_program": [],
             "validate_registration": false,
             "is_internal": false
         },
         {
             "name": "HfG Karlsruhe",
             "short_name": "HfG KA",
-            "study_program":"",
+            "study_program": [],
             "validate_registration": false,
             "is_internal": false
         },
         {
             "name": "Musikhochschule Karlsruhe",
             "short_name": "MHS KA",
-            "study_program":"",
+            "study_program": [],
             "validate_registration": false,
             "is_internal": false
         },
         {
             "name": "Sonstige",
             "short_name": "Sonst.",
-            "study_program":"",
+            "study_program": [],
             "validate_registration": false,
             "is_internal": false
         }
