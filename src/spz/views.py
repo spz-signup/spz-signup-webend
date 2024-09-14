@@ -889,17 +889,6 @@ def lists():
         .order_by(models.Language.name) \
         .from_self()  # b/c of eager loading, see: http://thread.gmane.org/gmane.comp.python.sqlalchemy.user/36757
 
-    # quickfix: copy grades from applicant table to attendance table if attendance grade is empty
-    """langs = models.Language.query.all()
-    for l in langs:
-        for course in l.courses:
-            for applicant in course.course_list:
-                    attendance = course.get_course_attendance(course.id, applicant.id)
-                    if applicant.grade is not None and attendance.grade is None:
-                        # only update initially with applicant grade values
-                        attendance.grade = applicant.grade
-                        attendance.hide_grade = applicant.hide_grade
-    db.session.commit()"""
 
     return dict(lang_misc=lang_misc)
 
