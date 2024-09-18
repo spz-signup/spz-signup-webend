@@ -1025,7 +1025,7 @@ class EditTeacherForm(FlaskForm):
         ]
     )
 
-    add_to_course = SelectField(
+    add_to_course = SelectMultipleField(
         'Kurs hinzufügen',
         [validators.Optional()],
         coerce=int,
@@ -1047,14 +1047,15 @@ class EditTeacherForm(FlaskForm):
         self.teacher = teacher
 
         self.add_to_course.choices = cached.all_courses_to_choicelist()
-        self.remove_from_course.choices = cached.all_courses_to_choicelist()
+        self.remove_from_course.choices = cached.own_courses_to_choicelist(teacher)
 
-    def populate(self, teacher):
-        self.teacher = teacher
+    def populate(self):
         self.first_name.data = self.teacher.first_name
         self.last_name.data = self.teacher.last_name
         self.mail.data = self.teacher.email
         self.tag.data = self.teacher.tag
+        # reload choices (if course is added needs to be updated)
+        self.remove_from_course.choices = cached.own_courses_to_choicelist(self.teacher)
 
     def get_teacher(self):
         return self.teacher
@@ -1076,7 +1077,7 @@ class EditTeacherForm(FlaskForm):
         return languages if languages else None
 
     def get_add_to_course(self):
-        return models.Course.query.get(self.add_to_course.data) if self.add_to_course.data else None
+        return [models.Course.query.get(course_id) for course_id in self.add_to_course.data] if self.add_to_course.data else None
 
     def get_remove_from_course(self):
         return models.Course.query.get(self.remove_from_course.data) if self.remove_from_course.data else None

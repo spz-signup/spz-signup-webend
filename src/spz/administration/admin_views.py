@@ -123,7 +123,7 @@ def add_teacher(id):
             except Exception as e:
                 db.session.rollback()
                 flash(_('Es gab einen Fehler beim Hinzufügen des Lehrbeauftragten: %(error)s', error=e), 'negative')
-                return dict(form=form)
+                return dict(language=lang, form=form)
 
             if send_pw_mail:
                 # send password reset mail, if writing to database was successfully
@@ -182,7 +182,7 @@ def edit_teacher(id):
                 try:
                     success = TeacherManagement.remove_course(teacher, remove_from_course, teacher.id)
                     flash(
-                        _('Der/die Lehrbeauftragte wurde vom Kurs "(%(name)s)" entfernt',
+                        _('Der/die Lehrbeauftragte wurde vom Kurs %(name)s entfernt',
                           name=remove_from_course.full_name),
                         'success')
                     db.session.commit()
@@ -193,9 +193,13 @@ def edit_teacher(id):
 
             if add_to_course:
                 try:
-                    TeacherManagement.add_course(teacher, add_to_course)
+                    course_names = []
+                    for course in add_to_course:
+                        TeacherManagement.add_course(teacher, course)
+                        course_names.append(course.full_name)
+                    course_str = ', '.join(course_names)
                     flash(
-                        _('Der/die Lehrbeauftragte wurde zum Kurs {} hinzugefügt.'.format(add_to_course.full_name)),
+                        _('Der/die Lehrbeauftragte wurde zu folgenden Kurs(en) {} hinzugefügt.'.format(course_str)),
                         'success'
                     )
                     db.session.commit()
@@ -223,7 +227,7 @@ def edit_teacher(id):
             flash(_('Der Bewerber konnte nicht aktualisiert werden: %(error)s', error=e), 'negative')
             return dict(form=form)
 
-    form.populate(teacher)
+    form.populate()
     return dict(teacher=teacher, form=form)
 
 

@@ -8,6 +8,14 @@
 
 {% block internal_body %}
     <div class="row">
+            <a href="{{ url_for('teacher_void') }}">
+                <button class="ui basic button">
+                    <i class="hide icon"></i>
+                    Lehrbeauftragte ohne Kurse
+                </button>
+            </a>
+    </div>
+    <div class="row">
         <table class="ui selectable sortable compact small striped table">
             <thead>
             <tr>

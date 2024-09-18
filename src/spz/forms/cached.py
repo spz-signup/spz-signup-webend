@@ -150,3 +150,15 @@ def grouped_by_level_to_choicelist(grouped_courses: dict):
     for level, courses in grouped_courses.items():
         choices.append((courses[0].level, '{0}'.format(courses[0].name)))
     return choices
+
+
+def own_courses_to_choicelist(teacher):
+    courses = []
+    for role in teacher.roles:
+        if role.role == models.Role.COURSE_TEACHER:
+            courses.append(role.course)
+    courses = sorted(courses, key=lambda x: x.full_name)
+    return [
+        (course.id, '{0}'.format(course.full_name))
+        for course in courses
+    ]
