@@ -4,8 +4,9 @@
 
    Manages the mapping between routes and their activities for the administrators.
 """
+import json
 import socket
-from flask import request, redirect, render_template, url_for, flash
+from flask import request, redirect, render_template, url_for, flash, jsonify, make_response
 from flask_login import current_user, login_required, login_user, logout_user
 from flask_mail import Message
 
@@ -17,6 +18,8 @@ from spz.auth.password_reset import send_password_reset_to_user
 import spz.forms as forms
 
 from flask_babel import gettext as _
+
+from spz.util.Filetype import mime_from_filepointer
 
 
 @templated('internal/administration/teacher_overview_base.html')
@@ -48,6 +51,81 @@ def administration_teacher():
     } for l_id, name, course_count, teacher_count in languages_info]
 
     return dict(language=languages_data)
+
+
+@login_required
+@templated('internal/administration/teacher_overview_base.html')
+def teacher_export():
+    teachers = (models.User.query
+                .outerjoin(models.Role)
+                .filter(
+        (models.Role.id == None) |
+        (models.Role.role == models.Role.COURSE_TEACHER) |
+        (
+            models.Role.role.notin_([
+                models.Role.SUPERUSER,
+                models.Role.COURSE_ADMIN
+            ])))
+                .group_by(models.User.id)
+                .all()
+                )
+
+    teacher_dict = []
+    for teacher in teachers:
+        teacher_dict.append({
+            'first_name': teacher.first_name,
+            'last_name': teacher.last_name,
+            'email': teacher.email,
+            'tag': teacher.tag
+        })
+
+    # Convert to JSON string
+    json_data = jsonify(teacher_dict)
+
+    # Create a response object
+    response = make_response(json_data)
+    response.headers['Content-Disposition'] = 'attachment; filename=teachers.json'
+    response.headers['Content-Type'] = 'application/json'
+
+    return response
+
+
+@login_required
+@templated('internal/administration/teacher_overview_base.html')
+def teacher_import():
+    if request.method == 'POST':
+        fp = request.files['file_name']
+        if fp:
+            mime = mime_from_filepointer(fp)
+            if mime == 'application/json' or mime == 'text/plain':
+                try:
+                    json_data = json.load(fp)
+
+                    if not isinstance(json_data, list):
+                        raise ValueError("Loaded data is not a list")
+
+                    for teacher in json_data:
+                        new_teacher = models.User(
+                            email=teacher["email"],
+                            tag=teacher["tag"],
+                            active=True
+                        )
+                        new_teacher.first_name = teacher["first_name"]
+                        new_teacher.last_name = teacher["last_name"]
+                        db.session.add(new_teacher)
+
+                    db.session.commit()
+                    flash(_('%(num)s Dozent(en) erfolgreich importiert', num=str(len(json_data))), 'success')
+                except Exception as e:
+                    db.session.rollback()
+                    flash(_('Konnte Dozenten nicht importieren, bitte neu einlesen: %(error)s', error=e), 'negative')
+                return redirect(url_for('administration_teacher'))
+
+            flash(_('Falscher Dateityp %(type)s, bitte nur Text oder json Dateien verwenden', type=mime), 'danger')
+            return redirect(url_for('administration_teacher'))
+
+    flash(_('Datei konnte nicht gelesen werden'), 'negative')
+    return redirect(url_for('administration_teacher'))
 
 
 @templated('internal/administration/teacher_overview_lang.html')

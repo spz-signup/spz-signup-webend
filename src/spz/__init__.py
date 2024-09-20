@@ -209,6 +209,8 @@ routes = [
     ('/internal/teacher/<int:id>/attendance/<int:course_id>', admin_views.attendances, ['GET', 'POST']),
     ('/internal/teacher/<int:id>/attendance/<int:course_id>/edit/<int:class_id>', admin_views.edit_attendances,
      ['GET', 'POST']),
+    ('/internal/administration/teacher/export', admin_views.teacher_export, ['GET', 'POST']),
+    ('/internal/administration/teacher/import', admin_views.teacher_import, ['GET', 'POST']),
 
     ('/api/campus_portal/export/<string:export_token>', views.campus_portal_grades, ['GET']),
     ('/internal/campus_portal/export', views.campus_export_language, ['GET', 'POST']),

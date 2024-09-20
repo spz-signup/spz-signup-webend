@@ -1,5 +1,5 @@
 {% extends 'internal/internal.html' %}
-{% from 'formhelpers.html' import td_sorted %}
+{% from 'formhelpers.html' import td_sorted, csrf_field %}
 
 {% block caption %}
     Verwaltung der Lehrbeauftragten
@@ -8,12 +8,12 @@
 
 {% block internal_body %}
     <div class="row">
-            <a href="{{ url_for('teacher_void') }}">
-                <button class="ui basic button">
-                    <i class="hide icon"></i>
-                    Lehrbeauftragte ohne Kurse
-                </button>
-            </a>
+        <a href="{{ url_for('teacher_void') }}">
+            <button class="ui basic button">
+                <i class="hide icon"></i>
+                Lehrbeauftragte ohne Kurse
+            </button>
+        </a>
     </div>
     <div class="row">
         <table class="ui selectable sortable compact small striped table">
@@ -46,4 +46,32 @@
             </tbody>
         </table>
     </div>
+    {% if current_user.is_superuser %}
+        <div class="row">
+            <div class="ui message">
+                <h3>Export Dozenten:</h3>
+                <p>Alle aktuell angelegten Lehrbeauftragten werden exportiert
+                    (Superuser und Fachleiter sind nicht enthalten).</p>
+            </div>
+            <form class="ui form" method="post" action="{{ url_for('teacher_export') }}">
+                {{ csrf_field() }}
+                <button type="submit" class="ui fluid positive button">Exportieren</button>
+            </form>
+        </div>
+        <div class="row">
+            <form class="ui form" method="post" action="{{ url_for('teacher_import') }}"
+                  enctype="multipart/form-data">
+                {{ csrf_field() }}
+                <div class="ui message">
+                    <h3>Import Dozenten:</h3>
+                    <p>Dateiformat: json, txt</p>
+                    <p>Exportierte Datei des letzten Semesters hier einlesen.</p>
+                </div>
+                <div class="field">
+                    <input type="file" name="file_name">
+                </div>
+                <button type="submit" class="ui fluid positive button">Importieren</button>
+            </form>
+        </div>
+    {% endif %}
 {% endblock internal_body %}
