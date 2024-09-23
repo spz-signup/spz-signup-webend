@@ -206,8 +206,9 @@ def signupinternal(course_id):
                 # save information in temporary session token
                 o_auth_token.is_student = True
                 db.session.commit()
-        if not o_auth_token.is_student and not current_user.is_admin_or_superuser:
+        if not o_auth_token.is_student and not current_user.is_authenticated:
             # preselect employee option in origin field
+            # ToDo: make dynamic not hardcoded
             form.origin.choices = [(12, 'KIT (Mitarbeiter*in)')]
             """for num, key in form.origin.choices:
                 if key == 'KIT (Mitarbeiter*in)':
