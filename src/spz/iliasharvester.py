@@ -191,7 +191,7 @@ def parse_data(it):
         # ==========================
         # == 1. get right columns ==
         # ==========================
-        s_user = row[1]
+        s_user = row[1].split('@')[0] # remove email domain from user tag
         s_idnumber = row[2]
         s_points_got = row[3]
         s_points_max = row[4]
