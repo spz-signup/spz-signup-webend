@@ -735,36 +735,6 @@ def approvals_export():
 
 
 @login_required
-@templated('internal/approvals.html')
-def approvals_export():
-    if request.method == 'POST':
-        english_courses = models.Language.query.filter(models.Language.name == 'Englisch').first().courses
-
-        tags_seen = set()  # append tags to this set to avoid duplicates
-        export_data = []
-        for course in english_courses:
-            for applicant in course.course_list:
-                if applicant.tag and applicant.tag not in tags_seen:
-                    tags_seen.add(applicant.tag)
-                    export_data.append((applicant.tag, applicant.best_rating()))
-        # sort by tag (remains untested)
-        export_data.sort(key=lambda x: x[0])
-        # create a buffer
-        with io.StringIO() as buffer:
-            writer = csv.writer(buffer, delimiter=';')
-            for line in export_data:
-                writer.writerow(line)
-            csv_out = buffer.getvalue()
-
-        resp = make_response(csv_out)
-        resp.headers['Content-Disposition'] = 'attachment; filename="returners.csv"'
-        resp.mimetype = "text/csv"
-        return resp
-
-    flash(_('Export-Datei konnte nicht generiert werden'), 'negative')
-    return redirect(url_for('approvals'))
-
-@login_required
 @templated('internal/approvals_edit.html')
 def approvals_edit(tag):
     form = forms.TagForm()
@@ -780,6 +750,8 @@ def approvals_edit(tag):
                 approval_field = getattr(edit_form, f'approval_{approval.id}', None)
                 if approval_field and approval_field.data != approval.percent:
                     approval.percent = approval_field.data
+                    # manual change of approval, so it is a sticky entry and should not be removed by ilias syncing
+                    approval.sticky = True
                     changes = True
 
             if changes:
