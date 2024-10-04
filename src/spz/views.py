@@ -749,15 +749,18 @@ def approvals_edit(tag):
             for approval in approvals:
                 approval_field = getattr(edit_form, f'approval_{approval.id}', None)
                 priority_field = getattr(edit_form, f'priority_{approval.id}', None)
+                prio = approval.priority
                 if approval_field and approval_field.data != approval.percent:
                     approval.percent = approval_field.data
+                    prio = True
                     changes = True
                 if priority_field and priority_field.data != approval.priority:
-                    approval.priority = priority_field.data
+                    prio = priority_field.data
                     changes = True
                 if changes:
                     # manual change of approval, so it is a sticky entry and should not be removed by ilias syncing
                     approval.sticky = True
+                    approval.priority = prio
 
             if changes:
                 db.session.commit()

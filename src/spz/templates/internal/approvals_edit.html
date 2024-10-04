@@ -92,7 +92,7 @@
                                        id="{{ edit_form['priority_' ~ approval.id].id }}"
                                        name="{{ edit_form['priority_' ~ approval.id].name }}"
                                        value="true"
-                                       checked>
+                                       {% if approval.priority %} checked {% endif %}>
                                 <label for="{{ edit_form['priority_' ~ approval.id].id }}">
                                     {{ edit_form['priority_' ~ approval.id].label.text }}
                                 </label>
