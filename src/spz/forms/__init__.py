@@ -1160,4 +1160,8 @@ def create_approval_form(tag):
                 IntegerField("Test", validators=[validators.DataRequired(), validators.NumberRange(min=0, max=100)],
                              default=approval.percent))
 
+        priority_field_name = f'priority_{approval.id}'
+        setattr(EditApprovalForm, priority_field_name,
+                BooleanField("Priorität", default=approval.priority))
+
     return EditApprovalForm

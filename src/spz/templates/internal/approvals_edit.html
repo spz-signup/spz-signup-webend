@@ -67,7 +67,7 @@
                 <thead>
                 <tr>
                     <th>Level</th>
-                    <th>Per Web-Oberfläche hinzugefügt</th>
+                    <th>Per Web-Oberfläche hinzugefügt/bearbeitet</th>
                     <th>Priorität</th>
                 </tr>
                 </thead>
@@ -85,7 +85,24 @@
                             </div>
                         </td>
                         <td>{% if approval.sticky %}Ja {% else %}Nein {% endif %} </td>
-                        <td>{% if approval.priority %}Ja {% else %}Nein {% endif %}</td>
+                        <td>
+                            <div class="ui toggle checkbox">
+                                <!-- manually link the checkbox input to the form field -->
+                                <input type="checkbox"
+                                       id="{{ edit_form['priority_' ~ approval.id].id }}"
+                                       name="{{ edit_form['priority_' ~ approval.id].name }}"
+                                       value="true"
+                                       checked>
+                                <label for="{{ edit_form['priority_' ~ approval.id].id }}">
+                                    {{ edit_form['priority_' ~ approval.id].label.text }}
+                                </label>
+                                {% if edit_form['priority_' ~ approval.id].errors %}
+                                    <span
+                                        class="ui red left pointing label">
+                                        {{ edit_form['priority_' ~ approval.id].errors[0] }}</span>
+                                {% endif %}
+                            </div>
+                        </td>
                     </tr>
                 {% endfor %}
                 </tbody>
