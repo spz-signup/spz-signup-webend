@@ -87,7 +87,11 @@ def insert_courses(json_file):
             )
 
             for course in courses:
-                for alt in course.pop('alternatives', [None]):
+                alternatives = course.pop('alternatives', [None])
+                if len(alternatives) == 0:
+                    print("  WARNING: course {} is not added, alternatives empty ([] instead [\"\"])".format(
+                        language["name"] + " " + course["level"]))
+                for alt in alternatives:
                     db.session.add(Course(
                         language=ref_lang,
                         alternative=alt,
