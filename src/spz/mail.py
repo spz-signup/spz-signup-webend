@@ -2,7 +2,7 @@
 
 """Implements mail generators."""
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone as dt_timezone
 from pytz import timezone, utc
 
 from flask import render_template
@@ -14,7 +14,7 @@ from spz import app, models
 
 def generate_status_mail(applicant, course, time=None, restock=False):
     """Generate mail to notify applicants about their new attendance status."""
-    time = time or datetime.now(timezone.utc).replace(tzinfo=None)
+    time = time or datetime.now(dt_timezone.utc).replace(tzinfo=None)
     attendance = models.Attendance.query \
         .filter(models.Attendance.applicant_id == applicant.id, models.Attendance.course_id == course.id) \
         .first()
