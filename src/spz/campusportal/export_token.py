@@ -1,10 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from spz import app, tasks
 
 import jwt
 
 def generate_export_token_for_courses(courses):
-    return jwt.encode({'courses': courses, 'exp': datetime.utcnow() + timedelta(hours=1)},
+    return jwt.encode({'courses': courses, 'exp': datetime.now(timezone.utc) + timedelta(hours=1)},
                       key=app.config['SECRET_KEY'], algorithm="HS256")
 
 def get_courses_from_export_token(export_token):

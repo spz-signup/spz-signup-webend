@@ -7,7 +7,7 @@
 import enum
 from enum import Enum
 from binascii import hexlify
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import total_ordering
 import random
 import string
@@ -144,7 +144,7 @@ class Attendance(db.Model):
     def set_waiting_status(self, waiting_list):
         if self.waiting and not waiting_list:
             signoff_period = app.config['SELF_SIGNOFF_PERIOD']
-            self.signoff_window = (datetime.utcnow() + signoff_period).replace(microsecond=0, second=0, minute=0)
+            self.signoff_window = (datetime.now(timezone.utc) + signoff_period).replace(microsecond=0, second=0, minute=0)
             self.waiting = False
         elif not self.waiting and waiting_list:
             self.waiting = True
@@ -426,7 +426,7 @@ class Applicant(db.Model):
 
     # Management wants us to limit the global amount of attendances one is allowed to have.. so what can I do?
     def over_limit(self):
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         # at least do not count in courses that are already over..
         running = [att for att in self.attendances if att.course.language.signup_end >= now]
         return len(running) >= app.config['MAX_ATTENDANCES']
@@ -439,7 +439,7 @@ class Applicant(db.Model):
             att = [attendance for attendance in self.attendances if course == attendance.course][0]
         except IndexError:
             return False
-        return att.signoff_window > datetime.utcnow()
+        return att.signoff_window > datetime.now(timezone.utc)
 
     @property
     def doppelgangers(self):
@@ -741,7 +741,7 @@ class Language(db.Model):
         return (time < self.signup_manual_end) or (time > self.signup_auto_end)
 
     def until_signup_fmt(self):
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         delta = self.signup_begin - now
 
         # here we are in the closed window period; calculate delta to open again

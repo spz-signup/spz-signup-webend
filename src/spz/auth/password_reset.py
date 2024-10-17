@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from spz import app, tasks
 from flask import render_template, url_for, flash
 from flask_mail import Message
@@ -23,7 +23,7 @@ def send_password_reset_to_user(user):
 
 
 def get_password_reset_token_for_user(user):
-    return jwt.encode({'reset_password': user.id, 'exp': datetime.utcnow() + timedelta(days=3)},
+    return jwt.encode({'reset_password': user.id, 'exp': datetime.now(timezone.utc) + timedelta(days=3)},
                       key=app.config['SECRET_KEY'], algorithm="HS256")
 
 
