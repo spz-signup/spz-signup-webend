@@ -7,7 +7,7 @@
 
 import itertools
 
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import func, and_, or_, not_
 from flask_wtf import FlaskForm, Form
 from flask_login import current_user
@@ -464,7 +464,7 @@ class VacanciesForm(FlaskForm):
                     models.Course.is_full,
                     models.Course.count_attendances(waiting=True) <= app.config['SHORT_WAITING_LIST'])
             )),
-            and_(models.Language.signup_begin <= datetime.utcnow(), models.Language.signup_end >= datetime.utcnow())
+            and_(models.Language.signup_begin <= datetime.now(timezone.utc), models.Language.signup_end >= datetime.now(timezone.utc))
         ) \
             .all()
         return itertools.groupby(courses, lambda course: (course.language, course.ger))

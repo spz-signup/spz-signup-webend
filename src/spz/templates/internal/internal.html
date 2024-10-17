@@ -22,8 +22,8 @@
             <a class="item" href="{{ url_for('overview_export_list') }}"><i class="file excel icon"></i>Gesamtliste</a>
             {% if current_user.is_superuser %}
                 <a class="item" href="{{ url_for('preterm') }}"><i class="star icon"></i> Prioritär&shy;anmeldungen</a>
-                <a class="item" href="{{ url_for('unique') }}"><i class="trash icon"></i> Wartelisten Bereinigen</a>
             {% endif %}
+            <a class="item" href="{{ url_for('unique') }}"><i class="trash icon"></i> Wartelisten Bereinigen</a>
         {% endif %}
     </div>
 {% endblock navbar %}

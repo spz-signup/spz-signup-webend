@@ -19,7 +19,7 @@ def log(msg, course=None, timestamp=None):
 
     # fill in timestamp
     if timestamp is None:
-        timestamp = datetime.now(timezone.utc)
+        timestamp = datetime.now(timezone.utc).replace(tzinfo=None)
 
     entry = models.LogEntry(timestamp, msg, course)
     db.session.add(entry)

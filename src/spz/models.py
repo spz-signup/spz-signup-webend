@@ -114,9 +114,9 @@ class Attendance(db.Model):
 
     paidbycash = db.Column(db.Boolean)  # could be remove, since cash payments are not allowed anyway
 
-    registered = db.Column(db.DateTime(), default=datetime.utcnow)
+    registered = db.Column(db.DateTime(), default=datetime.now(timezone.utc).replace(tzinfo=None))
     payingdate = db.Column(db.DateTime())
-    signoff_window = db.Column(db.DateTime(), default=datetime.utcnow)
+    signoff_window = db.Column(db.DateTime(), default=datetime.now(timezone.utc).replace(tzinfo=None))
 
     informed_about_rejection = db.Column(db.Boolean, nullable=False, default=False)
 
@@ -144,7 +144,7 @@ class Attendance(db.Model):
     def set_waiting_status(self, waiting_list):
         if self.waiting and not waiting_list:
             signoff_period = app.config['SELF_SIGNOFF_PERIOD']
-            self.signoff_window = (datetime.now(timezone.utc) + signoff_period).replace(microsecond=0, second=0, minute=0)
+            self.signoff_window = (datetime.now(timezone.utc).replace(tzinfo=None) + signoff_period).replace(microsecond=0, second=0, minute=0)
             self.waiting = False
         elif not self.waiting and waiting_list:
             self.waiting = True
@@ -255,7 +255,7 @@ class Applicant(db.Model):
 
     signoff_id = db.Column(db.String(120))
 
-    registered = db.Column(db.DateTime(), default=datetime.utcnow)
+    registered = db.Column(db.DateTime(), default=datetime.now(timezone.utc).replace(tzinfo=None))
 
     def __init__(self, mail, tag, first_name, last_name, phone, degree, semester, origin):
         self.mail = mail
@@ -426,7 +426,7 @@ class Applicant(db.Model):
 
     # Management wants us to limit the global amount of attendances one is allowed to have.. so what can I do?
     def over_limit(self):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         # at least do not count in courses that are already over..
         running = [att for att in self.attendances if att.course.language.signup_end >= now]
         return len(running) >= app.config['MAX_ATTENDANCES']
@@ -439,7 +439,7 @@ class Applicant(db.Model):
             att = [attendance for attendance in self.attendances if course == attendance.course][0]
         except IndexError:
             return False
-        return att.signoff_window > datetime.now(timezone.utc)
+        return att.signoff_window > datetime.now(timezone.utc).replace(tzinfo=None)
 
     @property
     def doppelgangers(self):
@@ -741,7 +741,7 @@ class Language(db.Model):
         return (time < self.signup_manual_end) or (time > self.signup_auto_end)
 
     def until_signup_fmt(self):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         delta = self.signup_begin - now
 
         # here we are in the closed window period; calculate delta to open again

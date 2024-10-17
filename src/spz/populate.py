@@ -174,7 +174,7 @@ def update_waiting_list_status():
 
 def populate_global():
     """Run global populate procedure as discussed with management."""
-    time = datetime.now(timezone.utc)
+    time = datetime.now(timezone.utc).replace(tzinfo=None)
     populate_rnd(time)
     populate_fcfs(time)
     update_waiting_list_status()

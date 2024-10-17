@@ -76,7 +76,7 @@ def index():
 
     # show all forms to authenticated users (normal or via one_time_token)
     form = forms.PreSignupForm(show_all_courses=(current_user.is_authenticated or token_payload))
-    time = datetime.now(timezone.utc)
+    time = datetime.now(timezone.utc).replace(tzinfo=None)
 
     if current_user.is_authenticated:
         flash(_('Angemeldet: Vorzeitige Registrierung möglich. Falls unerwünscht, bitte abmelden.'), 'info')
@@ -128,7 +128,7 @@ def signupinternal(course_id):
     form = forms.SignupFormInternal(course_id)
     is_student = True
 
-    time = datetime.now(timezone.utc)
+    time = datetime.now(timezone.utc).replace(tzinfo=None)
     one_time_token = request.args.get('token', None)
 
     # token_payload will contain the linked mail address if valid or None otherwise
@@ -345,7 +345,7 @@ def signupinternal(course_id):
 def signupexternal(course_id):
     course = models.Course.query.get_or_404(course_id)
     form = forms.SignupFormExternal(course_id)
-    time = datetime.now(timezone.utc)
+    time = datetime.now(timezone.utc).replace(tzinfo=None)
     one_time_token = request.args.get('token', None)
 
     # token_payload will contain the linked mail address if valid or None otherwise
@@ -490,7 +490,7 @@ def signoff():
                   'für den Sie nicht angemeldet waren!')
             )
             err |= check_precondition_with_auth(
-                applicant.is_in_signoff_window(course) or (datetime.now(timezone.utc) < course.language.signup_fcfs_begin),
+                applicant.is_in_signoff_window(course) or (datetime.now(timezone.utc).replace(tzinfo=None) < course.language.signup_fcfs_begin),
                 _('Abmeldefrist abgelaufen: Zur Abmeldung bitte bei Ihrem Fachbereichsleiter melden!')
             )
 
@@ -1182,7 +1182,7 @@ def status(applicant_id, course_id):
     if form.validate_on_submit():
         try:
             attendance.graduation = form.get_graduation()
-            attendance.payingdate = datetime.now(timezone.utc)
+            attendance.payingdate = datetime.now(timezone.utc).replace(tzinfo=None)
             attendance.discount = form.discount.data
             # attendance.applicant.discounted = form.discounted.data
             attendance.paidbycash = form.paidbycash.data

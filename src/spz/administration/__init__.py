@@ -6,9 +6,7 @@ This module contains methods for:
     - course management
 """
 
-from flask import flash
 from spz import models, db
-from spz.mail import generate_status_mail
 
 from flask_babel import gettext as _
 
