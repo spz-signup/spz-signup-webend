@@ -5,6 +5,7 @@
    Manages the mapping between abstract entities and concrete database models.
 """
 import enum
+import math
 from enum import Enum
 from binascii import hexlify
 from datetime import datetime, timedelta
@@ -104,7 +105,8 @@ class Attendance(db.Model):
 
     ects_points = db.Column(db.Integer, nullable=False, default=0)
     # internal representation of the grade is in %
-    grade = db.Column(db.Integer, nullable=True)  # TODO store grade encrypted
+    grade = db.Column(db.Float, nullable=True)  # TODO store grade encrypted
+
     # if a student only wants 'bestanden' instead of the grade value, is set to true
     hide_grade = db.Column(db.Boolean, nullable=False, default=False)
 

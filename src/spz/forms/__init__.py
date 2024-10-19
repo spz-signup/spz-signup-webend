@@ -12,9 +12,11 @@ from sqlalchemy import func, and_, or_, not_
 from flask_wtf import FlaskForm, Form
 from flask_login import current_user
 from markupsafe import Markup
-from wtforms import widgets, StringField, SelectField, SelectMultipleField, IntegerField, Label
+from wtforms import widgets, StringField, SelectField, SelectMultipleField, IntegerField,FloatField, Label
 from wtforms import TextAreaField, BooleanField, DecimalField, MultipleFileField, FieldList, FormField, HiddenField
 from flask_ckeditor import CKEditorField
+
+
 from wtforms.validators import DataRequired
 
 from spz import app, models, token
@@ -1103,7 +1105,7 @@ def create_grade_form(applicants, course_id):
         attendance = models.Attendance.query.filter_by(applicant_id=applicant.id, course_id=course_id).first()
         field_name = f'grade_{applicant.id}'
         setattr(GradeForm, field_name,
-                IntegerField("Note", validators=[validators.Optional(), validators.NumberRange(min=0, max=100)],
+                FloatField("Note", validators=[validators.Optional(), validators.NumberRange(min=0, max=100)],
                              default=attendance.grade))
 
     return GradeForm
