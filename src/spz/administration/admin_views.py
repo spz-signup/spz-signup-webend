@@ -17,7 +17,7 @@ from spz.auth.password_reset import send_password_reset_to_user
 import spz.forms as forms
 
 from flask_babel import gettext as _
-
+import math
 
 @templated('internal/administration/teacher_overview_base.html')
 def administration_teacher():
@@ -255,7 +255,7 @@ def edit_grade(course_id):
 
     # ToDo: assign course ects when applicant registers for course
     # temporary quickfix
-    import math
+
     for applicant in course.course_list:
         attendance = course.get_course_attendance(course.id, applicant.id)
         if attendance.ects_points == 0:

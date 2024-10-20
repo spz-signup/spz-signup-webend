@@ -5,7 +5,6 @@
    Manages the mapping between abstract entities and concrete database models.
 """
 import enum
-import math
 from enum import Enum
 from binascii import hexlify
 from datetime import datetime, timedelta
