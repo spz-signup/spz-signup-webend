@@ -33,7 +33,10 @@ Sprachen
                 {{ td_sorted(language.count_attendances(waiting=False)) }}
                 {{ td_sorted(language.count_attendances(is_free=False, waiting=False)) }}
                 <td class="collapsing"><a href="{{ url_for('print_language', language_id=language.id) }}"><button type="button" class="ui button">PDF</button></a></td>
-                <td class="collapsing"><a href="{{ url_for('print_language_presence', language_id=language.id) }}"><button type="button" class="ui button">PDF</button></a></td>
+                <td class="collapsing">
+                    <a href="{{ url_for('print_language_presence', language_id=language.id) }}"><button type="button" class="ui button">PDF</button></a> /
+                    <a href="{{ url_for('print_language_presence_zip', language_id=language.id) }}"><button type="button" class="ui button">ZIP</button></a>
+                </td>
                 <td class="collapsing"><a href="{{ url_for('export', type='language', id=language.id) }}"><button type="button" class="ui button">Export</button></a></td>
             </tr>
             {% if sums.update({

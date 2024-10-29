@@ -157,6 +157,7 @@ routes = [
     ('/internal/print_course/<int:course_id>', pdf.print_course, ['GET']),
     ('/internal/print_course_presence/<int:course_id>', pdf.print_course_presence, ['GET']),
     ('/internal/print_language/<int:language_id>', pdf.print_language, ['GET']),
+    ('/internal/print_language_presence_zip/<int:language_id>', pdf.print_language_presence_zip, ['GET']),
     ('/internal/print_language_presence/<int:language_id>', pdf.print_language_presence, ['GET']),
 
     ('/internal/export/<string:type>/<int:id>', views.export, ['GET', 'POST']),

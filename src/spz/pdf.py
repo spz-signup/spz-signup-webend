@@ -222,7 +222,7 @@ def print_course_presence(course_id):
 
 
 @login_required
-def print_language_presence(language_id):
+def print_language_presence_zip(language_id):
     language = models.Language.query.get_or_404(language_id)
     zip_writer = PdfZipWriter()
     for course in language.courses:
@@ -231,6 +231,15 @@ def print_language_presence(language_id):
         zip_writer.write_to_zip(pdflist.gen_final_data(), course.full_name)
 
     return html_response(zip_writer, language.name)
+
+@login_required
+def print_language_presence(language_id):
+    language = models.Language.query.get_or_404(language_id)
+    pdflist = PresenceGenerator()
+    for course in language.courses:
+        list_presence(pdflist, course)
+
+    return pdflist.gen_response(language.name)
 
 
 def list_course(pdflist, course):
