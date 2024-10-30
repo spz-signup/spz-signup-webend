@@ -1,0 +1,33 @@
+{% extends 'internal/internal.html' %}
+{% from 'formhelpers.html' import csrf_field, render_submit, attendance_status, render_boolean, render_input, render_raw_input %}
+
+{% block caption %}
+    Kurs: {{ course.language.name }} {{ course.level }}
+    {{ course.alternative }}
+{% endblock caption %}
+
+
+{% block internal_body %}
+    <div class="row">
+        <h2>Notenliste Hochladen</h2>
+    </div>
+
+    <form class="ui form" method="POST" enctype="multipart/form-data">
+        {{ csrf_field() }}
+        <div class="ui message">
+            <p>Notenliste für <strong>{{ course.language.name }} {{ course.level }}</strong> mit ausgefüllten Noten für den Upload auswählen.</p>
+        </div>
+        <div>
+            {{ form.file(class="ui input") }}
+            {% if form.file.errors %}
+                <div class="ui negative message">
+                    {% for error in form.file.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        {{ render_submit(submit='Notenliste hochladen') }}
+    </form>
+
+{% endblock internal_body %}

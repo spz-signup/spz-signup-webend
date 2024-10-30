@@ -15,14 +15,18 @@
             </a>
         </div>
     {% endif %}
-
+    <div class="row">
+        <h2>Notenübersicht</h2>
+    </div>
     <div class="three column row">
         <div class="left floated column">
-            <h2>Notenübersicht</h2>
+            <a href=" {{ url_for('import_grade', course_id=course.id) }} ">
+                <button type="button" class="ui blue button"><i class="edit icon"></i>Notenliste hochladen</button>
+            </a>
         </div>
-        <div class="right floated column">
+        <div class="center floated column">
             <a href=" {{ url_for('edit_grade', course_id=course.id) }} ">
-                <button type="button" class="ui button"><i class="edit icon"></i>Noten ändern</button>
+                <button type="button" class="ui button"><i class="edit icon"></i>Noten eintragen</button>
             </a>
         </div>
     </div>
@@ -73,5 +77,10 @@
             </tbody>
         </table>
     </div>
+    <div class="row">
+        <h2>Hochgeladene Notenliste</h2>
+        <p>Es wurde bisher keine Datei hochgeladen</p>
+    </div>
+
 
 {% endblock internal_body %}
