@@ -397,6 +397,22 @@ def edit_grade_view(course_id):
 
     return dict(course=course, exam_date=exam_date)
 
+@templated('internal/administration/import_grade.html')
+def import_grade(course_id):
+    course = models.Course.query.get_or_404(course_id)
+    form = forms.ImportGradeForm()
+    if form.validate_on_submit():
+        try:
+            file = form.file.data
+            # Save the file securely in the specified upload folder
+            #filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+            #file.save(filepath)
+            flash("File uploaded successfully!", "success")
+            return redirect(url_for('grade', course_id=course.id))
+        except Exception as e:
+            flash(_('Noten konnten nicht importiert werden: %(error)s', error=e), 'negative')
+    return dict(form=form, course=course)
+
 
 @templated('internal/administration/attendances.html')
 def attendances(id, course_id):
