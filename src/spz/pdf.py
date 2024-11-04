@@ -3,7 +3,8 @@
 """Helper functions for pdf-generator.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
+import pytz
 import fpdf
 import os
 
@@ -120,7 +121,23 @@ class PresenceGenerator(TablePDF):
     def footer(self):
         self.set_y(-10)
         self.font_normal(8)
-        self.cell(0, 5, 'Diese Liste bildet lediglich eine Hilfe im Unterricht und verbleibt beim Dozenten.', 0, 1, 'C')
+
+        # Center-aligned text
+        center_text = 'Diese Liste bildet lediglich eine Hilfe im Unterricht und verbleibt beim Dozenten.'
+
+        # get the current time in the german timezone
+        utc_now = datetime.now(timezone.utc)
+        target_timezone = pytz.timezone("Europe/Berlin")
+        local_time = utc_now.astimezone(target_timezone)
+        date_str = local_time.strftime('%d.%m.%Y %H:%M')
+        date_text_width = self.get_string_width(f'Stand: {date_str}')
+
+        # Define the margin for spacing the center text properly
+        self.multi_cell(self.w - date_text_width, 5, center_text, 0, 'C', 0)
+
+        # Move to the right for the date and time text
+        self.set_xy(self.w - date_text_width, -10)
+        self.cell(0, 5, f'Stand: {date_str}', 0, 0, 'R')
 
 
 class BillGenerator(SPZPDF):
