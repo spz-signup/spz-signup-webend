@@ -1114,6 +1114,7 @@ def remove_attendance(applicant, course, notify):
         try:
             tasks.send_slow.delay(generate_status_mail(applicant, course))
             flash(_('Bestätigungsmail wurde versendet'), 'success')
+            course.last_signoff_at = datetime.now(timezone.utc).replace(tzinfo=None)
         except (AssertionError, socket.error, ConnectionError) as e:
             flash(_('Bestätigungsmail konnte nicht versendet werden: %(error)s', error=e), 'negative')
 

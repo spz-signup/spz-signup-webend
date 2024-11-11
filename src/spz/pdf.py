@@ -113,6 +113,10 @@ class PresenceGenerator(TablePDF):
     column_size = [7, 40, 40, 20, 80, 6]
     header_texts = ["Nr.", "Nachname", "Vorname", "Matr.", "E-Mail", ""]
 
+    def __init__(self, course=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.course = course
+
     def header(self):
         super(PresenceGenerator, self).header()
         self.cell(0, 5, 'Anwesenheitsliste', 0, 0, 'R')
@@ -128,16 +132,27 @@ class PresenceGenerator(TablePDF):
         # get the current time in the german timezone
         utc_now = datetime.now(timezone.utc)
         target_timezone = pytz.timezone("Europe/Berlin")
-        local_time = utc_now.astimezone(target_timezone)
+
+        if self.course == None:
+            local_time = utc_now.astimezone(target_timezone)
+        else:
+            # find applicant last registering
+            last_registered = self.course.last_registered_at
+            # check most recent action (signoff or signup)
+            if last_registered and last_registered > self.course.last_signoff_at:
+                local_time = last_registered.astimezone(target_timezone)
+            else:
+                local_time = self.course.last_signoff_at.astimezone(target_timezone)
+
         date_str = local_time.strftime('%d.%m.%Y %H:%M')
-        date_text_width = self.get_string_width(f'Stand: {date_str}')
+        date_text_width = self.get_string_width(f'Letzte An-/Abmeldung: {date_str}')
 
         # Define the margin for spacing the center text properly
         self.multi_cell(self.w - date_text_width, 5, center_text, 0, 'C', 0)
 
         # Move to the right for the date and time text
-        self.set_xy(self.w - date_text_width, -10)
-        self.cell(0, 5, f'Stand: {date_str}', 0, 0, 'R')
+        self.set_xy(self.w - date_text_width, -11)
+        self.cell(0, 5, f'Letzte An-/Abmeldung: {date_str}', 0, 0, 'R')
 
 
 class BillGenerator(SPZPDF):
@@ -231,8 +246,8 @@ def list_presence(pdflist, course):
 
 @login_required
 def print_course_presence(course_id):
-    pdflist = PresenceGenerator()
     course = models.Course.query.get_or_404(course_id)
+    pdflist = PresenceGenerator(course)
     list_presence(pdflist, course)
 
     return pdflist.gen_response(course.full_name)
@@ -243,7 +258,7 @@ def print_language_presence_zip(language_id):
     language = models.Language.query.get_or_404(language_id)
     zip_writer = PdfZipWriter()
     for course in language.courses:
-        pdflist = PresenceGenerator()
+        pdflist = PresenceGenerator(course)
         list_presence(pdflist, course)
         zip_writer.write_to_zip(pdflist.gen_final_data(), course.full_name)
 

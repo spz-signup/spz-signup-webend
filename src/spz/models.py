@@ -468,6 +468,7 @@ class Course(db.Model):
        :param collision: Levels that collide with this course.
        :param has_waiting_list: Indicates if there is a waiting list for this course
        :param ects_points: amount of ects credit points corresponding to the effort
+       :param last_signoff_at: time of the last signed off applicant from the course
 
        .. seealso:: the :py:data:`attendances` relationship
     """
@@ -487,6 +488,7 @@ class Course(db.Model):
     collision = db.Column(postgresql.ARRAY(db.String(120)), nullable=False)
     has_waiting_list = db.Column(db.Boolean, nullable=False, default=False)
     ects_points = db.Column(db.Integer, nullable=False)
+    last_signoff_at = db.Column(db.DateTime(), default=datetime.now(timezone.utc).replace(tzinfo=None))
 
     unique_constraint = db.UniqueConstraint(language_id, level, alternative, ger)
     limit_constraint = db.CheckConstraint(limit > 0)
@@ -647,6 +649,12 @@ class Course(db.Model):
         if teacher_role and teacher_role.user:
             return teacher_role.user.full_name
         return ""
+
+    @property
+    def last_registered_at(self):
+        if not self.attendances:
+            return None
+        return max([att.registered for att in self.attendances])
 
 
 @total_ordering
