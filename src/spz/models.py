@@ -88,6 +88,15 @@ class Attendance(db.Model):
        :param waiting: Represents the waiting status of this :py:class`Attendance`.
        :param discount: Discount percentage for this :py:class:`Attendance` from 0 (no discount) to 100 (free).
        :param informed_about_rejection: Tells us if we already send a "you're (not) in the course" mail
+       :param ects_points: The amount of ECTS points this :py:class:`Attendance
+       :param grade: The grade stored as float in % (0-100)
+       :param hide_grade: If the grade is hidden when uploading it to CAS (students want bestanden instead of a grade)
+       :param amountpaid:
+       :param paidbycash:
+       :param registered: time stamp (GMT) when the applicant registered for the course(waiting=True and waiting=False)
+       :param payingdate: time stamp (GMT) when the applicant paid the course fee
+       :param signoff_window: maximum time window until the user can sign off by himself
+       :param enrolled_at: time stamp when the applicant has a fixed, active place in the course (waiting=False)
 
        .. seealso:: the :py:data:`Applicant` member functions for an easy way of establishing associations
     """
@@ -117,6 +126,8 @@ class Attendance(db.Model):
     registered = db.Column(db.DateTime(), default=datetime.now(timezone.utc).replace(tzinfo=None))
     payingdate = db.Column(db.DateTime())
     signoff_window = db.Column(db.DateTime(), default=datetime.now(timezone.utc).replace(tzinfo=None))
+    # date when the student is moved from the waiting list to the course
+    enrolled_at = db.Column(db.DateTime(), nullable=True)
 
     informed_about_rejection = db.Column(db.Boolean, nullable=False, default=False)
 
@@ -146,6 +157,7 @@ class Attendance(db.Model):
             signoff_period = app.config['SELF_SIGNOFF_PERIOD']
             self.signoff_window = (datetime.now(timezone.utc).replace(tzinfo=None) + signoff_period).replace(microsecond=0, second=0, minute=0)
             self.waiting = False
+            self.enrolled_at = datetime.now(timezone.utc).replace(tzinfo=None)
         elif not self.waiting and waiting_list:
             self.waiting = True
 
@@ -652,9 +664,9 @@ class Course(db.Model):
 
     @property
     def last_registered_at(self):
-        if not self.attendances:
+        if not self.filter_attendances(waiting=False):
             return None
-        return max([att.registered for att in self.attendances])
+        return max([att.enrolled_at for att in self.filter_attendances(waiting=False)])
 
 
 @total_ordering

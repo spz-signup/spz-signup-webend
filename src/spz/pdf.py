@@ -135,24 +135,27 @@ class PresenceGenerator(TablePDF):
 
         if self.course == None:
             local_time = utc_now.astimezone(target_timezone)
+            signup_signoff_str = 'Stand'
         else:
             # find applicant last registering
             last_registered = self.course.last_registered_at
             # check most recent action (signoff or signup)
             if last_registered and last_registered > self.course.last_signoff_at:
                 local_time = last_registered.astimezone(target_timezone)
+                signup_signoff_str = 'Letzte Anmeldung'
             else:
                 local_time = self.course.last_signoff_at.astimezone(target_timezone)
+                signup_signoff_str = 'Letzte Abmeldung'
 
         date_str = local_time.strftime('%d.%m.%Y %H:%M')
-        date_text_width = self.get_string_width(f'Letzte An-/Abmeldung: {date_str}')
+        date_text_width = self.get_string_width(f'{signup_signoff_str}: {date_str}')
 
         # Define the margin for spacing the center text properly
         self.multi_cell(self.w - date_text_width, 5, center_text, 0, 'C', 0)
 
         # Move to the right for the date and time text
         self.set_xy(self.w - date_text_width, -11)
-        self.cell(0, 5, f'Letzte An-/Abmeldung: {date_str}', 0, 0, 'R')
+        self.cell(0, 5, f'{signup_signoff_str}: {date_str}', 0, 0, 'R')
 
 
 class BillGenerator(SPZPDF):
