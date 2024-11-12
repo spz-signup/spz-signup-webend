@@ -140,6 +140,8 @@ class Attendance(db.Model):
         self.graduation = graduation
         self.ects_points = course.ects_points
         self.waiting = waiting
+        if not waiting:
+            self.enrolled_at = datetime.now(timezone.utc).replace(tzinfo=None)
         self.discount = discount
         self.paidbycash = False
         self.amountpaid = 0
@@ -160,6 +162,7 @@ class Attendance(db.Model):
             self.enrolled_at = datetime.now(timezone.utc).replace(tzinfo=None)
         elif not self.waiting and waiting_list:
             self.waiting = True
+            self.enrolled_at = None
 
     @property
     def sanitized_grade(self):
