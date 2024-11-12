@@ -505,6 +505,9 @@ class Course(db.Model):
     ects_points = db.Column(db.Integer, nullable=False)
     last_signoff_at = db.Column(db.DateTime(), default=datetime.now(timezone.utc).replace(tzinfo=None))
 
+    # db model GradeSheets associated with this course, backref allows access of e. g. gradesheet.course
+    grade_sheets = db.relationship("GradeSheets", backref="course", cascade='all, delete-orphan', lazy="joined")
+
     unique_constraint = db.UniqueConstraint(language_id, level, alternative, ger)
     limit_constraint = db.CheckConstraint(limit > 0)
     price_constraint = db.CheckConstraint(price > 0)
@@ -1263,3 +1266,35 @@ class OAuthToken(db.Model):
         self.code_verifier = code_verifier
         self.request_has_been_made = False
         self.is_student = False
+
+class GradeSheets(db.Model):
+    """Database model for the xls/xlsx grade sheets
+
+       :param id: unique ID
+       :param course_id: course ID
+       :param dir: folder directory to the grade sheet
+       :param filename: filename of the grade sheet
+       :param upload_at: timestamp of the upload in GMT
+    """
+
+    __tablename__ = 'gradesheets'
+
+    id = db.Column(db.Integer, primary_key=True)
+    course_id = db.Column(db.Integer, db.ForeignKey('course.id'))
+    dir = db.Column(db.String(100), nullable=False)
+    filename = db.Column(db.String(40), nullable=False)
+    upload_at = db.Column(db.DateTime(), default=datetime.now(timezone.utc).replace(tzinfo=None))
+
+
+    def __init__(self, course_id, dir, filename):
+        self.course_id = course_id
+        self.dir = dir
+        self.filename = filename
+
+    def __repr__(self):
+        return '<GradeSheet %r>' % self.filename
+
+    @property
+    def path(self):
+        return "{0}{1}".format(self.dir, self.filename)
+
