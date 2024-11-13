@@ -1,0 +1,28 @@
+{% extends 'internal/internal.html' %}
+{% from 'formhelpers.html' import csrf_field, render_submit %}
+
+{% block caption %}
+    Datei Löschen: {{ file.filename }}
+{% endblock caption %}
+
+
+{% block internal_body %}
+    <div class="row">
+        <h2>{{ file.filename }} Endgültig Löschen</h2>
+        <div class="ui message">
+            <p>Soll die Datei <strong>{{ file.filename }} </strong> wirklich gelöscht werden?
+                <br> Das kann nicht rückgängig gemacht werden.</p>
+        </div>
+        <form method="post" class="ui form">
+            {{ csrf_field() }}
+
+            <div class="ui two fluid buttons">
+                <button type="submit" class="ui red button">Löschen</button>
+
+                <div class="or"></div>
+
+                <a href="{{ url_for('grade', course_id=file.course_id) }}" class="ui button">Abbrechen</a>
+            </div>
+        </form>
+    </div>
+{% endblock internal_body %}

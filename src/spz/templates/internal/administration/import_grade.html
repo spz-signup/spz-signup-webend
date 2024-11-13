@@ -9,13 +9,19 @@
 
 {% block internal_body %}
     <div class="row">
+        <a href=" {{ url_for('grade', course_id=course.id) }} ">
+            <button type="button" class="ui button">Zurück zur Notenübersicht</button>
+        </a>
+    </div>
+    <div class="row">
         <h2>Notenliste Hochladen</h2>
     </div>
 
     <form class="ui form" method="POST" enctype="multipart/form-data">
         {{ csrf_field() }}
         <div class="ui message">
-            <p>Notenliste für <strong>{{ course.language.name }} {{ course.level }}</strong> mit ausgefüllten Noten für den Upload auswählen.</p>
+            <p>Notenliste für <strong>{{ course.language.name }} {{ course.level }}</strong> mit ausgefüllten Noten für
+                den Upload auswählen.</p>
         </div>
         <div>
             {{ form.file(class="ui input") }}

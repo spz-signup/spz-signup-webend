@@ -4,10 +4,11 @@
 
    Manages the mapping between abstract entities and concrete database models.
 """
-import enum
+import os
 from enum import Enum
 from binascii import hexlify
 from datetime import datetime, timedelta, timezone
+import pytz
 from functools import total_ordering
 import random
 import string
@@ -1268,7 +1269,7 @@ class OAuthToken(db.Model):
         self.is_student = False
 
 class GradeSheets(db.Model):
-    """Database model for the xls/xlsx grade sheets
+    """Database model for the xls/xlsx grade sheet mapping
 
        :param id: unique ID
        :param course_id: course ID
@@ -1277,24 +1278,32 @@ class GradeSheets(db.Model):
        :param upload_at: timestamp of the upload in GMT
     """
 
-    __tablename__ = 'gradesheets'
+    __tablename__ = 'grade_sheets'
 
     id = db.Column(db.Integer, primary_key=True)
     course_id = db.Column(db.Integer, db.ForeignKey('course.id'))
-    dir = db.Column(db.String(100), nullable=False)
-    filename = db.Column(db.String(40), nullable=False)
-    upload_at = db.Column(db.DateTime(), default=datetime.now(timezone.utc).replace(tzinfo=None))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    filename = db.Column(db.String(60), nullable=False)
+    upload_at = db.Column(db.DateTime(), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 
 
-    def __init__(self, course_id, dir, filename):
+    def __init__(self, course_id, user_id, filename):
         self.course_id = course_id
-        self.dir = dir
+        self.user_id = user_id
         self.filename = filename
 
     def __repr__(self):
         return '<GradeSheet %r>' % self.filename
 
     @property
-    def path(self):
-        return "{0}{1}".format(self.dir, self.filename)
+    def dir(self):
+        return os.path.join(app.config['FILE_DIR'], self.filename)
+
+    def get_user(self):
+        return User.query.get(self.user_id)
+
+    @property
+    def uploat_at_utc(self):
+        target_timezone = pytz.timezone("Europe/Berlin")
+        return self.upload_at.astimezone(target_timezone).strftime("%d.%m.%Y %H:%M")
 

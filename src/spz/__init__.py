@@ -208,6 +208,8 @@ routes = [
     ('/internal/grades/<int:course_id>/edit', admin_views.edit_grade, ['GET', 'POST']),
     ('/internal/grades/<int:course_id>/edit_view', admin_views.edit_grade_view, ['GET', 'POST']),
     ('/internal/grades/<int:course_id>/import_grade', admin_views.import_grade, ['GET', 'POST']),
+    ('/internal/delete_sheet/<int:file_id>', admin_views.delete_sheet, ['GET', 'POST']),
+    ('/internal/download_sheet/<int:file_id>', admin_views.download_sheet, ['GET']),
     ('/internal/teacher/<int:id>/attendance/<int:course_id>', admin_views.attendances, ['GET', 'POST']),
     ('/internal/teacher/<int:id>/attendance/<int:course_id>/edit/<int:class_id>', admin_views.edit_attendances,
      ['GET', 'POST']),

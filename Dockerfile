@@ -36,6 +36,10 @@ RUN mkdir /state && \
 COPY --chown=spz:spz uwsgi.ini uwsgi.ini
 COPY --chown=spz:spz src/spz spz
 
+# create files directory (save excel files)
+RUN mkdir /home/spz/code/spz/files && \
+    chown -R spz:spz /home/spz/code/spz/files
+
 # switch to spz user
 USER 1000
 
