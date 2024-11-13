@@ -10,7 +10,6 @@ import socket
 from flask import request, redirect, render_template, url_for, flash, jsonify, make_response
 from flask_login import current_user, login_required, login_user, logout_user
 from flask_mail import Message
-from sphinx.cmd.quickstart import suffix
 
 from spz import app
 from spz import models, db, log
