@@ -314,6 +314,7 @@ def edit_teacher(id):
 def teacher():
     return dict(user=current_user)
 
+
 @login_required
 @templated('internal/administration/grade.html')
 def grade(course_id):
@@ -322,6 +323,7 @@ def grade(course_id):
     exam_date = app.config['EXAM_DATE']
 
     return dict(course=course, exam_date=exam_date)
+
 
 @login_required
 @templated('internal/administration/edit_grade.html')
@@ -366,6 +368,7 @@ def edit_grade(course_id):
 
     return dict(course=course, form=form, exam_date=exam_date)
 
+
 @login_required
 @templated('internal/administration/edit_grade_view.html')
 def edit_grade_view(course_id):
@@ -398,6 +401,7 @@ def edit_grade_view(course_id):
 
     return dict(course=course, exam_date=exam_date)
 
+
 @login_required
 @templated('internal/administration/import_grade.html')
 def import_grade(course_id):
@@ -407,12 +411,11 @@ def import_grade(course_id):
         try:
             file = form.file.data
 
-            # ToDo: sanity check for valid grade sheet file
-
-            # ToDo: grade import
+            # read the grades from the xlsx file
+            success_num = TeacherManagement.import_grades(file, course)
 
             # first add the db entry to map to the file
-            suffix = file.filename.split(".")[-1] # only '.xls' or '.xlsx' files pass the form validation
+            suffix = file.filename.split(".")[-1]  # only '.xls' or '.xlsx' files pass the form validation
             file_increment = len(course.grade_sheets) + 1
             course_name = course.full_name.replace(" ", "_").replace("/", "_")
             filename = course_name + "_version" + str(file_increment) + "." + suffix
@@ -431,15 +434,17 @@ def import_grade(course_id):
 
             # now save the file to the docker file volume
             file.save(file_entry.dir)
-            flash(f"saved under: '{file_entry.dir}'", "info")
 
             db.session.commit()
-            flash("Notenliste wurde erfolgreich hochgeladen!", "success")
+            flash(
+                "<strong>Notenimport</strong><br>{} von {} Noten erfolgreich importiert.<br><strong>Datei erfolgreich gespeichert</strong>".format(
+                    success_num, len(course.course_list)), "success")
             return redirect(url_for('grade', course_id=course.id))
         except Exception as e:
             db.session.rollback()
-            flash(_('Noten konnten nicht importiert werden: %(error)s', error=e), 'negative')
+            flash(_('Noten-Upload fehlgeschlagen: %(error)s', error=e), 'negative')
     return dict(form=form, course=course)
+
 
 @login_required
 def download_sheet(file_id):
@@ -458,6 +463,7 @@ def download_sheet(file_id):
     except IOError as e:
         flash(_('Datei konnte nicht heruntergeladen werden: %(error)s', error=str(e)), 'negative')
         return redirect(url_for('grade', course_id=file.course_id))
+
 
 @login_required
 @templated('internal/administration/delete_grade_sheet.html')
@@ -480,7 +486,6 @@ def delete_sheet(file_id):
         return redirect(url_for('grade', course_id=file.course_id))
 
     return dict(file=file)
-
 
 
 @templated('internal/administration/attendances.html')

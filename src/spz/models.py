@@ -124,9 +124,9 @@ class Attendance(db.Model):
 
     paidbycash = db.Column(db.Boolean)  # could be remove, since cash payments are not allowed anyway
 
-    registered = db.Column(db.DateTime(), default=datetime.now(timezone.utc).replace(tzinfo=None))
+    registered = db.Column(db.DateTime(), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
     payingdate = db.Column(db.DateTime())
-    signoff_window = db.Column(db.DateTime(), default=datetime.now(timezone.utc).replace(tzinfo=None))
+    signoff_window = db.Column(db.DateTime(), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
     # date when the student is moved from the waiting list to the course
     enrolled_at = db.Column(db.DateTime(), nullable=True)
 
@@ -271,7 +271,7 @@ class Applicant(db.Model):
 
     signoff_id = db.Column(db.String(120))
 
-    registered = db.Column(db.DateTime(), default=datetime.now(timezone.utc).replace(tzinfo=None))
+    registered = db.Column(db.DateTime(), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 
     def __init__(self, mail, tag, first_name, last_name, phone, degree, semester, origin):
         self.mail = mail
@@ -504,7 +504,7 @@ class Course(db.Model):
     collision = db.Column(postgresql.ARRAY(db.String(120)), nullable=False)
     has_waiting_list = db.Column(db.Boolean, nullable=False, default=False)
     ects_points = db.Column(db.Integer, nullable=False)
-    last_signoff_at = db.Column(db.DateTime(), default=datetime.now(timezone.utc).replace(tzinfo=None))
+    last_signoff_at = db.Column(db.DateTime(), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 
     # db model GradeSheets associated with this course, backref allows access of e. g. gradesheet.course
     grade_sheets = db.relationship("GradeSheets", backref="course", cascade='all, delete-orphan', lazy="joined")

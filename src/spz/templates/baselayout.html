@@ -115,7 +115,7 @@
                                             {% for category, message in messages %}
                                                 <div class="ui {{ category }} message">
                                                     <i class="close icon"></i>
-                                                    {{ message }}
+                                                    {{ message|safe }}
                                                 </div>
                                             {% endfor %}
                                         {% endif %}
