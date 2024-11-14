@@ -1170,8 +1170,8 @@ def excel_file_validator(form, field):
     # Check if the uploaded file has a .xlsx or .xls extension
     if field.data:
         filename = field.data.filename
-        if not (filename.endswith('.xlsx') or filename.endswith('.xls')):
-            raise validators.ValidationError("Die hochgeladene Datei muss eine Excel-Datei sein (*.xlsx oder *.xls).")
+        if not (filename.endswith('.xlsx')):
+            raise validators.ValidationError("Die hochgeladene Datei muss eine Excel-Datei sein (Format: *.xlsx).")
 
 class ImportGradeForm(FlaskForm):
     file = FileField('Datei', validators=[validators.DataRequired(), excel_file_validator])

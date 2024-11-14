@@ -5,9 +5,10 @@
    Manages the mapping between routes and their activities for the administrators.
 """
 import json
+import io
 import os
 import socket
-from flask import request, redirect, render_template, url_for, flash, jsonify, make_response
+from flask import request, redirect, url_for, flash, jsonify, make_response, send_from_directory
 from flask_login import current_user, login_required, login_user, logout_user
 from flask_mail import Message
 
@@ -407,15 +408,21 @@ def edit_grade_view(course_id):
 def import_grade(course_id):
     course = models.Course.query.get_or_404(course_id)
     form = forms.ImportGradeForm()
+
     if form.validate_on_submit():
         try:
             file = form.file.data
 
-            # read the grades from the xlsx file
-            success_num = TeacherManagement.import_grades(file, course)
+            # create an in-memory copy of the file, so the original uploaded file stays untouched
+            # during the grade import process (prevent file corruption)
+            file_copy = io.BytesIO(file.read())
+            file.seek(0)  # Reset file pointer to beginning
 
-            # first add the db entry to map to the file
-            suffix = file.filename.split(".")[-1]  # only '.xls' or '.xlsx' files pass the form validation
+            # read the grades from the copied xlsx file
+            n_success = TeacherManagement.import_grades(file_copy, course)
+
+            # save file to database: first add the db entry to map to the file
+            suffix = file.filename.split(".")[-1]  # only '.xlsx' files pass the form validation (.xls not compatible withopenpyxl)
             file_increment = len(course.grade_sheets) + 1
             course_name = course.full_name.replace(" ", "_").replace("/", "_")
             filename = course_name + "_version" + str(file_increment) + "." + suffix
@@ -438,11 +445,12 @@ def import_grade(course_id):
             db.session.commit()
             flash(
                 "<strong>Notenimport</strong><br>{} von {} Noten erfolgreich importiert.<br><strong>Datei erfolgreich gespeichert</strong>".format(
-                    success_num, len(course.course_list)), "success")
+                    n_success, len(course.course_list)), "success")
             return redirect(url_for('grade', course_id=course.id))
         except Exception as e:
             db.session.rollback()
             flash(_('Noten-Upload fehlgeschlagen: %(error)s', error=e), 'negative')
+
     return dict(form=form, course=course)
 
 
@@ -455,11 +463,11 @@ def download_sheet(file_id):
         return redirect(url_for('grade', course_id=file.course_id))
 
     try:
-        with open(file.dir, 'rb') as f:
-            response = make_response(f.read())
-            response.headers['Content-Disposition'] = f'attachment; filename={file.filename}'
-            response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            return response
+        return send_from_directory(
+            directory=app.config['FILE_DIR'],
+            filename=file.filename,
+            as_attachment=True
+        )
     except IOError as e:
         flash(_('Datei konnte nicht heruntergeladen werden: %(error)s', error=str(e)), 'negative')
         return redirect(url_for('grade', course_id=file.course_id))
@@ -471,18 +479,18 @@ def delete_sheet(file_id):
     file = models.GradeSheets.query.get_or_404(file_id)
 
     if not os.path.exists(file.dir):
-        flash(_('Die Datei existiert nicht oder wurde entfernt.'), 'negative')
+        flash(_('Die Datei "{}" existiert nicht oder wurde entfernt.'.format(file.filename)), 'negative')
         return redirect(url_for('grade', course_id=file.course_id))
 
     if request.method == 'POST':
         try:
-            os.remove(file.dir)
-            db.session.delete(file)
+            os.remove(file.dir)  # remove file from file system
+            db.session.delete(file)  # remove file entry from database
             db.session.commit()
-            flash(_('Datei erfolgreich gelöscht.'), 'success')
+            flash(_('Datei "{}" erfolgreich gelöscht.'.format(file.filename)), 'success')
         except Exception as e:
             db.session.rollback()
-            flash(_('Datei konnte nicht gelöscht werden: %(error)s', error=e), 'negative')
+            flash(_('Datei "{}" konnte nicht gelöscht werden: %(error)s'.format(file.filename), error=e), 'negative')
         return redirect(url_for('grade', course_id=file.course_id))
 
     return dict(file=file)

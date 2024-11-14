@@ -121,9 +121,8 @@ class TeacherManagement:
 
     @staticmethod
     def import_grades(xlsx_file, course):
-        # ToDo: openpyxl only supports xlsx files -> update accordingly
+
         grade_wb = load_workbook(xlsx_file, read_only=True, data_only=True)
-        # flash(f"sheetnames: '{grade_wb.sheetnames}'", "info")
 
         # check for 'Notenliste' and 'RAWDATA' sheet
         if not all(sheet in grade_wb.sheetnames for sheet in ['RAWDATA', 'Notenliste']):
