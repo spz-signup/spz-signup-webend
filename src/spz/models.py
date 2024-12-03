@@ -4,10 +4,11 @@
 
    Manages the mapping between abstract entities and concrete database models.
 """
-import enum
+import os
 from enum import Enum
 from binascii import hexlify
 from datetime import datetime, timedelta, timezone
+import pytz
 from functools import total_ordering
 import random
 import string
@@ -123,9 +124,9 @@ class Attendance(db.Model):
 
     paidbycash = db.Column(db.Boolean)  # could be remove, since cash payments are not allowed anyway
 
-    registered = db.Column(db.DateTime(), default=datetime.now(timezone.utc).replace(tzinfo=None))
+    registered = db.Column(db.DateTime(), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
     payingdate = db.Column(db.DateTime())
-    signoff_window = db.Column(db.DateTime(), default=datetime.now(timezone.utc).replace(tzinfo=None))
+    signoff_window = db.Column(db.DateTime(), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
     # date when the student is moved from the waiting list to the course
     enrolled_at = db.Column(db.DateTime(), nullable=True)
 
@@ -270,7 +271,7 @@ class Applicant(db.Model):
 
     signoff_id = db.Column(db.String(120))
 
-    registered = db.Column(db.DateTime(), default=datetime.now(timezone.utc).replace(tzinfo=None))
+    registered = db.Column(db.DateTime(), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 
     def __init__(self, mail, tag, first_name, last_name, phone, degree, semester, origin):
         self.mail = mail
@@ -503,7 +504,10 @@ class Course(db.Model):
     collision = db.Column(postgresql.ARRAY(db.String(120)), nullable=False)
     has_waiting_list = db.Column(db.Boolean, nullable=False, default=False)
     ects_points = db.Column(db.Integer, nullable=False)
-    last_signoff_at = db.Column(db.DateTime(), default=datetime.now(timezone.utc).replace(tzinfo=None))
+    last_signoff_at = db.Column(db.DateTime(), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+
+    # db model GradeSheets associated with this course, backref allows access of e. g. gradesheet.course
+    grade_sheets = db.relationship("GradeSheets", backref="course", cascade='all, delete-orphan', lazy="joined")
 
     unique_constraint = db.UniqueConstraint(language_id, level, alternative, ger)
     limit_constraint = db.CheckConstraint(limit > 0)
@@ -699,6 +703,10 @@ class Language(db.Model):
     signup_auto_end = db.Column(db.DateTime())
 
     signup_constraint = db.CheckConstraint(signup_end > signup_begin)
+
+    import_format_id = db.Column(db.Integer, db.ForeignKey('import_format.id'), nullable=True)
+    import_format = db.relationship("ImportFormat", back_populates="languages")
+
 
     def __init__(self, name, reply_to, signup_begin, signup_rnd_window_end, signup_manual_end, signup_end,
                  signup_auto_end, name_english=None):
@@ -1263,3 +1271,82 @@ class OAuthToken(db.Model):
         self.code_verifier = code_verifier
         self.request_has_been_made = False
         self.is_student = False
+
+class GradeSheets(db.Model):
+    """Database model for the xls/xlsx grade sheet mapping
+
+       :param id: unique ID
+       :param course_id: course ID
+       :param dir: folder directory to the grade sheet
+       :param filename: filename of the grade sheet
+       :param upload_at: timestamp of the upload in GMT
+    """
+
+    __tablename__ = 'grade_sheets'
+
+    id = db.Column(db.Integer, primary_key=True)
+    course_id = db.Column(db.Integer, db.ForeignKey('course.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    filename = db.Column(db.String(60), nullable=False)
+    upload_at = db.Column(db.DateTime(), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+
+
+    def __init__(self, course_id, user_id, filename):
+        self.course_id = course_id
+        self.user_id = user_id
+        self.filename = filename
+
+    def __repr__(self):
+        return '<GradeSheet %r>' % self.filename
+
+    @property
+    def dir(self):
+        return os.path.join(app.config['FILE_DIR'], self.filename)
+
+    def get_user(self):
+        return User.query.get(self.user_id)
+
+    @property
+    def upload_at_utc(self):
+        target_timezone = pytz.timezone("Europe/Berlin")
+        return self.upload_at.astimezone(target_timezone).strftime("%d.%m.%Y %H:%M")
+
+
+class ImportFormat(db.Model):
+    """Format used when importing grade course lists
+
+       :param id: unique ID
+       :param name: human readable name for the format
+       :param grade_column: defines the xls column in which the grade is stored and from which is read from
+       :param languages: list of associated languages for which the import format is intended (NULL for any)
+    """
+
+    __tablename__ = 'import_format'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False)
+    grade_column = db.Column(db.String(10), nullable=False)
+    mail_column = db.Column(db.String(10), nullable=True)
+
+    # Define a one-to-many relationship with Language
+    # (one import format can be used for multiple languages, but each language only has one import format)
+    languages = db.relationship("Language", back_populates="import_format")
+
+    def __init__(self, name, grade_column, mail_column=None, languages=None):
+        if languages is None:
+            languages = []
+        self.name = name
+        self.grade_column = grade_column
+        self.mail_column = mail_column
+        self.languages = languages
+
+    def __repr__(self):
+        return '<ImportFormat "{}">'.format(self.descriptive_name)
+
+    def __lt__(self, other):
+        return self.name.lower() < other.name.lower()
+
+    @property
+    def descriptive_name(self):
+        return self.name
+

@@ -5,8 +5,10 @@
    Manages the mapping between routes and their activities for the administrators.
 """
 import json
+import io
+import os
 import socket
-from flask import request, redirect, render_template, url_for, flash, jsonify, make_response
+from flask import request, redirect, url_for, flash, jsonify, make_response, send_from_directory
 from flask_login import current_user, login_required, login_user, logout_user
 from flask_mail import Message
 
@@ -314,6 +316,7 @@ def teacher():
     return dict(user=current_user)
 
 
+@login_required
 @templated('internal/administration/grade.html')
 def grade(course_id):
     course = models.Course.query.get_or_404(course_id)
@@ -323,6 +326,7 @@ def grade(course_id):
     return dict(course=course, exam_date=exam_date)
 
 
+@login_required
 @templated('internal/administration/edit_grade.html')
 def edit_grade(course_id):
     course = models.Course.query.get_or_404(course_id)
@@ -366,6 +370,7 @@ def edit_grade(course_id):
     return dict(course=course, form=form, exam_date=exam_date)
 
 
+@login_required
 @templated('internal/administration/edit_grade_view.html')
 def edit_grade_view(course_id):
     course = models.Course.query.get_or_404(course_id)
@@ -396,6 +401,105 @@ def edit_grade_view(course_id):
         return redirect(url_for('grade', course_id=course_id))
 
     return dict(course=course, exam_date=exam_date)
+
+
+@login_required
+@templated('internal/administration/import_grade.html')
+def import_grade(course_id):
+    course = models.Course.query.get_or_404(course_id)
+    form = forms.ImportGradeForm()
+
+    if form.validate_on_submit():
+        try:
+            file = form.file.data
+
+            # create an in-memory copy of the file, so the original uploaded file stays untouched
+            # during the grade import process (prevent file corruption)
+            file_copy = io.BytesIO(file.read())
+            file.seek(0)  # Reset file pointer to beginning
+
+            # read the grades from the copied xlsx file
+            n_success = TeacherManagement.import_grades(file_copy, course)
+
+            # save file to database: first add the db entry to map to the file
+            suffix = file.filename.split(".")[
+                -1]  # only '.xlsx' files pass the form validation (.xls not compatible withopenpyxl)
+            file_increment = len(course.grade_sheets) + 1
+            course_name = course.full_name.replace(" ", "_").replace("/", "_")
+            filename = course_name + "_version" + str(file_increment) + "." + suffix
+
+            # in case there have been file deletions, a not used filename is chosen
+            while os.path.exists(os.path.join(app.config['FILE_DIR'], filename)):
+                file_increment += 1
+                filename = course_name + "_version" + str(file_increment) + "." + suffix
+
+            file_entry = models.GradeSheets(
+                course_id=course.id,
+                user_id=current_user.id,
+                filename=filename
+            )
+            db.session.add(file_entry)
+
+            # now save the file to the docker file volume
+            file.save(file_entry.dir)
+
+            db.session.commit()
+            if n_success < 1:
+                flash(
+                    "<strong>Notenimport</strong><br>{} von {} Noten erfolgreich importiert.<br><strong>Datei erfolgreich gespeichert</strong>".format(
+                        n_success, len(course.course_list)), "warning")
+            else:
+                flash(
+                    "<strong>Notenimport</strong><br>{} von {} Noten erfolgreich importiert.<br><strong>Datei erfolgreich gespeichert</strong>".format(
+                        n_success, len(course.course_list)), "success")
+            return redirect(url_for('grade', course_id=course.id))
+        except Exception as e:
+            db.session.rollback()
+            flash(_('Noten-Upload fehlgeschlagen: %(error)s', error=e), 'negative')
+
+    return dict(form=form, course=course)
+
+
+@login_required
+def download_sheet(file_id):
+    file = models.GradeSheets.query.get_or_404(file_id)
+
+    if not os.path.exists(file.dir):
+        flash(_('Die Datei existiert nicht oder wurde entfernt.'), 'negative')
+        return redirect(url_for('grade', course_id=file.course_id))
+
+    try:
+        return send_from_directory(
+            directory=app.config['FILE_DIR'],
+            filename=file.filename,
+            as_attachment=True
+        )
+    except IOError as e:
+        flash(_('Datei konnte nicht heruntergeladen werden: %(error)s', error=str(e)), 'negative')
+        return redirect(url_for('grade', course_id=file.course_id))
+
+
+@login_required
+@templated('internal/administration/delete_grade_sheet.html')
+def delete_sheet(file_id):
+    file = models.GradeSheets.query.get_or_404(file_id)
+
+    if not os.path.exists(file.dir):
+        flash(_('Die Datei "{}" existiert nicht oder wurde entfernt.'.format(file.filename)), 'negative')
+        return redirect(url_for('grade', course_id=file.course_id))
+
+    if request.method == 'POST':
+        try:
+            os.remove(file.dir)  # remove file from file system
+            db.session.delete(file)  # remove file entry from database
+            db.session.commit()
+            flash(_('Datei "{}" erfolgreich gelöscht.'.format(file.filename)), 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(_('Datei "{}" konnte nicht gelöscht werden: %(error)s'.format(file.filename), error=e), 'negative')
+        return redirect(url_for('grade', course_id=file.course_id))
+
+    return dict(file=file)
 
 
 @templated('internal/administration/attendances.html')

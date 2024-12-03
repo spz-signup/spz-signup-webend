@@ -8,70 +8,125 @@
 
 
 {% block internal_body %}
-    {% if current_user.is_teacher %}
-        <div>
-            <a href=" {{ url_for('teacher') }} ">
-                <button type="button" class="ui button">Zurück zu meinen Kursen</button>
-            </a>
-        </div>
-    {% endif %}
-
-    <div class="three column row">
-        <div class="left floated column">
+    <div class="ui grid">
+        {% if current_user.is_teacher %}
+            <div>
+                <a href=" {{ url_for('teacher') }} ">
+                    <button type="button" class="ui button">Zurück zu meinen Kursen</button>
+                </a>
+            </div>
+        {% endif %}
+        <div class="row">
             <h2>Notenübersicht</h2>
         </div>
-        <div class="right floated column">
-            <a href=" {{ url_for('edit_grade', course_id=course.id) }} ">
-                <button type="button" class="ui button"><i class="edit icon"></i>Noten ändern</button>
-            </a>
+        <div class="three column row">
+            <div class="left floated column">
+                <a href=" {{ url_for('import_grade', course_id=course.id) }} ">
+                    <button type="button" class="ui blue button"><i class="file excel icon"></i>Notenliste hochladen</button>
+                </a>
+            </div>
+            <div class="center floated column">
+                <a href=" {{ url_for('edit_grade', course_id=course.id) }} ">
+                    <button type="button" class="ui button"><i class="edit icon"></i>Noten eintragen</button>
+                </a>
+            </div>
         </div>
-    </div>
-    <div class="row">
-        <table class="ui selectable sortable compact small table">
-            <thead>
-            <tr>
-                <th>Matrikelnr.</th>
-                <th>Vorname</th>
-                <th>Nachname</th>
-                <th>ECTS</th>
-                <th>Note</th>
-                <th>Prüfungsdatum</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for applicant in course.course_list %}
-                {% set attendance = course.get_course_attendance(course.id, applicant.id) %}
-                <tr class="{{ 'error' if attendance.full_grade == 'nicht bestanden' else '' }}">
-                    <td>{% if applicant.tag %} {{ applicant.tag }} {% endif %}</td>
-                    <td>{{ applicant.first_name }}</td>
-                    <td>{{ applicant.last_name }}</td>
-                    <td>
-                        {% if attendance is none %}
-                            Fehler: nicht in Liste
-                        {% else %}
-                            {{ attendance.ects_points }}
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if attendance is none %}
-                            Fehler: nicht in Liste
-                        {% else %}
-                            {% if attendance.grade is not none %}
-                                {% if attendance.hide_grade %}
-                                    <b>bestanden</b>
-                                {% else %}
-                                    {{ attendance.full_grade }}
-                                {% endif %}
-                            {% else %}
-                                -
-                            {% endif %}
-                        {% endif %}
-                    </td>
-                    <td> {{ exam_date }}</td>
+        <div class="sixteen wide column">
+            <table class="ui selectable sortable compact small table">
+                <thead>
+                <tr>
+                    <th>Matrikelnr.</th>
+                    <th>Vorname</th>
+                    <th>Nachname</th>
+                    <th>ECTS</th>
+                    <th>Note</th>
+                    <th>Prüfungsdatum</th>
                 </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                {% for applicant in course.course_list %}
+                    {% set attendance = course.get_course_attendance(course.id, applicant.id) %}
+                    <tr class="{{ 'error' if attendance.full_grade == 'nicht bestanden' else '' }}">
+                        <td>{% if applicant.tag %} {{ applicant.tag }} {% endif %}</td>
+                        <td>{{ applicant.first_name }}</td>
+                        <td>{{ applicant.last_name }}</td>
+                        <td>
+                            {% if attendance is none %}
+                                Fehler: nicht in Liste
+                            {% else %}
+                                {{ attendance.ects_points }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if attendance is none %}
+                                Fehler: nicht in Liste
+                            {% else %}
+                                {% if attendance.grade is not none %}
+                                    {% if attendance.hide_grade %}
+                                        <b>bestanden</b>
+                                    {% else %}
+                                        {{ attendance.full_grade }}
+                                    {% endif %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                        <td> {{ exam_date }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="row">
+            <h2>Hochgeladene Notenliste(n)</h2>
+            {% if course.grade_sheets|length < 1 %}
+                <p>Es wurde bisher keine Datei hochgeladen</p>
+            {% else %}
+                <div class="sixteen wide column">
+                    <table class="ui selectable sortable small compact table">
+                        <thead>
+                        <tr>
+                            <th>Datei</th>
+                            <th>Hochgeladen von</th>
+                            <th>Download</th>
+                            {% if current_user.is_admin_or_superuser %}
+                                <th>Löschen</th>
+                            {% endif %}
+                            <th>Datum</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for file in course.grade_sheets %}
+                            <tr>
+                                <td>{{ file.filename }}</td>
+                                <td>{{ file.get_user().full_name }}</td>
+                                <td>
+                                    <a href="{{ url_for('download_sheet', file_id=file.id) }}">
+                                        <button type="button" class="ui button">
+                                            <i class="download icon"></i>Download
+                                        </button>
+                                    </a>
+                                </td>
+                                {% if current_user.is_admin_or_superuser %}
+                                    <td>
+                                        <a href="{{ url_for('delete_sheet', file_id=file.id) }}">
+                                            <button type="button" class="ui button">
+                                                <i class="trash icon"></i>Löschen
+                                            </button>
+                                        </a>
+                                    </td>
+                                {% endif %}
+                                <td>{{ file.upload_at_utc }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+
     </div>
+
 
 {% endblock internal_body %}

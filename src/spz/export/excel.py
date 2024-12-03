@@ -128,7 +128,7 @@ class ExcelZipWriter(ExcelWriter):
         max_row = self.information_sheet.max_row
         # iterate sheet to find jinja expressions
         # for row in self.information_sheet.iter_rows(min_row=30, min_col=1, max_row=max_row, max_col=3):
-        for row in self.information_sheet.iter_rows(min_row=0, min_col=0, max_row=max_row, max_col=0):
+        for row in self.information_sheet.iter_rows(min_row=1, min_col=1, max_row=max_row, max_col=3):
             for cell in row:
                 if cell.value is not None:
                     key = cell.value

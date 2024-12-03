@@ -13,7 +13,7 @@ from flask_wtf import FlaskForm, Form
 from flask_login import current_user
 from markupsafe import Markup
 from wtforms import widgets, StringField, SelectField, SelectMultipleField, IntegerField, Label
-from wtforms import TextAreaField, BooleanField, DecimalField, MultipleFileField, FieldList, FormField, HiddenField
+from wtforms import TextAreaField, BooleanField, DecimalField, MultipleFileField, HiddenField, FileField
 from flask_ckeditor import CKEditorField
 from wtforms.validators import DataRequired
 
@@ -1165,3 +1165,13 @@ def create_approval_form(tag):
                 BooleanField("Priorität", default=approval.priority))
 
     return EditApprovalForm
+
+def excel_file_validator(form, field):
+    # Check if the uploaded file has a .xlsx or .xls extension
+    if field.data:
+        filename = field.data.filename
+        if not (filename.endswith('.xlsx')):
+            raise validators.ValidationError("Die hochgeladene Datei muss eine Excel-Datei sein (Format: *.xlsx).")
+
+class ImportGradeForm(FlaskForm):
+    file = FileField('Datei', validators=[validators.DataRequired(), excel_file_validator])
