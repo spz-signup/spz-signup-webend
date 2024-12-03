@@ -143,7 +143,7 @@ class TeacherManagement:
         # grade import
         rawdata_sheet = grade_wb['RAWDATA']
         # in rawdata mails are saved in column H, starting from line 2
-        mail_col = 'H'
+        mail_col = app.config['DEFAULT_MAIL_COLUMN']
         grade_col = app.config['DEFAULT_GRADE_COLUMN']
         max_row = 36  # ToDo: define in config
 
@@ -151,6 +151,8 @@ class TeacherManagement:
             import_format = models.ImportFormat.query.get(course.language.import_format_id)
             if import_format:
                 grade_col = import_format.grade_column
+                if import_format.mail_column:
+                    mail_col = import_format.mail_column
 
         # convert column letters to integer
         mail_col_idx = column_index_from_string(mail_col)
@@ -180,7 +182,7 @@ class TeacherManagement:
             read_grade = grade_row[0].value
 
             if read_mail is None or read_grade is None:
-                if read_grade is None:
+                if read_grade is None and read_mail is not None:
                     warnings.append((1, grade_row[0].coordinate, _('Note fehlt für Kursteilnehmer mit der E-Mail: "{}"'.format(read_mail))))
                 continue
 

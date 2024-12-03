@@ -1326,16 +1326,18 @@ class ImportFormat(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
     grade_column = db.Column(db.String(10), nullable=False)
+    mail_column = db.Column(db.String(10), nullable=True)
 
     # Define a one-to-many relationship with Language
     # (one import format can be used for multiple languages, but each language only has one import format)
     languages = db.relationship("Language", back_populates="import_format")
 
-    def __init__(self, name, grade_column, languages=None):
+    def __init__(self, name, grade_column, mail_column=None, languages=None):
         if languages is None:
             languages = []
         self.name = name
         self.grade_column = grade_column
+        self.mail_column = mail_column
         self.languages = languages
 
     def __repr__(self):

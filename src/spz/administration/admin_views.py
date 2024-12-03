@@ -422,7 +422,8 @@ def import_grade(course_id):
             n_success = TeacherManagement.import_grades(file_copy, course)
 
             # save file to database: first add the db entry to map to the file
-            suffix = file.filename.split(".")[-1]  # only '.xlsx' files pass the form validation (.xls not compatible withopenpyxl)
+            suffix = file.filename.split(".")[
+                -1]  # only '.xlsx' files pass the form validation (.xls not compatible withopenpyxl)
             file_increment = len(course.grade_sheets) + 1
             course_name = course.full_name.replace(" ", "_").replace("/", "_")
             filename = course_name + "_version" + str(file_increment) + "." + suffix
@@ -443,9 +444,14 @@ def import_grade(course_id):
             file.save(file_entry.dir)
 
             db.session.commit()
-            flash(
-                "<strong>Notenimport</strong><br>{} von {} Noten erfolgreich importiert.<br><strong>Datei erfolgreich gespeichert</strong>".format(
-                    n_success, len(course.course_list)), "success")
+            if n_success < 1:
+                flash(
+                    "<strong>Notenimport</strong><br>{} von {} Noten erfolgreich importiert.<br><strong>Datei erfolgreich gespeichert</strong>".format(
+                        n_success, len(course.course_list)), "warning")
+            else:
+                flash(
+                    "<strong>Notenimport</strong><br>{} von {} Noten erfolgreich importiert.<br><strong>Datei erfolgreich gespeichert</strong>".format(
+                        n_success, len(course.course_list)), "success")
             return redirect(url_for('grade', course_id=course.id))
         except Exception as e:
             db.session.rollback()
