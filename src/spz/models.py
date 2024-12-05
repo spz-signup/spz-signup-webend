@@ -1086,6 +1086,10 @@ class User(db.Model):
         return any([r.role == Role.COURSE_ADMIN or r.role == Role.SUPERUSER for r in self.roles])
 
     @property
+    def is_admin(self):
+        return any([r.role == Role.COURSE_ADMIN for r in self.roles])
+
+    @property
     def is_active(self):
         """Report if user is active."""
         return self.active

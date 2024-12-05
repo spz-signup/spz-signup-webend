@@ -850,7 +850,7 @@ def export(type, id):
             form.courses.data = [course.id for course in language.courses]
 
     # update course multi-select based on assigned courses to user
-    # if teacher, then only own courses in multi-select selectable
+    # if teacher, then only show own courses in multi-select to be selected
     # if superuser or course admin, then all courses can be downloaded
     form.update_course_list(current_user)
     return dict(form=form, user=current_user)

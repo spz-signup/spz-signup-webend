@@ -21,6 +21,7 @@ import spz.forms as forms
 
 from flask_babel import gettext as _
 
+from spz.export import export_course_list
 from spz.util.Filetype import mime_from_filepointer
 
 
@@ -49,7 +50,7 @@ def administration_teacher():
         'name': name,
         'course_count': course_count if course_count else 0,
         'teacher_count': teacher_count if teacher_count else 0,
-        'teacher_rate_per_course': teacher_count / course_count if course_count else 0,
+        'courses_per_teacher': course_count / teacher_count if teacher_count else 0,
     } for l_id, name, course_count, teacher_count in languages_info]
 
     return dict(language=languages_data)
@@ -500,6 +501,28 @@ def delete_sheet(file_id):
         return redirect(url_for('grade', course_id=file.course_id))
 
     return dict(file=file)
+
+
+@login_required
+def download_template(course_id):
+    course = models.Course.query.get_or_404(course_id)
+    if course.language.import_format_id:
+        # specific, language dependent format
+        import_export_name = course.language.import_format.name
+    else:
+        # default format
+        import_export_name = app.config['DEFAULT_TEMPLATE_NAME']
+
+    export_format = models.ExportFormat.query.filter(models.ExportFormat.name == import_export_name).first()
+    if export_format:
+        return export_course_list(
+            courses=[course],
+            format=export_format
+        )
+
+    flash(
+        _('Fehler: Es konnte kein passendes Exportformat gefunden werden. Bitte manuell unter Spalte Daten -> "Export" herunterladen. :/'),
+        'negative')
 
 
 @templated('internal/administration/attendances.html')

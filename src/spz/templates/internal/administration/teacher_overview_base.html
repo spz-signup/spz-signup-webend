@@ -22,7 +22,7 @@
                 <th>Sprache</th>
                 <th>Kursanzahl</th>
                 <th>Dozentenanzahl</th>
-                <th>Dozentenrate pro Kurs</th>
+                <th>Kurse pro Dozent</th>
             </tr>
             </thead>
             <tbody>
@@ -39,7 +39,7 @@
                         {{ l.teacher_count }}
                     </td>
                     <td>
-                        {{ "%.2f"|format(l.teacher_rate_per_course*100) }} %
+                        {{ "%.2f"|format(l.courses_per_teacher) }}
                     </td>
                 </tr>
             {% endfor %}

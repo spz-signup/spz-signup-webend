@@ -5,6 +5,9 @@
         <div class="item">
             <a href="{{ url_for('internal') }}"><h1>Interner Bereich</h1></a>
         </div>
+        {% if current_user.is_admin %}
+        <a class="item" href="{{ url_for('teacher') }}"><i class="inbox icon"></i> Meine Kurse</a>
+        {% endif %}
         {% if current_user.is_admin_or_superuser %}
             <a class="item" href="{{ url_for('registrations') }}"><i class="barcode icon"></i> Matrikelnummern</a>
             <a class="item" href="{{ url_for('approvals') }}"><i class="file text outline icon"></i> Englisch
