@@ -145,7 +145,7 @@ class TeacherManagement:
         # in rawdata mails are saved in column H, starting from line 2
         mail_col = app.config['DEFAULT_MAIL_COLUMN']
         grade_col = app.config['DEFAULT_GRADE_COLUMN']
-        max_row = 36  # ToDo: define in config
+        max_row = app.config['MAX_ROWS']
 
         if course.language.import_format_id is not None:
             import_format = models.ImportFormat.query.get(course.language.import_format_id)
@@ -163,7 +163,6 @@ class TeacherManagement:
         warnings = []
 
         success = 0
-
         # simultaneously iterate over mail column in RAWDATA sheet and grade column in Notenliste sheet
         for mail_row, grade_row in zip(
             rawdata_sheet.iter_rows(
@@ -181,7 +180,7 @@ class TeacherManagement:
             read_mail = mail_row[0].value
             read_grade = grade_row[0].value
 
-            if read_mail is None or read_grade is None:
+            if read_mail is None or read_grade is None or read_grade == 0:
                 if read_grade is None and read_mail is not None:
                     warnings.append((1, grade_row[0].coordinate, _('Note fehlt für Kursteilnehmer mit der E-Mail: "{}"'.format(read_mail))))
                 continue
