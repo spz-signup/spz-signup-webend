@@ -14,7 +14,7 @@ from flask_mail import Message
 
 from spz import app
 from spz import models, db, log
-from spz.administration import TeacherManagement
+from spz.administration import TeacherManagement, is_valid_float
 from spz.decorators import templated
 from spz.auth.password_reset import send_password_reset_to_user
 import spz.forms as forms
@@ -512,6 +512,10 @@ def download_template(course_id):
     else:
         # default format
         import_export_name = app.config['DEFAULT_TEMPLATE_NAME']
+
+    # check spanish template config
+    if course.language.name == 'Spanisch' and course.level and not is_valid_float(course.level[-1]):
+        import_export_name = 'Spanisch'
 
     export_format = models.ExportFormat.query.filter(models.ExportFormat.name == import_export_name).first()
     if export_format:

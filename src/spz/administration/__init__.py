@@ -161,6 +161,14 @@ class TeacherManagement:
                 if import_format.ects_column:
                     ects_col = import_format.ects_column
 
+        # specific solution for language: Spanish
+        if course.language.name == 'Spanisch' and course.level and not is_valid_float(course.level[-1]):
+            # dont use default spanish template 'Spanisch Hueber' for other courses without book
+            # set columns for 'Spanisch' template manually
+            mail_col = 'H'
+            grade_col = 'E'
+            ects_col = 'H'
+
         # convert column letters to integer
         mail_col_idx = column_index_from_string(mail_col)
         grade_col_idx = column_index_from_string(grade_col)
