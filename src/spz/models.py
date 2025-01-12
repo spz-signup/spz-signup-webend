@@ -1331,6 +1331,7 @@ class ImportFormat(db.Model):
     name = db.Column(db.String(50), nullable=False)
     grade_column = db.Column(db.String(10), nullable=False)
     mail_column = db.Column(db.String(10), nullable=True)
+    ects_column = db.Column(db.String(10), nullable=True)
 
     # Define a one-to-many relationship with Language
     # (one import format can be used for multiple languages, but each language only has one import format)

@@ -129,8 +129,11 @@ class TeacherManagement:
             raise ValueError(
                 _('Die Excel-Datei enthält nicht die notwendigen Blätter "RAWDATA" und/oder "Notenliste".'))
 
+        max_row = app.config['MAX_ROWS']
         # check course name in 'Notenliste' sheet -> throw warning if not matching with course
         grade_sheet = grade_wb['Notenliste']
+        if grade_sheet.max_row < max_row:
+            max_row = grade_sheet.max_row
         for row in grade_sheet.iter_rows(min_row=40, max_col=3, max_row=50):
             for cell in row:
                 if cell.value == 'Kursname:':
@@ -142,10 +145,12 @@ class TeacherManagement:
 
         # grade import
         rawdata_sheet = grade_wb['RAWDATA']
+        if rawdata_sheet.max_row < max_row:
+            max_row = rawdata_sheet.max_row
         # in rawdata mails are saved in column H, starting from line 2
         mail_col = app.config['DEFAULT_MAIL_COLUMN']
         grade_col = app.config['DEFAULT_GRADE_COLUMN']
-        max_row = app.config['MAX_ROWS']
+        ects_col = app.config['DEFAULT_ECTS_COLUMN']
 
         if course.language.import_format_id is not None:
             import_format = models.ImportFormat.query.get(course.language.import_format_id)
@@ -153,10 +158,13 @@ class TeacherManagement:
                 grade_col = import_format.grade_column
                 if import_format.mail_column:
                     mail_col = import_format.mail_column
+                if import_format.ects_column:
+                    ects_col = import_format.ects_column
 
         # convert column letters to integer
         mail_col_idx = column_index_from_string(mail_col)
         grade_col_idx = column_index_from_string(grade_col)
+        ects_col_idx = column_index_from_string(ects_col)
 
         # warnings importing the grades, tuple: (work sheet, coordinate, text)
         # rawdata -> 0, Notenliste -> 1
@@ -164,7 +172,7 @@ class TeacherManagement:
 
         success = 0
         # simultaneously iterate over mail column in RAWDATA sheet and grade column in Notenliste sheet
-        for mail_row, grade_row in zip(
+        for mail_row, grade_row, ects_row in zip(
             rawdata_sheet.iter_rows(
                 min_col=mail_col_idx,
                 max_col=mail_col_idx,
@@ -174,11 +182,17 @@ class TeacherManagement:
                 min_col=grade_col_idx,
                 max_col=grade_col_idx,
                 min_row=2,
+                max_row=max_row),
+            grade_sheet.iter_rows(
+                min_col=ects_col_idx,
+                max_col=ects_col_idx,
+                min_row=2,
                 max_row=max_row)
         ):
             # rows returned as a tuple, obtain first and only element
             read_mail = mail_row[0].value
             read_grade = grade_row[0].value
+            read_ects = ects_row[0].value
 
             if read_mail is None or read_grade is None or read_grade == 0:
                 if read_grade is None and read_mail is not None:
@@ -201,6 +215,11 @@ class TeacherManagement:
                     attendance = course.get_course_attendance(course.id, applicant.id)
                     if attendance:
                         attendance.grade = to_float(read_grade)
+
+                        # update ects if entered
+                        if read_ects and is_valid_float(read_ects):
+                            attendance.ects_points = to_float(read_ects)
+
                         success += 1
                     else:
                         warnings.append((1, grade_row[0].coordinate,
