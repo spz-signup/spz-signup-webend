@@ -11,7 +11,7 @@ import socket
 import re
 import csv
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 from redis import ConnectionError
 
@@ -76,7 +76,7 @@ def index():
 
     # show all forms to authenticated users (normal or via one_time_token)
     form = forms.PreSignupForm(show_all_courses=(current_user.is_authenticated or token_payload))
-    time = datetime.utcnow()
+    time = datetime.now(timezone.utc).replace(tzinfo=None)
 
     if current_user.is_authenticated:
         flash(_('Angemeldet: Vorzeitige Registrierung möglich. Falls unerwünscht, bitte abmelden.'), 'info')
@@ -128,7 +128,7 @@ def signupinternal(course_id):
     form = forms.SignupFormInternal(course_id)
     is_student = True
 
-    time = datetime.utcnow()
+    time = datetime.now(timezone.utc).replace(tzinfo=None)
     one_time_token = request.args.get('token', None)
 
     # token_payload will contain the linked mail address if valid or None otherwise
@@ -206,8 +206,9 @@ def signupinternal(course_id):
                 # save information in temporary session token
                 o_auth_token.is_student = True
                 db.session.commit()
-        if not o_auth_token.is_student and not current_user.is_admin_or_superuser:
+        if not o_auth_token.is_student and not current_user.is_authenticated:
             # preselect employee option in origin field
+            # ToDo: make dynamic not hardcoded
             form.origin.choices = [(12, 'KIT (Mitarbeiter*in)')]
             """for num, key in form.origin.choices:
                 if key == 'KIT (Mitarbeiter*in)':
@@ -319,7 +320,6 @@ def signupinternal(course_id):
                 discount=applicant.current_discount(),
                 informed_about_rejection=informed_about_rejection
             )
-            # set course ects to applicant
             db.session.add(applicant)
             db.session.delete(o_auth_token)
             db.session.commit()
@@ -344,7 +344,7 @@ def signupinternal(course_id):
 def signupexternal(course_id):
     course = models.Course.query.get_or_404(course_id)
     form = forms.SignupFormExternal(course_id)
-    time = datetime.utcnow()
+    time = datetime.now(timezone.utc).replace(tzinfo=None)
     one_time_token = request.args.get('token', None)
 
     # token_payload will contain the linked mail address if valid or None otherwise
@@ -434,7 +434,6 @@ def signupexternal(course_id):
                 discount=applicant.current_discount(),
                 informed_about_rejection=informed_about_rejection
             )
-            # add course ects to applicant
             db.session.add(applicant)
             db.session.commit()
         except Exception as e:
@@ -489,7 +488,7 @@ def signoff():
                   'für den Sie nicht angemeldet waren!')
             )
             err |= check_precondition_with_auth(
-                applicant.is_in_signoff_window(course) or (datetime.utcnow() < course.language.signup_fcfs_begin),
+                applicant.is_in_signoff_window(course) or (datetime.now(timezone.utc).replace(tzinfo=None) < course.language.signup_fcfs_begin),
                 _('Abmeldefrist abgelaufen: Zur Abmeldung bitte bei Ihrem Fachbereichsleiter melden!')
             )
 
@@ -734,36 +733,6 @@ def approvals_export():
 
 
 @login_required
-@templated('internal/approvals.html')
-def approvals_export():
-    if request.method == 'POST':
-        english_courses = models.Language.query.filter(models.Language.name == 'Englisch').first().courses
-
-        tags_seen = set()  # append tags to this set to avoid duplicates
-        export_data = []
-        for course in english_courses:
-            for applicant in course.course_list:
-                if applicant.tag and applicant.tag not in tags_seen:
-                    tags_seen.add(applicant.tag)
-                    export_data.append((applicant.tag, applicant.best_rating()))
-        # sort by tag (remains untested)
-        export_data.sort(key=lambda x: x[0])
-        # create a buffer
-        with io.StringIO() as buffer:
-            writer = csv.writer(buffer, delimiter=';')
-            for line in export_data:
-                writer.writerow(line)
-            csv_out = buffer.getvalue()
-
-        resp = make_response(csv_out)
-        resp.headers['Content-Disposition'] = 'attachment; filename="returners.csv"'
-        resp.mimetype = "text/csv"
-        return resp
-
-    flash(_('Export-Datei konnte nicht generiert werden'), 'negative')
-    return redirect(url_for('approvals'))
-
-@login_required
 @templated('internal/approvals_edit.html')
 def approvals_edit(tag):
     form = forms.TagForm()
@@ -777,9 +746,19 @@ def approvals_edit(tag):
             changes = False
             for approval in approvals:
                 approval_field = getattr(edit_form, f'approval_{approval.id}', None)
+                priority_field = getattr(edit_form, f'priority_{approval.id}', None)
+                prio = approval.priority
                 if approval_field and approval_field.data != approval.percent:
                     approval.percent = approval_field.data
+                    prio = True
                     changes = True
+                if priority_field and priority_field.data != approval.priority:
+                    prio = priority_field.data
+                    changes = True
+                if changes:
+                    # manual change of approval, so it is a sticky entry and should not be removed by ilias syncing
+                    approval.sticky = True
+                    approval.priority = prio
 
             if changes:
                 db.session.commit()
@@ -871,7 +850,7 @@ def export(type, id):
             form.courses.data = [course.id for course in language.courses]
 
     # update course multi-select based on assigned courses to user
-    # if teacher, then only own courses in multi-select selectable
+    # if teacher, then only show own courses in multi-select to be selected
     # if superuser or course admin, then all courses can be downloaded
     form.update_course_list(current_user)
     return dict(form=form, user=current_user)
@@ -889,17 +868,6 @@ def lists():
         .order_by(models.Language.name) \
         .from_self()  # b/c of eager loading, see: http://thread.gmane.org/gmane.comp.python.sqlalchemy.user/36757
 
-    # quickfix: copy grades from applicant table to attendance table if attendance grade is empty
-    """langs = models.Language.query.all()
-    for l in langs:
-        for course in l.courses:
-            for applicant in course.course_list:
-                    attendance = course.get_course_attendance(course.id, applicant.id)
-                    if applicant.grade is not None and attendance.grade is None:
-                        # only update initially with applicant grade values
-                        attendance.grade = applicant.grade
-                        attendance.hide_grade = applicant.hide_grade
-    db.session.commit()"""
 
     return dict(lang_misc=lang_misc)
 
@@ -1146,6 +1114,7 @@ def remove_attendance(applicant, course, notify):
         try:
             tasks.send_slow.delay(generate_status_mail(applicant, course))
             flash(_('Bestätigungsmail wurde versendet'), 'success')
+            course.last_signoff_at = datetime.now(timezone.utc).replace(tzinfo=None)
         except (AssertionError, socket.error, ConnectionError) as e:
             flash(_('Bestätigungsmail konnte nicht versendet werden: %(error)s', error=e), 'negative')
 
@@ -1212,7 +1181,7 @@ def status(applicant_id, course_id):
     if form.validate_on_submit():
         try:
             attendance.graduation = form.get_graduation()
-            attendance.payingdate = datetime.utcnow()
+            attendance.payingdate = datetime.now(timezone.utc).replace(tzinfo=None)
             attendance.discount = form.discount.data
             # attendance.applicant.discounted = form.discounted.data
             attendance.paidbycash = form.paidbycash.data

@@ -2,7 +2,7 @@
 
 """Logging module, writes annoted logs to the database."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import event
 
@@ -19,7 +19,7 @@ def log(msg, course=None, timestamp=None):
 
     # fill in timestamp
     if timestamp is None:
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(timezone.utc).replace(tzinfo=None)
 
     entry = models.LogEntry(timestamp, msg, course)
     db.session.add(entry)

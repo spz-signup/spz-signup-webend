@@ -18,6 +18,7 @@
                 <!--<th>Anwesenheit eintragen</th>-->
                 <th class="collapsing">Kurs-L.</th>
                 <th class="collapsing">Anw.-L.</th>
+                <th class="collapsing">Noten-L.</th>
                 <th class="collapsing">Daten</th>
             </tr>
             </thead>
@@ -42,6 +43,8 @@
                     <td class="collapsing"><a href="{{ url_for('print_course_presence', course_id=course.id) }}">
                         <button type="button" class="ui button">PDF</button>
                     </a></td>
+                    <td class="collapsing"><a href="{{ url_for('download_template', course_id=course.id) }}">
+                        <button type="button" class="ui button">EXCEL</button></a></td>
                     <td class="collapsing"><a href="{{ url_for('export', type='course', id=course.id) }}">
                         <button type="button" class="ui button">Export</button>
                     </a></td>

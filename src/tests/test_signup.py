@@ -7,12 +7,12 @@ from tests import get_text
 from spz.models import Applicant, Approval
 from spz import db, token
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 
 def signup_set_open(course, open=True):
     language = course.language
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     delta = timedelta(hours=1)
 
     if open:

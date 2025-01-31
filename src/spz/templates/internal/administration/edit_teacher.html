@@ -36,7 +36,7 @@
             {% endif %}
 
             {{ render_option(form.remove_from_course, help='Aus folgendem Kurs entfernen') }}
-            {{ render_option(form.add_to_course, help='Zu folgendem Kurs hinzufügen') }}
+            {{ render_option(form.add_to_course, multiple=True, help='Zu folgendem Kurs hinzufügen') }}
 
             {% if form.get_languages() %}
                 <h3 class="ui dividing header">Sprachen des/der Lehrbeauftragten</h3>

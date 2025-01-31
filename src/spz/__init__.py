@@ -157,6 +157,7 @@ routes = [
     ('/internal/print_course/<int:course_id>', pdf.print_course, ['GET']),
     ('/internal/print_course_presence/<int:course_id>', pdf.print_course_presence, ['GET']),
     ('/internal/print_language/<int:language_id>', pdf.print_language, ['GET']),
+    ('/internal/print_language_presence_zip/<int:language_id>', pdf.print_language_presence_zip, ['GET']),
     ('/internal/print_language_presence/<int:language_id>', pdf.print_language_presence, ['GET']),
 
     ('/internal/export/<string:type>/<int:id>', views.export, ['GET', 'POST']),
@@ -206,9 +207,15 @@ routes = [
     ('/internal/grades/<int:course_id>', admin_views.grade, ['GET', 'POST']),
     ('/internal/grades/<int:course_id>/edit', admin_views.edit_grade, ['GET', 'POST']),
     ('/internal/grades/<int:course_id>/edit_view', admin_views.edit_grade_view, ['GET', 'POST']),
+    ('/internal/grades/<int:course_id>/import_grade', admin_views.import_grade, ['GET', 'POST']),
+    ('/internal/delete_sheet/<int:file_id>', admin_views.delete_sheet, ['GET', 'POST']),
+    ('/internal/download_sheet/<int:file_id>', admin_views.download_sheet, ['GET']),
+    ('/internal/download_template/<int:course_id>', admin_views.download_template, ['GET']),
     ('/internal/teacher/<int:id>/attendance/<int:course_id>', admin_views.attendances, ['GET', 'POST']),
     ('/internal/teacher/<int:id>/attendance/<int:course_id>/edit/<int:class_id>', admin_views.edit_attendances,
      ['GET', 'POST']),
+    ('/internal/administration/teacher/export', admin_views.teacher_export, ['GET', 'POST']),
+    ('/internal/administration/teacher/import', admin_views.teacher_import, ['GET', 'POST']),
 
     ('/api/campus_portal/export/<string:export_token>', views.campus_portal_grades, ['GET']),
     ('/internal/campus_portal/export', views.campus_export_language, ['GET', 'POST']),

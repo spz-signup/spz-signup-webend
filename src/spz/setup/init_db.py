@@ -16,7 +16,7 @@ from spz.models import *  # noqa
 
 
 def validate_resources():
-    resources = ('degrees', 'origins', 'courses', 'degrees', 'graduations', 'users', 'export_formats')
+    resources = ('degrees', 'origins', 'courses', 'degrees', 'graduations', 'users', 'export_formats', 'import_formats')
 
     for fname in resources:
         with app.open_resource('resource/{0}.json'.format(fname)) as fd_json, \
@@ -38,6 +38,7 @@ def insert_resources():
     insert_origins('resource/origins.json')
     insert_courses('resource/courses.json')
     insert_export_formats('resource/export_formats.json')
+    insert_import_formats('resource/import_formats.json')
     insert_users('resource/users.json')
     db.session.commit()
 
@@ -87,7 +88,11 @@ def insert_courses(json_file):
             )
 
             for course in courses:
-                for alt in course.pop('alternatives', [None]):
+                alternatives = course.pop('alternatives', [None])
+                if len(alternatives) == 0:
+                    print("  WARNING: course {} is not added, alternatives empty ([] instead [\"\"])".format(
+                        language["name"] + " " + course["level"]))
+                for alt in alternatives:
                     db.session.add(Course(
                         language=ref_lang,
                         alternative=alt,
@@ -108,6 +113,25 @@ def insert_export_formats(json_file):
             #instance = format.pop('instance', ExportFormat.COURSE)
 
             db.session.add(ExportFormat(**format, language=lang_ref))
+
+
+def insert_import_formats(json_file):
+    with app.open_resource(json_file) as fd:
+        res = json.load(fd)
+
+        for format in res["formats"]:
+            lang_refs = []
+            if 'languages' not in format:
+                print("  WARNING: no languages specified for import format {}".format(format["name"]))
+                continue
+            for lang in format.pop('languages'):
+                lang_ref = Language.query.filter(Language.name == lang).first()
+                if lang_ref:
+                    lang_refs.append(lang_ref)
+                else:
+                    print("  WARNING: language {} does not exist".format(lang))
+
+            db.session.add(ImportFormat(**format, languages=lang_refs))
 
 
 def insert_users(json_file):

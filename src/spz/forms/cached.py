@@ -5,7 +5,7 @@
    Do not specify a timeout; so the default one (from the configuration) gets picked up.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from spz import models, cache, db
 
@@ -115,7 +115,7 @@ def upcoming_courses_to_choicelist():
         .join(models.Language.courses) \
         .order_by(models.Language.name, models.Course.level, models.Course.alternative)
 
-    time = datetime.utcnow()
+    time = datetime.now(timezone.utc).replace(tzinfo=None)
     upcoming = [course for course in available if course.language.is_upcoming(time)]
 
     def generate_marker(course):
@@ -150,3 +150,15 @@ def grouped_by_level_to_choicelist(grouped_courses: dict):
     for level, courses in grouped_courses.items():
         choices.append((courses[0].level, '{0}'.format(courses[0].name)))
     return choices
+
+
+def own_courses_to_choicelist(teacher):
+    courses = []
+    for role in teacher.roles:
+        if role.role == models.Role.COURSE_TEACHER:
+            courses.append(role.course)
+    courses = sorted(courses, key=lambda x: x.full_name)
+    return [
+        (course.id, '{0}'.format(course.full_name))
+        for course in courses
+    ]

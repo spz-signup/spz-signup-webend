@@ -119,6 +119,8 @@ class ExcelZipWriter(ExcelWriter):
         self.check_for_expressions()
         self.tempfile = NamedTemporaryFile()
         self.zip = ZipFile(self.tempfile, 'w')
+        self.is_single_section = True
+        self.single_section_data = None
 
     def check_for_expressions(self):
         # set course information
@@ -128,7 +130,7 @@ class ExcelZipWriter(ExcelWriter):
         max_row = self.information_sheet.max_row
         # iterate sheet to find jinja expressions
         # for row in self.information_sheet.iter_rows(min_row=30, min_col=1, max_row=max_row, max_col=3):
-        for row in self.information_sheet.iter_rows(min_row=0, min_col=0, max_row=max_row, max_col=0):
+        for row in self.information_sheet.iter_rows(min_row=1, min_col=1, max_row=max_row, max_col=3):
             for cell in row:
                 if cell.value is not None:
                     key = cell.value
@@ -167,6 +169,9 @@ class ExcelZipWriter(ExcelWriter):
             cell.value = expression_column[i]
 
     def begin_section(self, section_name):
+        # If this is not the first section, set is_single_section to False
+        if self.is_single_section and self.section_count > 0:
+            self.is_single_section = False
         # use title of template sheet
         super().begin_section(section_name=self.template_sheet.title)
 
@@ -174,15 +179,28 @@ class ExcelZipWriter(ExcelWriter):
         super().end_section(section_name)
         with NamedTemporaryFile() as file:
             self.workbook.save(file.name)
-            self.zip.write(file.name, "{}.xlsx".format(section_name))
+
+            if self.is_single_section:
+                # If it's a single section, store the data
+                with open(file.name, 'rb') as single_file:
+                    self.single_section_data = single_file.read()
+            else:
+                # Otherwise, write to the ZIP file
+                self.zip.write(file.name, "{}.xlsx".format(section_name))
         # Restore template workbook to initial state
         self.workbook.remove(self.current_sheet)
         self.section_count -= 1
 
     def get_data(self):
-        self.zip.close()
-        self.tempfile.seek(0)
-        return self.tempfile.read()
+        if self.is_single_section and self.single_section_data:
+            # update mimetype and extension to export single xlsx file
+            self.mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            self.extension = 'xlsx'
+            return self.single_section_data
+        else:
+            self.zip.close()
+            self.tempfile.seek(0)
+            return self.tempfile.read()
 
 
 class SingleSectionExcelWriter(ExcelWriter):

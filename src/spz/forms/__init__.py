@@ -7,13 +7,15 @@
 
 import itertools
 
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import func, and_, or_, not_
 from flask_wtf import FlaskForm, Form
 from flask_login import current_user
 from markupsafe import Markup
-from wtforms import widgets, StringField, SelectField, SelectMultipleField, IntegerField,FloatField, Label
-from wtforms import TextAreaField, BooleanField, DecimalField, MultipleFileField, FieldList, FormField, HiddenField
+
+from wtforms import widgets, StringField, SelectField, SelectMultipleField, IntegerField, FloatField, Label
+from wtforms import TextAreaField, BooleanField, DecimalField, MultipleFileField, HiddenField, FileField
+
 from flask_ckeditor import CKEditorField
 
 
@@ -466,7 +468,7 @@ class VacanciesForm(FlaskForm):
                     models.Course.is_full,
                     models.Course.count_attendances(waiting=True) <= app.config['SHORT_WAITING_LIST'])
             )),
-            and_(models.Language.signup_begin <= datetime.utcnow(), models.Language.signup_end >= datetime.utcnow())
+            and_(models.Language.signup_begin <= datetime.now(timezone.utc), models.Language.signup_end >= datetime.now(timezone.utc))
         ) \
             .all()
         return itertools.groupby(courses, lambda course: (course.language, course.ger))
@@ -1027,7 +1029,7 @@ class EditTeacherForm(FlaskForm):
         ]
     )
 
-    add_to_course = SelectField(
+    add_to_course = SelectMultipleField(
         'Kurs hinzufügen',
         [validators.Optional()],
         coerce=int,
@@ -1049,14 +1051,15 @@ class EditTeacherForm(FlaskForm):
         self.teacher = teacher
 
         self.add_to_course.choices = cached.all_courses_to_choicelist()
-        self.remove_from_course.choices = cached.all_courses_to_choicelist()
+        self.remove_from_course.choices = cached.own_courses_to_choicelist(teacher)
 
-    def populate(self, teacher):
-        self.teacher = teacher
+    def populate(self):
         self.first_name.data = self.teacher.first_name
         self.last_name.data = self.teacher.last_name
         self.mail.data = self.teacher.email
         self.tag.data = self.teacher.tag
+        # reload choices (if course is added needs to be updated)
+        self.remove_from_course.choices = cached.own_courses_to_choicelist(self.teacher)
 
     def get_teacher(self):
         return self.teacher
@@ -1078,7 +1081,7 @@ class EditTeacherForm(FlaskForm):
         return languages if languages else None
 
     def get_add_to_course(self):
-        return models.Course.query.get(self.add_to_course.data) if self.add_to_course.data else None
+        return [models.Course.query.get(course_id) for course_id in self.add_to_course.data] if self.add_to_course.data else None
 
     def get_remove_from_course(self):
         return models.Course.query.get(self.remove_from_course.data) if self.remove_from_course.data else None
@@ -1161,4 +1164,18 @@ def create_approval_form(tag):
                 IntegerField("Test", validators=[validators.DataRequired(), validators.NumberRange(min=0, max=100)],
                              default=approval.percent))
 
+        priority_field_name = f'priority_{approval.id}'
+        setattr(EditApprovalForm, priority_field_name,
+                BooleanField("Priorität", default=approval.priority))
+
     return EditApprovalForm
+
+def excel_file_validator(form, field):
+    # Check if the uploaded file has a .xlsx or .xls extension
+    if field.data:
+        filename = field.data.filename
+        if not (filename.endswith('.xlsx')):
+            raise validators.ValidationError("Die hochgeladene Datei muss eine Excel-Datei sein (Format: *.xlsx).")
+
+class ImportGradeForm(FlaskForm):
+    file = FileField('Datei', validators=[validators.DataRequired(), excel_file_validator])

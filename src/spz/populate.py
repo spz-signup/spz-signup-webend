@@ -3,7 +3,7 @@
 """Holds popuplation logic."""
 
 import socket
-from datetime import datetime
+from datetime import datetime, timezone
 
 from redis import ConnectionError
 
@@ -174,7 +174,7 @@ def update_waiting_list_status():
 
 def populate_global():
     """Run global populate procedure as discussed with management."""
-    time = datetime.utcnow()
+    time = datetime.now(timezone.utc).replace(tzinfo=None)
     populate_rnd(time)
     populate_fcfs(time)
     update_waiting_list_status()
