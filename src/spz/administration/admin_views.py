@@ -21,6 +21,8 @@ import spz.forms as forms
 
 from flask_babel import gettext as _
 
+import math
+
 from spz.export import export_course_list
 from spz.util.Filetype import mime_from_filepointer
 
@@ -347,7 +349,7 @@ def edit_grade(course_id):
                 attendance = course.get_course_attendance(course.id, applicant.id)
                 grade_field = getattr(form, f'grade_{applicant.id}', None)
                 if grade_field and grade_field.data != attendance.grade:
-                    attendance.grade = grade_field.data
+                    attendance.grade = math.ceil(grade_field.data)
                     changes = True
 
                 ects_field_name = f'ects_{applicant.id}'
