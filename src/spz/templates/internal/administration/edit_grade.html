@@ -2,8 +2,11 @@
 {% from 'formhelpers.html' import csrf_field, render_submit, attendance_status, render_boolean, render_input, render_raw_input %}
 
 {% block caption %}
+    {% if current_user.is_admin_or_superuser %}
+    {% else %}
     Kurs: {{ course.language.name }} {{ course.level }}
     {{ course.alternative }}
+    {% endif %}
 {% endblock caption %}
 
 
@@ -18,11 +21,18 @@
             die ECTS-Punkte für die Studierenden auswählen, falls erforderlich.
         </p>
     </div>
-    <div class="ui section divider"></div>
+    <div class="ui message" style="display: flex; align-items: center;">
+        <i class="exclamation triangle icon" style="font-size: 4em; margin-right: 30px;"></i>
+        <div>
+            <h3>Hinweis Kommazahlen:</h3>
+            <p>Beim Eintrag von Kommazahlen diese bitte durch einen <b>Punkt (.)</b> und nicht durch ein Komma (,) trennen.</p>
+        </div>
+    </div>
+    <div class="ui section divider" style="width: 100%; display: block;"></div>
     <form method="post">
         {{ csrf_field() }}
-        <div class="row">
-            <table class="ui selectable sortable compact small table">
+
+            <table class="ui selectable sortable small table">
                 <thead>
                 <tr>
                     <th>Matrikelnr.</th>
@@ -77,12 +87,12 @@
                 {% endfor %}
                 </tbody>
             </table>
-        </div>
-        <div class="ui section divider"></div>
+
+        <div class="ui section divider" style="width: 100%; display: block;"></div>
         <div class="row">
             <a href="
                 {% if current_user.is_admin_or_superuser %}
-                    {{ url_for('language', id=course.language_id) }}
+                    {{ url_for('grade', course_id=course.id) }}
                 {% else %}
                     {{ url_for('grade', course_id=course.id) }}
                 {% endif %}">
