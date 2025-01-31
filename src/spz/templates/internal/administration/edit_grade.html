@@ -2,11 +2,10 @@
 {% from 'formhelpers.html' import csrf_field, render_submit, attendance_status, render_boolean, render_input, render_raw_input %}
 
 {% block caption %}
-    {% if current_user.is_admin_or_superuser %}
-    {% else %}
-    Kurs: {{ course.language.name }} {{ course.level }}
+    Kurs: {% if current_user.is_admin_or_superuser %}
+    <a href="{{ url_for('language', id=course.language.id) }}">{{ course.language.name }}</a>
+    {% else %}{{ course.language.name }} {% endif %} {{ course.level }}
     {{ course.alternative }}
-    {% endif %}
 {% endblock caption %}
 
 
@@ -25,68 +24,69 @@
         <i class="exclamation triangle icon" style="font-size: 4em; margin-right: 30px;"></i>
         <div>
             <h3>Hinweis Kommazahlen:</h3>
-            <p>Beim Eintrag von Kommazahlen diese bitte durch einen <b>Punkt (.)</b> und nicht durch ein Komma (,) trennen.</p>
+            <p>Beim Eintrag von Kommazahlen diese bitte durch einen <b>Punkt (.)</b> und nicht durch ein Komma (,)
+                trennen.</p>
         </div>
     </div>
     <div class="ui section divider" style="width: 100%; display: block;"></div>
     <form method="post">
         {{ csrf_field() }}
 
-            <table class="ui selectable sortable small table">
-                <thead>
+        <table class="ui selectable sortable small table">
+            <thead>
+            <tr>
+                <th>Matrikelnr.</th>
+                <th>Vorname</th>
+                <th>Nachname</th>
+                <th>ECTS</th>
+                <th>Note (in %)</th>
+                <th>Prüfungsdatum</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for applicant in course.course_list %}
+                {% set attendance = course.get_course_attendance(course.id, applicant.id) %}
                 <tr>
-                    <th>Matrikelnr.</th>
-                    <th>Vorname</th>
-                    <th>Nachname</th>
-                    <th>ECTS</th>
-                    <th>Note (in %)</th>
-                    <th>Prüfungsdatum</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for applicant in course.course_list %}
-                    {% set attendance = course.get_course_attendance(course.id, applicant.id) %}
-                    <tr>
-                        <td>{% if applicant.tag %} {{ applicant.tag }} {% endif %}</td>
-                        <td>{{ applicant.first_name }}</td>
-                        <td>{{ applicant.last_name }}</td>
-                        <td>
-                            {% if attendance is none %}
-                                Fehler: nicht in Liste
+                    <td>{% if applicant.tag %} {{ applicant.tag }} {% endif %}</td>
+                    <td>{{ applicant.first_name }}</td>
+                    <td>{{ applicant.last_name }}</td>
+                    <td>
+                        {% if attendance is none %}
+                            Fehler: nicht in Liste
+                        {% else %}
+                            {% if course.ects_points == 2 %}
+                                <select name="ects_{{ applicant.id }}" class="ui dropdown">
+                                    <option value="2"
+                                            {% if attendance.ects_points == 2 %}selected{% endif %}>
+                                        2 (normal)
+                                    </option>
+                                    <option value="3"
+                                            {% if attendance.ects_points == 3 %}selected{% endif %}>
+                                        3 (mit Zusatzleistung)
+                                    </option>
+                                </select>
                             {% else %}
-                                {% if course.ects_points == 2 %}
-                                    <select name="ects_{{ applicant.id }}" class="ui dropdown">
-                                        <option value="2"
-                                                {% if attendance.ects_points == 2 %}selected{% endif %}>
-                                            2 (normal)
-                                        </option>
-                                        <option value="3"
-                                                {% if attendance.ects_points == 3 %}selected{% endif %}>
-                                            3 (mit Zusatzleistung)
-                                        </option>
-                                    </select>
-                                {% else %}
-                                    {{ attendance.ects_points }}
-                                {% endif %}
+                                {{ attendance.ects_points }}
                             {% endif %}
-                        </td>
-                        <td>
-                            <div class="ui labeled input">
-                                {{ form['grade_' ~ applicant.id]() }}
-                                {% if form['grade_' ~ applicant.id].errors %}
-                                    <span
-                                        class="ui red left pointing label">
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="ui labeled input">
+                            {{ form['grade_' ~ applicant.id]() }}
+                            {% if form['grade_' ~ applicant.id].errors %}
+                                <span
+                                    class="ui red left pointing label">
                                         {{ form['grade_' ~ applicant.id].errors[0] }}</span>
-                                {% endif %}
-                            </div>
-                        </td>
-                        <td>
-                            {{ exam_date }}
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        {{ exam_date }}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
 
         <div class="ui section divider" style="width: 100%; display: block;"></div>
         <div class="row">

@@ -2,7 +2,9 @@
 {% from 'formhelpers.html' import csrf_field, render_submit, attendance_status, render_boolean, render_input, render_raw_input %}
 
 {% block caption %}
-    Kurs: {{ course.language.name }} {{ course.level }}
+    Kurs: {% if current_user.is_admin_or_superuser %}
+    <a href="{{ url_for('language', id=course.language.id) }}">{{ course.language.name }}</a>
+    {% else %}{{ course.language.name }} {% endif %} {{ course.level }}
     {{ course.alternative }}
 {% endblock caption %}
 
