@@ -385,11 +385,7 @@ def markup_grade(course_id):
         ts_rx = request.form.getlist('TS_rx')
         ps_rx = request.form.getlist('PS_rx')
 
-        # ToDo: I only get marked (true) checkboxes, how do I now, that a checkbox changed from true to false?
-        # ToDo: In this way I will not now, if a checkbox was unchecked, so I can't set the value to false in the database
-
         try:
-
             for checked in ts_tx:
                 mail = checked.split('_', 1)[1]
                 attendance = models.Attendance.query \
@@ -411,12 +407,16 @@ def markup_grade(course_id):
                     .first()
                 attendance.ps_received = True
 
-            # ToDo: check all attendances for changes from marked (true) to unmarked (false) checkboxes
             active_attendances = models.Attendance.query \
                 .filter(models.Attendance.course_id == course_id, models.Attendance.waiting == False) \
                 .all()
             for attendance in active_attendances:
-                pass
+                if attendance.ts_requested and f"ts-tx_{attendance.applicant.mail}" not in ts_tx:
+                    attendance.ts_requested = False
+                if attendance.ts_received and f"ts-rx_{attendance.applicant.mail}" not in ts_rx:
+                    attendance.ts_received = False
+                if attendance.ps_received and f"ps-rx_{attendance.applicant.mail}" not in ps_rx:
+                    attendance.ps_received = False
 
             db.session.commit()
             flash('Status über TS/PS wurde erfolgreich aktualisiert!', 'success')

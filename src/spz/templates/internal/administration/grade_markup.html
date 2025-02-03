@@ -19,20 +19,7 @@
             </div>
         {% endif %}
         <div class="row">
-            <h2>Notenübersicht</h2>
-        </div>
-        <div class="three column row">
-            <div class="left floated column">
-                <a href=" {{ url_for('import_grade', course_id=course.id) }} ">
-                    <button type="button" class="ui blue button"><i class="file excel icon"></i>Notenliste hochladen
-                    </button>
-                </a>
-            </div>
-            <div class="center floated column">
-                <a href=" {{ url_for('edit_grade', course_id=course.id) }} ">
-                    <button type="button" class="ui button"><i class="edit icon"></i>Noten eintragen</button>
-                </a>
-            </div>
+            <h2>Änderung Status Teilnahme-/Prüfungsscheine</h2>
         </div>
         <div class="sixteen wide column">
             <form class="ui form" method="post">
@@ -84,19 +71,22 @@
                             <td>
                                 <div class="ui checkbox">
                                     <input type="checkbox" name="TS_tx"
-                                           value="tx_{{ attendance.applicant.mail }}">
+                                           value="ts-tx_{{ attendance.applicant.mail }}"
+                                        {% if attendance.ts_requested %} checked {% endif %}>
                                 </div>
                             </td>
                             <td>
                                 <div class="ui checkbox">
                                     <input type="checkbox" name="TS_rx"
-                                           value="rx_{{ attendance.applicant.mail }} {% if attendance.ts_requested %} checked {% endif %}">
+                                           value="ts-rx_{{ attendance.applicant.mail }}" {% if attendance.ts_received %}
+                                           checked {% endif %}>
                                 </div>
                             </td>
                             <td>
                                 <div class="ui checkbox">
-                                    <input type="checkbox" name="Ps_rx"
-                                           value="ps_rx_{{ attendance.applicant.mail }}">
+                                    <input type="checkbox" name="PS_rx"
+                                           value="ps-rx_{{ attendance.applicant.mail }}" {% if attendance.ps_received %}
+                                           checked {% endif %}>
                                 </div>
                             </td>
                         </tr>
@@ -104,7 +94,7 @@
                     </tbody>
                 </table>
                 <div class="row">
-                    <button type="submit" value="submit-grade_markup" class="fluid ui positive button" >Änderungen
+                    <button type="submit" value="submit-grade_markup" class="fluid ui positive button">Änderungen
                         Speichern
                     </button>
                 </div>

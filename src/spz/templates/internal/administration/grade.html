@@ -35,16 +35,21 @@
             </div>
         </div>
         <div class="sixteen wide column">
-            <table class="ui selectable sortable small celled table">
+            <table class="ui selectable small structured celled table">
                 <thead>
                 <tr>
-                    <th>Matrikelnr.</th>
-                    <th>Vorname</th>
-                    <th>Nachname</th>
-                    <th>ECTS</th>
-                    <th>Note</th>
-                    <th>Prüfungsdatum</th>
-                    <th>TS </th>
+                    <th rowspan="2">Matrikelnr.</th>
+                    <th rowspan="2">Vorname</th>
+                    <th rowspan="2">Nachname</th>
+                    <th rowspan="2">ECTS</th>
+                    <th rowspan="2">Note</th>
+                    <th rowspan="2">Prüfungsdatum</th>
+                    <th colspan="3" style="width: 5em"><a href=" {{ url_for("markup_grade", course_id=course.id) }} ">
+                        <i class="edit icon"></i> Status TS/PS
+                    </a></th>
+                </tr>
+                <tr>
+                    <th>TS</th>
                     <th>TS erh.</th>
                     <th>PS erh.</th>
                 </tr>
