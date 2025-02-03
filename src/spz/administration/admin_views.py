@@ -374,6 +374,63 @@ def edit_grade(course_id):
 
 
 @login_required
+@templated('internal/administration/grade_markup.html')
+def markup_grade(course_id):
+    course = models.Course.query.get_or_404(course_id)
+    if not current_user.is_admin_or_superuser and not current_user.is_course_teacher(course):
+        return redirect(url_for('internal'))
+
+    if request.method == 'POST' and current_user.is_authenticated:
+        ts_tx = request.form.getlist('TS_tx')
+        ts_rx = request.form.getlist('TS_rx')
+        ps_rx = request.form.getlist('PS_rx')
+
+        # ToDo: I only get marked (true) checkboxes, how do I now, that a checkbox changed from true to false?
+        # ToDo: In this way I will not now, if a checkbox was unchecked, so I can't set the value to false in the database
+
+        try:
+
+            for checked in ts_tx:
+                mail = checked.split('_', 1)[1]
+                attendance = models.Attendance.query \
+                    .filter(models.Attendance.course_id == course_id, models.Attendance.applicant.has(mail=mail)) \
+                    .first()
+                attendance.ts_requested = True
+
+            for checked in ts_rx:
+                mail = checked.split('_', 1)[1]
+                attendance = models.Attendance.query \
+                    .filter(models.Attendance.course_id == course_id, models.Attendance.applicant.has(mail=mail)) \
+                    .first()
+                attendance.ts_received = True
+
+            for checked in ps_rx:
+                mail = checked.split('_', 1)[1]
+                attendance = models.Attendance.query \
+                    .filter(models.Attendance.course_id == course_id, models.Attendance.applicant.has(mail=mail)) \
+                    .first()
+                attendance.ps_received = True
+
+            # ToDo: check all attendances for changes from marked (true) to unmarked (false) checkboxes
+            active_attendances = models.Attendance.query \
+                .filter(models.Attendance.course_id == course_id, models.Attendance.waiting == False) \
+                .all()
+            for attendance in active_attendances:
+                pass
+
+            db.session.commit()
+            flash('Status über TS/PS wurde erfolgreich aktualisiert!', 'success')
+
+        except Exception as e:
+            db.session.rollback()
+            flash(_('Es gab einen Fehler beim Ändern des Status der TS/PS: %(error)s', error=e), 'negative')
+
+        return redirect(url_for('grade', course_id=course_id))
+
+    return dict(course=course)
+
+
+@login_required
 @templated('internal/administration/edit_grade_view.html')
 def edit_grade_view(course_id):
     course = models.Course.query.get_or_404(course_id)

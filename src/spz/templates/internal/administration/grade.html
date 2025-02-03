@@ -35,7 +35,7 @@
             </div>
         </div>
         <div class="sixteen wide column">
-            <table class="ui selectable sortable small table">
+            <table class="ui selectable sortable small celled table">
                 <thead>
                 <tr>
                     <th>Matrikelnr.</th>
@@ -44,6 +44,9 @@
                     <th>ECTS</th>
                     <th>Note</th>
                     <th>Prüfungsdatum</th>
+                    <th>TS </th>
+                    <th>TS erh.</th>
+                    <th>PS erh.</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -76,6 +79,9 @@
                             {% endif %}
                         </td>
                         <td> {{ exam_date }}</td>
+                        <td> {% if attendance.ts_requested %} <i class="times icon"></i> {% endif %}</td>
+                        <td> {% if attendance.ts_received %} <i class="times icon"></i> {% endif %} </td>
+                        <td> {% if attendance.ps_received %} <i class="times icon"></i> {% endif %} </td>
                     </tr>
                 {% endfor %}
                 </tbody>

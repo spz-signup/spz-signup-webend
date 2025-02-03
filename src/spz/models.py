@@ -137,6 +137,10 @@ class Attendance(db.Model):
     MAX_DISCOUNT = 100  # discount stored as percentage
     discount_constraint = db.CheckConstraint(between(discount, 0, MAX_DISCOUNT))
 
+    ts_requested = db.Column(db.Boolean, default=False)
+    ts_received = db.Column(db.Boolean, default=False)
+    ps_received = db.Column(db.Boolean, default=False)
+
     def __init__(self, course, graduation, waiting, discount, informed_about_rejection=False):
         self.course = course
         self.graduation = graduation
