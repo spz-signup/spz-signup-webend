@@ -1,0 +1,45 @@
+{% extends 'internal/internal.html' %}
+{% from 'formhelpers.html' import csrf_field, render_input, render_option, render_submit %}
+
+{% block caption %}
+    Neuen Kurs Hinzufügen
+{% endblock caption %}
+
+
+{% block internal_body %}
+    <div class="row">
+        <form class="ui form" method="post">
+            {{ csrf_field() }}
+            <h3 class="ui dividing header">Kurs zu beliebiger Sprache hinzufügen</h3>
+            <p>Wenn eine neue Sprache hinzugefügt werden soll, bitte bei einem Admin melden.</p>
+
+            <h3 class="ui dividing header">Kursname</h3>
+            <div class="grouped fields">
+                {{ render_option(form.language, multiple=False, required=True, icon="language") }}
+                {{ render_input(form.level, required=True, icon="list icon", help="Es kann eine Zahl sein oder ein Textname.") }}
+                {{ render_option(form.alternative, multiple=False, required=True, icon="pencil alternate icon", help="Hier wird a, b, c, ... angegeben, falls vorhanden.") }}
+            </div>
+
+            <h3 class="ui dividing header">Kursdetails</h3>
+            <div class="grouped fields">
+                {{ render_input(form.limit, placeholder='25', icon='users icon', required=False) }}
+                {{ render_input(form.price, placeholder='90', icon='euro sign icon', required=False) }}
+                {{ render_option(form.ger, multiple=False, required=False, icon="tag icon") }}
+                {{ render_option(form.ects, multiple=False, required=True, icon="list icon") }}
+            </div>
+
+            <h3 class="ui dividing header">Kursniveau (für Englisch-Kurse)</h3>
+            <div class="grouped fields">
+                {{ render_input(form.rating_highest, placeholder='100', icon='arrow circle up icon', required=False) }}
+                {{ render_input(form.rating_lowest, placeholder='0', icon='arrow circle down icon', required=False) }}
+            </div>
+
+            <div class="ui toggle checkbox">
+                <input type="checkbox" name="changes_confirmed" required=true>
+                <label for="changes_confirmed">Alles überprüft und alles OK?</label>
+            </div>
+
+            {{ render_submit(submit='Neuen Kurs Anlegen') }}
+        </form>
+    </div>
+{% endblock internal_body %}

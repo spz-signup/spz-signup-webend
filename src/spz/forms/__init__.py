@@ -51,7 +51,8 @@ __all__ = [
     'TriStateLabel',
     'AttendanceForm',
     'CampusExportForm',
-    'ResetLanguagePWs'
+    'ResetLanguagePWs',
+    'AddCourseForm'
 ]
 
 
@@ -1179,3 +1180,48 @@ def excel_file_validator(form, field):
 
 class ImportGradeForm(FlaskForm):
     file = FileField('Datei', validators=[validators.DataRequired(), excel_file_validator])
+
+
+class AddCourseForm(FlaskForm):
+    language = SelectField(
+        'Sprache',
+        coerce=int
+    )
+    level = StringField(
+        'Kursname'
+    )
+    alternative = SelectField(
+        'Kurszusatz',
+        coerce=int
+    ) # put "", a to z
+    limit = IntegerField(
+        'Teilnehmerzahl', validators=[validators.NumberRange(min=0, max=40)]
+    )
+    price = IntegerField(
+        'Preis', validators=[validators.NumberRange(min=0, max=500)]
+    )
+    ger = SelectField(
+        'GER-Level',
+        coerce=int
+    )  # A1, A2, B1, B2, C1, C2
+    rating_highest = IntegerField(
+        'Höchste Bewertung', validators=[validators.NumberRange(min=0, max=100)]
+    )
+    rating_lowest = IntegerField(
+        'Niedrigste Bewertung', validators=[validators.NumberRange(min=0, max=100)]
+    )
+    # has waiting list = True
+    ects = SelectField(
+        'ECTS Leistungspunkte',
+        coerce=int
+    ) # 2, 3, 4
+
+    def __init__(self, *args, **kwargs):
+        super(AddCourseForm, self).__init__(*args, **kwargs)
+        self._populate()
+
+    def _populate(self):
+        self.language.choices = cached.languages_to_choicelist()
+        self.alternative.choices = [(0, '')] + [(i, "{0}".format(chr(97 + i))) for i in range(26)]
+        self.ger.choices = cached.gers_to_choicelist()
+        self.ects.choices = [(i, "{0}".format(str(i))) for i in range(2, 5)]

@@ -870,6 +870,39 @@ def lists():
 
 
     return dict(lang_misc=lang_misc)
+@login_required
+@templated('internal/add_course.html')
+def add_course():
+    form = forms.AddCourseForm()
+    #INSERT INTO
+    #course(language_id, level, alternative, "limit", price, ger, rating_highest, rating_lowest, collision,
+    #       has_waiting_list, ects_points)
+    #VALUES(1, '1', 'a', 25, 90, 'A2', 100, 0, '{}', 'f', 2);
+
+    #def __init__(
+    #    self, language, level, alternative, limit, price, level_english=None, ger=None, rating_highest=100,
+    #    rating_lowest=0, collision=[],
+    #    ects_points=2):
+    if form.validate_on_submit():
+        #ToDo: include ger with getter method in form to map back to actual ger-level from index
+        language_db = models.Language.query.get_or_404(form.language.data)
+        alt = ""
+        if form.alternative.data != 0:
+            alt = chr(97 + int(form.alternative.data))  # Convert ASCII integer to a lowercase letter
+        course = models.Course(
+            language=language_db,
+            level=form.level.data,
+            alternative=alt,
+            limit=form.limit.data,
+            price=form.price.data,
+            rating_highest=form.rating_highest.data if not None else 100,
+            rating_lowest=form.rating_lowest.data if not None else 0
+        )
+        #db.session.add(course)
+        #db.session.commit()
+        flash(_('Kurs "%(name)s" wurde in der Sprache  %(lang_name)s hinzugefügt', name=course.full_name, lang_name=language.name), 'success')
+        return redirect(url_for('lists'))
+    return dict(form=form)
 
 
 @login_required
