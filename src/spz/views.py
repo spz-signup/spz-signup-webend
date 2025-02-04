@@ -488,7 +488,8 @@ def signoff():
                   'für den Sie nicht angemeldet waren!')
             )
             err |= check_precondition_with_auth(
-                applicant.is_in_signoff_window(course) or (datetime.now(timezone.utc).replace(tzinfo=None) < course.language.signup_fcfs_begin),
+                applicant.is_in_signoff_window(course) or (
+                    datetime.now(timezone.utc).replace(tzinfo=None) < course.language.signup_fcfs_begin),
                 _('Abmeldefrist abgelaufen: Zur Abmeldung bitte bei Ihrem Fachbereichsleiter melden!')
             )
 
@@ -868,21 +869,14 @@ def lists():
         .order_by(models.Language.name) \
         .from_self()  # b/c of eager loading, see: http://thread.gmane.org/gmane.comp.python.sqlalchemy.user/36757
 
-
     return dict(lang_misc=lang_misc)
+
+
 @login_required
 @templated('internal/add_course.html')
 def add_course():
     form = forms.AddCourseForm()
-    #INSERT INTO
-    #course(language_id, level, alternative, "limit", price, ger, rating_highest, rating_lowest, collision,
-    #       has_waiting_list, ects_points)
-    #VALUES(1, '1', 'a', 25, 90, 'A2', 100, 0, '{}', 'f', 2);
 
-    #def __init__(
-    #    self, language, level, alternative, limit, price, level_english=None, ger=None, rating_highest=100,
-    #    rating_lowest=0, collision=[],
-    #    ects_points=2):
     if form.validate_on_submit():
         try:
             language_db = models.Language.query.get_or_404(form.language.data)
@@ -901,12 +895,14 @@ def add_course():
             )
             db.session.add(new_course)
             db.session.commit()
-            flash(_('Kurs "%(name)s" wurde in der Sprache  %(lang_name)s hinzugefügt', name=new_course.full_name, lang_name=language_db.name), 'success')
+            flash(_('Kurs "%(name)s" wurde in der Sprache  %(lang_name)s hinzugefügt', name=new_course.full_name,
+                    lang_name=language_db.name), 'success')
 
         except Exception as e:
             db.session.rollback()
             flash(_('Kurs konnte nicht hinzugefügt werden: %(error)s', error=e), 'negative')
         return redirect(url_for('lists'))
+
     return dict(form=form)
 
 

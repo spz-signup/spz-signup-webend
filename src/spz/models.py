@@ -357,7 +357,7 @@ class Applicant(db.Model):
         return len(remove) > 0
 
     def best_rating(self):
-        """Results best rating, prioritize sticky entries."""
+        """Results best rating, prioritize sticky entries, then latest entries from current semester."""
         results_priority = [
             approval.percent
             for approval
@@ -365,6 +365,14 @@ class Applicant(db.Model):
         ]
         if results_priority:
             return max(results_priority)
+
+        results_latest = [
+            approval.percent
+            for approval
+            in Approval.get_for_tag(tag=self.tag, latest=True) # basically gets ilias harvester results
+        ]
+        if results_latest:
+            return max(results_latest)
 
         results_normal = [
             approval.percent
@@ -949,14 +957,16 @@ class Approval(db.Model):
     percent = db.Column(db.Integer, nullable=False)
     sticky = db.Column(db.Boolean, nullable=False, default=False)
     priority = db.Column(db.Boolean, nullable=False, default=False)
+    latest = db.Column(db.Boolean, nullable=False, default=False)
 
     percent_constraint = db.CheckConstraint(between(percent, 0, 100))
 
-    def __init__(self, tag, percent, sticky, priority):
+    def __init__(self, tag, percent, sticky, priority, latest=False):
         self.tag_salted = Approval.cleartext_to_salted(tag)
         self.percent = percent
         self.sticky = sticky
         self.priority = priority
+        self.latest = latest
 
     def __repr__(self):
         return '<Approval %r %r>' % (self.tag_salted, self.percent)
@@ -973,16 +983,22 @@ class Approval(db.Model):
             return hash_secret_weak('')
 
     @staticmethod
-    def get_for_tag(tag, priority=None):
+    def get_for_tag(tag, priority=None, latest=None):
         """Get all approvals for a specific tag and priority.
 
            :param tag: tag (as cleartext) you're looking for
            :param priority: optional priority to filter for
+           :param latest: optional latest to filter for, less priority than priority
         """
         if priority is not None:
             return Approval.query.filter(and_(
                 Approval.tag_salted == Approval.cleartext_to_salted(tag),
                 Approval.priority == priority
+            )).all()
+        elif latest is not None:
+            return Approval.query.filter(and_(
+                Approval.tag_salted == Approval.cleartext_to_salted(tag),
+                Approval.latest == latest
             )).all()
         else:
             return Approval.query.filter(

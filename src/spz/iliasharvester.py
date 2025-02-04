@@ -234,7 +234,8 @@ def parse_data(it):
                 tag=tag,
                 percent=rating,
                 sticky=False,
-                priority=False
+                priority=False,
+                latest=True
             )
         )
 
