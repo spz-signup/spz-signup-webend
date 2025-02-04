@@ -1188,32 +1188,35 @@ class AddCourseForm(FlaskForm):
         coerce=int
     )
     level = StringField(
-        'Kursname'
+        'Kursname',
+        validators=[validators.Length(min=1, max=120, message="Der Kursname darf nicht leer sein. (max. 120 Zeichen)")]
     )
     alternative = SelectField(
         'Kurszusatz',
-        coerce=int
+        coerce=int,
+        default=0
     ) # put "", a to z
     limit = IntegerField(
-        'Teilnehmerzahl', validators=[validators.NumberRange(min=0, max=40)]
+        'Teilnehmerzahl', validators=[validators.Optional(), validators.NumberRange(min=0, max=40)]
     )
     price = IntegerField(
-        'Preis', validators=[validators.NumberRange(min=0, max=500)]
+        'Preis', validators=[validators.Optional(), validators.NumberRange(min=0, max=500)]
     )
     ger = SelectField(
         'GER-Level',
-        coerce=int
+        coerce=str
     )  # A1, A2, B1, B2, C1, C2
     rating_highest = IntegerField(
-        'Höchste Bewertung', validators=[validators.NumberRange(min=0, max=100)]
+        'Höchste Bewertung', validators=[validators.Optional(), validators.NumberRange(min=0, max=100)]
     )
     rating_lowest = IntegerField(
-        'Niedrigste Bewertung', validators=[validators.NumberRange(min=0, max=100)]
+        'Niedrigste Bewertung', validators=[validators.Optional(), validators.NumberRange(min=0, max=100)]
     )
     # has waiting list = True
     ects = SelectField(
         'ECTS Leistungspunkte',
-        coerce=int
+        coerce=int,
+        default=2
     ) # 2, 3, 4
 
     def __init__(self, *args, **kwargs):
@@ -1222,6 +1225,36 @@ class AddCourseForm(FlaskForm):
 
     def _populate(self):
         self.language.choices = cached.languages_to_choicelist()
-        self.alternative.choices = [(0, '')] + [(i, "{0}".format(chr(97 + i))) for i in range(26)]
+        self.alternative.choices = [(0, ' ')] + [(97 + i, "{0}".format(chr(97 + i))) for i in range(26)]
         self.ger.choices = cached.gers_to_choicelist()
         self.ects.choices = [(i, "{0}".format(str(i))) for i in range(2, 5)]
+
+    def get_alternative(self):
+        if self.alternative.data != 0:
+            return chr(self.alternative.data)  # Convert ASCII integer to a lowercase letter
+        return ""
+
+    def get_ger(self):
+        if self.ger.data == "None":
+            return None
+        return self.ger.data
+
+    def get_limit(self):
+        if self.limit.data is None:
+            return 25
+        return self.limit.data
+
+    def get_price(self):
+        if self.price.data is None:
+            return 90
+        return self.price.data
+
+    def get_rating_lowest(self):
+        if self.rating_lowest.data is None:
+            return 0
+        return self.rating_lowest.data
+
+    def get_rating_highest(self):
+        if self.rating_highest.data is None:
+            return 100
+        return self.rating_highest.data

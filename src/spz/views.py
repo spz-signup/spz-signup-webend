@@ -884,23 +884,28 @@ def add_course():
     #    rating_lowest=0, collision=[],
     #    ects_points=2):
     if form.validate_on_submit():
-        #ToDo: include ger with getter method in form to map back to actual ger-level from index
-        language_db = models.Language.query.get_or_404(form.language.data)
-        alt = ""
-        if form.alternative.data != 0:
-            alt = chr(97 + int(form.alternative.data))  # Convert ASCII integer to a lowercase letter
-        course = models.Course(
-            language=language_db,
-            level=form.level.data,
-            alternative=alt,
-            limit=form.limit.data,
-            price=form.price.data,
-            rating_highest=form.rating_highest.data if not None else 100,
-            rating_lowest=form.rating_lowest.data if not None else 0
-        )
-        #db.session.add(course)
-        #db.session.commit()
-        flash(_('Kurs "%(name)s" wurde in der Sprache  %(lang_name)s hinzugefügt', name=course.full_name, lang_name=language.name), 'success')
+        try:
+            language_db = models.Language.query.get_or_404(form.language.data)
+            if language_db is None:
+                flash(_('Sprache konnte bei Query nicht gefunden werden'), 'negative')
+
+            new_course = models.Course(
+                language=language_db,
+                level=form.level.data,
+                alternative=form.get_alternative(),
+                limit=form.get_limit(),
+                price=form.get_price(),
+                ger=form.get_ger(),
+                rating_highest=form.get_rating_highest(),
+                rating_lowest=form.get_rating_lowest()
+            )
+            db.session.add(new_course)
+            db.session.commit()
+            flash(_('Kurs "%(name)s" wurde in der Sprache  %(lang_name)s hinzugefügt', name=new_course.full_name, lang_name=language_db.name), 'success')
+
+        except Exception as e:
+            db.session.rollback()
+            flash(_('Kurs konnte nicht hinzugefügt werden: %(error)s', error=e), 'negative')
         return redirect(url_for('lists'))
     return dict(form=form)
 

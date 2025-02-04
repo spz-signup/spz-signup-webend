@@ -74,11 +74,15 @@
         </table>
     </div>
     {% if current_user.is_superuser %}
-        <div class="ui section divider" style="width: 100%; display: block;"></div>
-        <div class="row">
-            <a href="{{ url_for('add_course') }}">
-                <button type="button" class="ui primary button">Kurs Hinzufügen</button>
-            </a>
+        <div class="ui hidden divider"></div>
+        <div class="ui form">
+            <div class="row">
+                <a href="{{ url_for('add_course') }}">
+                    <button type="submit" class="fluid ui primary button" name="submit-button">Neuen Kurs
+                        Hinzufügen
+                    </button>
+                </a>
+            </div>
         </div>
     {% endif %}
 {% endblock internal_body %}
