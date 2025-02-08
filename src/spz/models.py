@@ -161,9 +161,11 @@ class Attendance(db.Model):
         return self.registered < other.registered
 
     def set_waiting_status(self, waiting_list):
+        signoff_period = app.config['SELF_SIGNOFF_PERIOD']
+        self.signoff_window = (datetime.now(timezone.utc).replace(tzinfo=None) + signoff_period).replace(microsecond=0,
+                                                                                                         second=0,
+                                                                                                         minute=0)
         if self.waiting and not waiting_list:
-            signoff_period = app.config['SELF_SIGNOFF_PERIOD']
-            self.signoff_window = (datetime.now(timezone.utc).replace(tzinfo=None) + signoff_period).replace(microsecond=0, second=0, minute=0)
             self.waiting = False
             self.enrolled_at = datetime.now(timezone.utc).replace(tzinfo=None)
         elif not self.waiting and waiting_list:
@@ -711,7 +713,6 @@ class Language(db.Model):
 
     import_format_id = db.Column(db.Integer, db.ForeignKey('import_format.id'), nullable=True)
     import_format = db.relationship("ImportFormat", back_populates="languages")
-
 
     def __init__(self, name, reply_to, signup_begin, signup_rnd_window_end, signup_manual_end, signup_end,
                  signup_auto_end, name_english=None):
@@ -1281,6 +1282,7 @@ class OAuthToken(db.Model):
         self.request_has_been_made = False
         self.is_student = False
 
+
 class GradeSheets(db.Model):
     """Database model for the xls/xlsx grade sheet mapping
 
@@ -1298,7 +1300,6 @@ class GradeSheets(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     filename = db.Column(db.String(60), nullable=False)
     upload_at = db.Column(db.DateTime(), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
-
 
     def __init__(self, course_id, user_id, filename):
         self.course_id = course_id
@@ -1359,4 +1360,3 @@ class ImportFormat(db.Model):
     @property
     def descriptive_name(self):
         return self.name
-
