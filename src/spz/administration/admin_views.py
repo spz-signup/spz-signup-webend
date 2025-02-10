@@ -349,7 +349,7 @@ def edit_grade(course_id):
                 attendance = course.get_course_attendance(course.id, applicant.id)
                 grade_field = getattr(form, f'grade_{applicant.id}', None)
                 if grade_field and grade_field.data != attendance.grade:
-                    attendance.grade = math.ceil(grade_field.data)
+                    attendance.grade = math.ceil(grade_field.data) if grade_field.data is not None else None
                     changes = True
 
                 ects_field_name = f'ects_{applicant.id}'
