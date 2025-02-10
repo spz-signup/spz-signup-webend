@@ -380,6 +380,8 @@ def markup_grade(course_id):
     if not current_user.is_admin_or_superuser and not current_user.is_course_teacher(course):
         return redirect(url_for('internal'))
 
+    exam_date = app.config['EXAM_DATE']
+
     if request.method == 'POST' and current_user.is_authenticated:
         ts_tx = request.form.getlist('TS_tx')
         ts_rx = request.form.getlist('TS_rx')
@@ -427,7 +429,7 @@ def markup_grade(course_id):
 
         return redirect(url_for('grade', course_id=course_id))
 
-    return dict(course=course)
+    return dict(course=course, exam_date=exam_date)
 
 
 @login_required
