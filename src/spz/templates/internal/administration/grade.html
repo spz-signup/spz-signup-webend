@@ -44,14 +44,13 @@
                     <th rowspan="2">ECTS</th>
                     <th rowspan="2">Note</th>
                     <th rowspan="2">Prüfungsdatum</th>
-                    <th colspan="3" style="width: 5em"><a href=" {{ url_for("markup_grade", course_id=course.id) }} ">
-                        <i class="edit icon"></i> Status TS/PS
+                    <th colspan="2" style="width: 5em"><a href=" {{ url_for("markup_grade", course_id=course.id) }} ">
+                        <i class="edit icon"></i> Status TS
                     </a></th>
                 </tr>
                 <tr>
                     <th>TS</th>
                     <th>TS erh.</th>
-                    <th>PS erh.</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -86,7 +85,6 @@
                         <td> {{ exam_date }}</td>
                         <td> {% if attendance.ts_requested %} <i class="times icon"></i> {% endif %}</td>
                         <td> {% if attendance.ts_received %} <i class="times icon"></i> {% endif %} </td>
-                        <td> {% if attendance.ps_received %} <i class="times icon"></i> {% endif %} </td>
                     </tr>
                 {% endfor %}
                 </tbody>

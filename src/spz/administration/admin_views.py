@@ -385,7 +385,6 @@ def markup_grade(course_id):
     if request.method == 'POST' and current_user.is_authenticated:
         ts_tx = request.form.getlist('TS_tx')
         ts_rx = request.form.getlist('TS_rx')
-        ps_rx = request.form.getlist('PS_rx')
 
         try:
             for checked in ts_tx:
@@ -402,13 +401,6 @@ def markup_grade(course_id):
                     .first()
                 attendance.ts_received = True
 
-            for checked in ps_rx:
-                mail = checked.split('_', 1)[1]
-                attendance = models.Attendance.query \
-                    .filter(models.Attendance.course_id == course_id, models.Attendance.applicant.has(mail=mail)) \
-                    .first()
-                attendance.ps_received = True
-
             active_attendances = models.Attendance.query \
                 .filter(models.Attendance.course_id == course_id, models.Attendance.waiting == False) \
                 .all()
@@ -417,15 +409,13 @@ def markup_grade(course_id):
                     attendance.ts_requested = False
                 if attendance.ts_received and f"ts-rx_{attendance.applicant.mail}" not in ts_rx:
                     attendance.ts_received = False
-                if attendance.ps_received and f"ps-rx_{attendance.applicant.mail}" not in ps_rx:
-                    attendance.ps_received = False
 
             db.session.commit()
-            flash('Status über TS/PS wurde erfolgreich aktualisiert!', 'success')
+            flash('Status über Teilnahmescheine (TS) wurde erfolgreich aktualisiert!', 'success')
 
         except Exception as e:
             db.session.rollback()
-            flash(_('Es gab einen Fehler beim Ändern des Status der TS/PS: %(error)s', error=e), 'negative')
+            flash(_('Es gab einen Fehler beim Ändern des Status der TS: %(error)s', error=e), 'negative')
 
         return redirect(url_for('grade', course_id=course_id))
 

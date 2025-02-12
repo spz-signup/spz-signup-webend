@@ -139,7 +139,7 @@ class Attendance(db.Model):
 
     ts_requested = db.Column(db.Boolean, default=False)
     ts_received = db.Column(db.Boolean, default=False)
-    ps_received = db.Column(db.Boolean, default=False)
+    ps_received = db.Column(db.Boolean, default=False) # ToDo: remove, not required by management
 
     def __init__(self, course, graduation, waiting, discount, informed_about_rejection=False):
         self.course = course
@@ -171,6 +171,14 @@ class Attendance(db.Model):
         elif not self.waiting and waiting_list:
             self.waiting = True
             self.enrolled_at = None
+
+    @property
+    def ts_requested_str(self):
+        return "X" if self.ts_requested else ""
+
+    @property
+    def ts_received_str(self):
+        return "X" if self.ts_received else ""
 
     @property
     def sanitized_grade(self):

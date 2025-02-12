@@ -19,7 +19,7 @@
             </div>
         {% endif %}
         <div class="row">
-            <h2>Änderung Status Teilnahme-/Prüfungsscheine</h2>
+            <h2>Änderung Status Teilnahmescheine (TS)</h2>
         </div>
         <div class="sixteen wide column">
             <form class="ui form" method="post">
@@ -35,7 +35,6 @@
                         <th>Prüfungsdatum</th>
                         <th>TS</th>
                         <th>TS erh.</th>
-                        <th>PS erh.</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -79,13 +78,6 @@
                                 <div class="ui checkbox">
                                     <input type="checkbox" name="TS_rx"
                                            value="ts-rx_{{ attendance.applicant.mail }}" {% if attendance.ts_received %}
-                                           checked {% endif %}>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="ui checkbox">
-                                    <input type="checkbox" name="PS_rx"
-                                           value="ps-rx_{{ attendance.applicant.mail }}" {% if attendance.ps_received %}
                                            checked {% endif %}>
                                 </div>
                             </td>
