@@ -181,6 +181,10 @@ class Attendance(db.Model):
         return "X" if self.ts_received else ""
 
     @property
+    def hide_grade_str(self):
+        return "X" if self.hide_grade else ""
+
+    @property
     def sanitized_grade(self):
         if self.grade is None:
             return ""
