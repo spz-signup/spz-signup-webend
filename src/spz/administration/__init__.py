@@ -13,6 +13,7 @@ from flask_babel import gettext as _
 from flask import flash
 from openpyxl.reader.excel import load_workbook
 from openpyxl.utils import column_index_from_string
+from sqlalchemy import func
 import re
 
 
@@ -218,7 +219,9 @@ class TeacherManagement:
                                 )
             else:
                 # add grade to course participant if both - mail and grade - are present in xls file
-                applicant = models.Applicant.query.filter_by(mail=read_mail).first()
+                applicant = models.Applicant.query.filter(
+                    func.lower(models.Applicant.mail) == func.lower(read_mail)
+                ).first()
                 if applicant:
                     attendance = course.get_course_attendance(course.id, applicant.id)
                     if attendance:
