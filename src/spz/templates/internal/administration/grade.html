@@ -37,56 +37,104 @@
         <div class="sixteen wide column">
             <table class="ui selectable small structured celled table">
                 <thead>
-                <tr>
-                    <th rowspan="2">Matrikelnr.</th>
-                    <th rowspan="2">Vorname</th>
-                    <th rowspan="2">Nachname</th>
-                    <th rowspan="2">ECTS</th>
-                    <th rowspan="2">Note</th>
-                    <th rowspan="2">Prüfungsdatum</th>
-                    <th colspan="2" style="width: 5em"><a href=" {{ url_for("markup_grade", course_id=course.id) }} ">
-                        <i class="edit icon"></i> Status TS
-                    </a></th>
-                </tr>
-                <tr>
-                    <th>TS</th>
-                    <th>TS erh.</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for applicant in course.course_list %}
-                    {% set attendance = course.get_course_attendance(course.id, applicant.id) %}
-                    <tr class="{{ 'error' if attendance.full_grade == 'nicht bestanden' else '' }}">
-                        <td>{% if applicant.tag %} {{ applicant.tag }} {% endif %}</td>
-                        <td>{{ applicant.first_name }}</td>
-                        <td>{{ applicant.last_name }}</td>
-                        <td>
-                            {% if attendance is none %}
-                                Fehler: nicht in Liste
-                            {% else %}
-                                {{ attendance.ects_points }}
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if attendance is none %}
-                                Fehler: nicht in Liste
-                            {% else %}
-                                {% if attendance.grade is not none %}
-                                    {% if attendance.hide_grade %}
-                                        <b>bestanden</b>
-                                    {% else %}
-                                        {{ attendance.full_grade }}
-                                    {% endif %}
-                                {% else %}
-                                    -
-                                {% endif %}
-                            {% endif %}
-                        </td>
-                        <td> {{ exam_date }}</td>
-                        <td> {% if attendance.ts_requested %} <i class="times icon"></i> {% endif %}</td>
-                        <td> {% if attendance.ts_received %} <i class="times icon"></i> {% endif %} </td>
+
+                <!-- for English courses show only grades that are not none -->
+                {% if course.language.name in ["Englisch", "Englisch Intensiv"] %}
+                    <tr>
+                        <th rowspan="2">Matrikelnr.</th>
+                        <th rowspan="2">Vorname</th>
+                        <th rowspan="2">Nachname</th>
+                        <th rowspan="2">ECTS</th>
+                        <th rowspan="2">Note</th>
+                        <th rowspan="2">Prüfungsdatum</th>
                     </tr>
-                {% endfor %}
+                    </thead>
+                    <tbody>
+                    {% for applicant in course.grade_list %}
+                        {% set attendance = course.get_course_attendance(course.id, applicant.id) %}
+                        <tr class="{{ 'error' if attendance.full_grade == 'nicht bestanden' else '' }}">
+                            <td>{% if applicant.tag %} {{ applicant.tag }} {% endif %}</td>
+                            <td>{{ applicant.first_name }}</td>
+                            <td>{{ applicant.last_name }}</td>
+                            <td>
+                                {% if attendance is none %}
+                                    Fehler: nicht in Liste
+                                {% else %}
+                                    {{ attendance.ects_points }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if attendance is none %}
+                                    Fehler: nicht in Liste
+                                {% else %}
+                                    {% if attendance.grade is not none %}
+                                        {% if attendance.hide_grade %}
+                                            <b>bestanden</b>
+                                        {% else %}
+                                            {{ attendance.full_grade }}
+                                        {% endif %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                            <td> {{ exam_date }}</td>
+                        </tr>
+                    {% endfor %}
+                    {% else %}
+                    <!-- all other courses -->
+                    <tr>
+                        <th rowspan="2">Matrikelnr.</th>
+                        <th rowspan="2">Vorname</th>
+                        <th rowspan="2">Nachname</th>
+                        <th rowspan="2">ECTS</th>
+                        <th rowspan="2">Note</th>
+                        <th rowspan="2">Prüfungsdatum</th>
+                        <th colspan="2" style="width: 5em"><a
+                            href=" {{ url_for("markup_grade", course_id=course.id) }} ">
+                            <i class="edit icon"></i> Status TS
+                        </a></th>
+                    </tr>
+                    <tr>
+                        <th>TS</th>
+                        <th>TS erh.</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for applicant in course.course_list %}
+                        {% set attendance = course.get_course_attendance(course.id, applicant.id) %}
+                        <tr class="{{ 'error' if attendance.full_grade == 'nicht bestanden' else '' }}">
+                            <td>{% if applicant.tag %} {{ applicant.tag }} {% endif %}</td>
+                            <td>{{ applicant.first_name }}</td>
+                            <td>{{ applicant.last_name }}</td>
+                            <td>
+                                {% if attendance is none %}
+                                    Fehler: nicht in Liste
+                                {% else %}
+                                    {{ attendance.ects_points }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if attendance is none %}
+                                    Fehler: nicht in Liste
+                                {% else %}
+                                    {% if attendance.grade is not none %}
+                                        {% if attendance.hide_grade %}
+                                            <b>bestanden</b>
+                                        {% else %}
+                                            {{ attendance.full_grade }}
+                                        {% endif %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                            <td> {{ exam_date }}</td>
+                            <td> {% if attendance.ts_requested %} <i class="times icon"></i> {% endif %}</td>
+                            <td> {% if attendance.ts_received %} <i class="times icon"></i> {% endif %} </td>
+                        </tr>
+                    {% endfor %}
+                {% endif %}
                 </tbody>
             </table>
         </div>

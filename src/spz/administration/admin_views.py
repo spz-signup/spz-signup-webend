@@ -470,6 +470,11 @@ def import_grade(course_id):
             file_copy = io.BytesIO(file.read())
             file.seek(0)  # Reset file pointer to beginning
 
+            # first reset all grades
+            for applicant in course.course_list:
+                attendance = course.get_course_attendance(course.id, applicant.id)
+                attendance.grade = None
+
             # read the grades from the copied xlsx file
             n_success = TeacherManagement.import_grades(file_copy, course)
 

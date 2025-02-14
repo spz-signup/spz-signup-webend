@@ -203,8 +203,8 @@ class TeacherManagement:
             read_ects = ects_row[0].value
 
             if read_mail is None or read_grade is None or read_grade == 0:
-                if read_grade is None and read_mail is not None:
-                    warnings.append((1, grade_row[0].coordinate, _('Note fehlt für Kursteilnehmer mit der E-Mail: "{}"'.format(read_mail))))
+                #if read_grade is None and read_mail is not None:
+                #    warnings.append((1, grade_row[0].coordinate, _('Note fehlt für Kursteilnehmer mit der E-Mail: "{}"'.format(read_mail))))
                 continue
 
             read_mail = str(read_mail).strip().lower()

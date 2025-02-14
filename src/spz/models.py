@@ -658,6 +658,12 @@ class Course(db.Model):
         list.sort()
         return list
 
+    @property
+    def grade_list(self):
+        list = [attendance.applicant for attendance in self.filter_attendances(waiting=False) if attendance.grade is not None]
+        list.sort()
+        return list
+
     class Status(Enum):
         VACANCIES = 1
         LITTLE_VACANCIES = 2
